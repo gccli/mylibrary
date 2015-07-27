@@ -1,0 +1,17 @@
+{
+   "query" : {
+      "filtered" : { 
+         "filter" : {
+            "bool" : {
+              "must" : [
+                 { "term" : {"hit_modules.name" : "PROC_POSSIBLE_INJECTED"}},
+                 { "term" : {"score" : 6}}
+              ],
+              "must_not" : {
+                 "term" : {"score" : 9} 
+              }
+           }
+         }
+      }
+   }
+}

@@ -1,0 +1,751 @@
+* Samba Basics
+
+   At a high level, you can look at Samba as offering three different kinds of network services:
+   - File and print sharing. Offering files and printers to other network devices and using those services on other machines
+   - Name services. Name resolution services necessary to participate in a Microsoft network
+   - Domain services. Samba can replace various Microsoft server roles such as a legacy domain controller and integrates with newer Active Directory Domain Services (AD DS) servers
+
+** Samba Concepts and Architecture
+
+*** SMB/CIFS concepts
+    SMB started out requiring an application programming interface (API) layer called Network Basic Input/Output System (NetBIOS). This API provided several services that SMB used as well as several services relating to name resolution and network browsing. When used in conjunction with NetBIOS, SMB could run on top of:
+      Raw Ethernet, in which case SMB used NetBIOS Frames, often called NetBEUI
+      Novell Internetwork Packet Exchange (IPX)/Sequenced Packet Exchange(SPX), in which case SMB used NetBIOS over IPX/SPX (NBX)
+      TCP/IP, in which case SMB used NetBIOS over TCP/IP (NBT)
+   NetBIOS provides three key services to a Microsoft network:
+      Name services for finding hosts on the network
+      Session services for the reliable communication and transfers between a client and a server
+      Datagram distribution services for small messages and network broadcasts
+   Eventually, TCP/IP's dominance and Microsoft's move to rely on Domain Name System (DNS) for name resolution led to SMB being run directly on top of TCP/IP in a manner called direct hosting.
+   Whereas NBT ran on TCP and User Datagram Protocol (UDP) ports 137-139, direct hosting uses TCP and UDP port 445.
+
+*** Understand the roles of the Samba daemons and components.
+    Summary of ports used in Samba
+    Port    Protocol        Service Daemon  Description
+    137     UDP     netbios-ns      nmbd    NetBIOS name services
+    138     UDP     netbios-dgm     nmbd    NetBIOS datagram services
+    139     TCP     netbios-ssn     smbd    NetBIOS over TCP (session services)
+    445     TCP     microsoft-ds    smbd    Direct-hosted SMB
+    $ grep '\b137\b|\b138\b|\b139\b|\b445\b' /etc/services
+
+    1. smbd — server to provide SMB/CIFS services to clients
+       Providing file and printer shares.
+       Authenticating users.
+       Providing time services.
+       By default, the smbd daemon binds to TCP ports 139 and 445. The SMB protocol uses port 139 through NetBIOS over TCP, which is the way many older clients use SMB/CIFS. Port 445 provides plain SMB over TCP services, which is how many newer clients access the Samba server.
+
+   2. nmbd — NetBIOS name server to provide NetBIOS over IP naming services to clients
+      Responding to name broadcasts.
+      Registering a NetBIOS name
+      Functioning as an NBNS server.
+      Functioning as a master browser.
+      Most of nmbd's functions require it to bind to TCP port 137, but master browser duties involve UDP port 138.
+
+   3. winbindd — Name Service Switch daemon for resolving names from NT servers
+      winbindd doesn't provide services for remote computers; instead, it serves as an interface between a Windows® (or Samba) domain controller and the local computer's own Pluggable Authentication Modules tools, enabling a domain controller to host Linux account information.
+      
+   4. samba — Server to provide AD and SMB/CIFS services to clients
+      
+*** [[http://www.linux-magazine.com/Online/Features/What-s-New-in-Samba-4][What new in Samba 4]] (C-c C-l open the link)
+Active Directory
+  An Active Directory Domain is a DNS domain. 
+  An Active Directory domain is a Kerberos domain. One requirement of Kerberos is accurate clock synchronization
+  Active Directory is an LDAP directory service with its own schema and security model.
+
+** Configure Samba [[http://www.samba.org/samba/docs/man/manpages/smb.conf.5.html][smb.conf]]
+
+*** variables
+    %U session username 
+    %G primary group name of %U.
+    %h the Internet hostname that Samba is running on.
+    %m the NetBIOS name of the client machine (very useful).
+    %L the NetBIOS name of the server. This allows you to change your config based on what the client calls you. Your server can have a “dual personality”.
+    %M the Internet name of the client machine.
+    %R the selected protocol level after protocol negotiation. It can be one of CORE, COREPLUS, LANMAN1, LANMAN2, NT1, SMB2_02, SMB2_10, SMB2_22, SMB2_24, SMB3_00 or SMB2_FF.
+    %d the process id of the current server process.
+    %S the name of the current service, if any.
+    %P the root directory of the current service, if any.
+    %u username of the current service, if any.
+    %g primary group name of %u.
+    %H the home directory of the user given by %u.
+    %N the name of your NIS home directory server. This is obtained from your NIS auto.map entry. If you have not compiled Samba with the --with-automount option, this value will be the same as %L.
+    %p the path of the service's home directory, obtained from your NIS auto.map entry. The NIS auto.map entry is split up as %N:%p.
+
+*** parameters
+    
+[[http://www.samba.org/samba/docs/man/manpages/smb.conf.5.html#SECURITY][security]]
+Samba provides a number of options related to how users are authenticated. The most important of these is the security option, which takes five possible values:
+  - Share. This security mode attempts to emulate the authentication method that the Microsoft® Windows 9x/Windows Me operating systems use, in which user names were ignored and passwords were associated with shares. To do this, Samba tries the password provided by the client with a variety of user names.
+  - User. This security mode, which is the default, uses a user name and password for authentication, similar to the way Linux typically works. In most cases on modern systems, though, the password is stored in an encrypted Samba-only password database.
+  - Server. If you want Samba to defer to another server for authentication, use this authentication method. To a client, this method looks just like user-level authentication, but Samba contacts the server specified with the password server parameter to do the actual authentication.
+  - Domain. You can fully join a Windows domain using this method, which looks just like user-level authentication to clients. Unlike server-level authentication, domain authentication involves a more secure domain-level password exchange. Fully joining the domain requires running extra commands on the Samba system and possibly on the domain controller, as well.
+  - ADS. This authentication method works much like domain authentication; however, it requires an Active Directory® Domain Services domain controller.
+  
+  As a general rule, user-level authentication is the best choice if your Samba server is a member of a Windows workgroup, which is the basic form of an SMB/CIFS network. A workgroup differs from a domain mainly in that a domain provides a domain controller, which is a server that provides authentication services to the domain. To use a domain controller, you must use server-, domain-, or ADS-level security. Server-level security is the easiest to configure but the least secure, whereas ADS-level security is the most difficult to configure but the most secure.
+  To fully join a domain for domain- or ADS-level security, you must set several options in the [global] section of the smb.conf file:
+      password server = DOMCONT
+      domain logons = No
+      encrypt passwords = Yes
+  The DOMCONT system is the domain controller. You must also type the following command on the Samba server that should join the domain:
+  # net join member -U adminuser
+  You may also need to configure the domain controller to accept the Samba server into the domain. 
+
+  Share-level security is largely outmoded; it exists mainly to provide compatibility for very old clients that don't understand user names. It can also be useful for some share types that you might want to make available with minimal security, such as printer shares. Because Linux requires that an account be used for all accesses, Samba tries the provided password against a series of accounts until one matches or they've all failed. These accounts include:
+    The guest account (set via the guest account parameter) if guest only = Yes
+    The user name the client provides (not all clients provide one, but some do)
+    The user name used for the last access from the client computer
+    The name of the share being accessed
+    The client's NetBIOS name
+    Any user names specified via the username parameter
+  Because most clients in use today understand user names, there's seldom a need to support share-level security. Using it only creates confusion and increases the security risk—with passwords being checked against so many accounts, a single password that falls into the wrong hands could become a significant risk to your server.
+
+_admin users_  do all file operations as the super-user (root).
+
+_hide special files_
+_hide unreadable_
+_hide unwriteable files_ 
+
+_add machine script_
+_add user script_  
+
+
+*** File and print sharing
+    - smb ports
+      By default, Samba listens on ports 139 and 445. You can change this behavior with the smb ports global parameter
+
+/smb ports/ - Specifies which ports the server should listen on for SMB traffic. Default: smb ports = 445 139
+/nbt port/ - Specifies which port the server should use for NetBIOS over IP name services traffic. Default: nbt port = 137
+/dgram port/ - Specifies which ports the server should listen on for NetBIOS datagram traffic. Default: dgram port = 138
+
+*** Name services
+    NetBIOS provides a name services layer responsible for network browsing and name lookups. Hostname to an IP address by using NetBIOS name service requests on UDP port 137. Support for browsing and election of support roles such as the master browser happens on UDP port 138, otherwise known as the datagram services port. 
+    Samba 4 configure: nbt port(default 137) and dgram port(default 138)
+    implements the nbt port and dgram port global parameters, which control the name service and datagram services ports, respectively.
+
+*** Troubleshooting 
+  $ testparm 
+    --parameter-name parametername
+    checking access with testparm
+
+  $ nmblookup
+    nmblookup [-M] [-R] [-S] [-r] [-A] [-h] [-B <broadcast address>] [-U <unicast address>] [-d <debug level>] [-s <smb config file>] [-i <NetBIOS scope>] [-T] [-f] {name}
+
+  -R  Set the recursion desired bit in the packet to do a recursive lookup.
+  -U <unicast address>
+     Do a unicast query to the specified address or host unicast address. This option (along with the -R option) is needed to query a WINS server.
+  -S Once the name query has returned an IP address then do a node status query as well.
+  -A Interpret name as an IP Address and do a node status query on this address
+  name
+     This is the NetBIOS name being queried. If a NetBIOS name then the different name types may be specified by appending '#<type>' to the name. This name may also be '*', which will return all registered names within a broadcast area.
+
+  e.g.
+  nmblookup -U samba.org -R 'IRIX#1B'
+  would query the WINS server samba.org for the domain master browser (1B name type) for the IRIX workgroup.
+
+  $ smbclient 
+  -R|--name-resolve <name resolve order>
+  -L|--list
+  -A|--authentication-file=filename
+  -U|--user=username[%password]
+  -W|--workgroup=domain
+
+  $ Logging and debugging
+
+** files
+***[[http://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/install.html#tdbpermfiledesc][ Persistent TDB File Descriptions]]
+secrets.tdb - This file stores the Workgroup/Domain/Machine SID, the LDAP directory update password, and a further collection of critical environmental data that is necessary for Samba to operate correctly. This file contains very sensitive information that must be protected. It is stored in the PRIVATE_DIR directory.
+passdb.tdb - Exists only when the tdbsam passwd backend is used. This file stores the SambaSAMAccount information. Note: This file requires that user POSIX account information is available from either the /etc/passwd file, or from an alternative system source.
+
+** Maintenance 
+*** smbcontrol - send messages to smbd, nmbd or winbindd processes
+    smbcontrol [destination] [message-type] [parameter]
+     debug - Set debug level to the value specified by the parameter.
+     ping - smbcontrol smbd ping
+     shutdown - Shuts down the specified daemon.
+     close-share - Close the share that the parameter specifies.
+     
+*** smbstatus - report on current Samba connections 
+    -v|--verbose
+    -p|--processes  print a list of smbd(8) processes and exit
+    -S|--shares     causes smbstatus to only list shares    
+*** tdbbackup
+
+* Samba Configuration
+** internationalization
+A /locale/ is simply a set of parameters that define a user's language, country, and any other preferences the user may use and view in the computing environment. When software is able to perform in a user's locale, it's commonly referred to as /internationalization/, or /i18n/.
+
+A /character code/ is the representation in numeric form of a particular character mapping from numeric to a particular character.
+A /code page/ is a mapping of numbers to specific characters as defined by a set of characters (repertoire) intended for use in a particular locale or locales. A code page has traditionally been known as /codepage/, /encoding/, /charset/, /character set/, and /coded character set/. 
+
+*** Configuring Samba for internationalization
+#======================= Global Settings =======================
+    [global]
+    dos charset = CP850        # DOS SMB clients assume the server has the same charset as they do. This option specifies which charset Samba should talk to DOS clients.
+    unix charset = ISO8859-1   # Specifies the charset the unix machine Samba runs on uses. Samba needs to know this in order to be able to convert text to the charsets other SMB clients use.
+
+
+** Samba Share Configuration
+*** File services and Permissions
+The default setting for a share is to be read-only.
+
+  IPC$ share
+  Server Message Block (SMB) servers, including native Microsoft implementations, have a share called IPC$, which is the interprocess communication share and is used to execute software functions over a network. A share ending in a dollar sign ($) is considered hidden and not shown in Microsoft clients, even thought the server will advertise the existence of the share.
+
+/guest ok/ enable guest account to access
+/follow symlinks/ 
+/wide links/ - This parameter controls whether or not links in the UNIX file system may be followed by the server
+In normal operation the option wide links which allows the server to follow symlinks outside of a share path.
+/valid users/  '+' UNIX group, '&' NIS netgroup; '@' means &+group
+
+/create mask/ - bit-wise 'AND'ed 
+/directory mask/ - bitwise 'OR'ing 
+/force create mode/ 
+/force directory mode/
+
+   The force security mode forces bits to be set on a file when it is created or when the client tries to change permissions. By default, it is 000, which means that no bits are forced.
+   security mask performs an AND and clears bits, remove from samba4
+   create mode bit-wise AND
+
+   the file mode = force security mode & security mask | create mask
+
+   create mask = 0644
+   security mask = 0640
+   force security mode = 0644
+
+*** TODO VFS
+/vfs objects/ - This parameter specifies the backend names which are used for Samba VFS I/O operations. 
+[[http://www.samba.org/samba/docs/man/manpages-3/vfs_acl_xattr.8.html][vfs_acl_xattr]] - The vfs_acl_xattr VFS module stores NTFS Access Control Lists (ACLs) in Extended Attributes (EAs). This enables the full mapping of Windows ACLs on Samba servers.
+vfs_acl_tdb - The vfs_acl_tdb VFS module stores NTFS Access Control Lists (ACLs) in a tdb file. This enables the full mapping of Windows ACLs on Samba servers.
+
+VFS modules acl_xattr or acl_tdb which store native Windows as meta-data will automatically turn this option on for any share for which they are loaded, as they require this option to emulate Windows ACLs correctly
+vfs_acl_xattr, vfs_acl_tdb and vfs objects.
+
+Implement full NT ACL support by storing them in XATTRs and correctly handling the semantics (see source3/modules/vfs_acl_xattr.c and source3/modules/vfs_acl_common.c.)
+
+acl_xattr (and acl_tdb) module - This module stores security descriptors (AKA NT ACLs) as blobs in XATTRs attached to files(security.NTACL), however, it does so in an interesting way.
+The process it uses is to retrieve any underlying ACL on the file by calling the next module in the stack. 
+This underlying ACL might be synthesized from UNIX permissions, or converted from RichACLs, etc. It then hashes the underlying
+security descriptor, and when storing a new NT ACL, it includes the hash of the underlying file system
+security descriptor in the blob it stores. This way, when the NT ACL is subsequently retrieved by
+Windows, the acl_xattr module can check to see if anyone changed the underlying security descriptor
+(permissions) and return those instead. This must be an attempt to provide some level of interoperability with NFS. 
+
+*** TODO ACL
+smbcacls - Set or get ACLs on an NT file or directory names
+smbcacls //server/share /filename [-D|--delete acls] [-M|--modify acls] [-a|--add acls] [-S|--set acls] [-C|--chown name] [-G|--chgrp name]
+
+e.g. 
+# get the ACLs of file example in root share
+smbcacls -v //localhost/root /example -Uroot%cc
+# change the owner of example to nobody and set ACLs
+smbcacls -v //localhost/root /example -C nobody -S "ACL:nobody:ALLOWED/0/RW" -Uroot%cc
+
+setfacl/getfacl - set/get extended attributes of filesystem objects
+setfattr/getfattr - set/get extended attributes of filesystem objects
+
+** Print Services 
+*** Enabling CUPS support
+[global]
+printing = cups
+printcap = cups
+
+*** The [printers] section
+Typically the path specified is that of a world-writeable spool directory with the sticky bit set on it. 
+
+*** The print$ share
+This share is hard-coded into Windows clients, and this is where the clients look for printer drivers when a printer is installed.
+[print$]
+  comment = Printer Driver Export
+  path = /etc/samba/drivers
+  browseable = yes
+  guest ok = no
+  read only = yes
+  write list = root
+
+* Samba User and Group Management
+** Managing User Accounts and Groups 
+For the typical Samba configuration, account information is stored in one of three password databases:
+smbpasswd - plaintext
+   This back end holds the account data in a simple flat file. The data in this file consists of the account name, the password hashes, and some basic account information. 
+tdbsam - TDB based password storage backend.
+   The tdbsam back end stores information in a format much like the Microsoft Windows NT Security Account Manager (SAM) does, which means almost anything that can be stored in the SAM can be represented in the Samba server. Therefore, tdbsam provides a high level of compatibility with Microsoft systems.
+ldapsam - The LDAP based passdb backend
+   
+/passdb backend/ 
+
+If you are working in a mixed environment with Windows computers, keep in mind that Windows doesn't allow a user account and group account to have identical names.
+Unix local accounts /etc/password /etc/group
+
+*** smbpasswd
+  smbpasswd [-a] [-c <config file>] [-x] [-d] [-e] [-D debuglevel] [-n] [-r <remote machine>] [-R <name resolve order>] [-m] [-U username[%password]] [-h] [-s] [-w pass] [-W] [-i] [-L] [username]
+
+-a add user, the user to already exist in the system password file (usually /etc/passwd)
+-x delete user
+-e enbale user
+-d disable user
+-m account being changed is a MACHINE account
+-w password
+   only available if Samba has been compiled with LDAP support. The -w switch is used to specify the password to be used with the ldap admin dn.
+-i interdomain trust account
+
+*** pdbedit
+[-a] [-b passdb-backend] [-c account-control] [-C value] [-d debuglevel] [-D drive] [-e passdb-backend]
+[-f fullname] [--force-initialized-passwords] [-g] [-h homedir] [-i passdb-backend] [-I domain] [-K] [-L] [-m] [-M SID|RID]
+[-N description] [-P account-policy] [-p profile] [--policies-reset] [-r] [-s configfile] [-S script] [-t] [--time-format] [-u username]
+[-U SID|RID] [-v] [-V] [-w] [-x] [-y] [-z] [-Z]
+
+pdbedit -P ? # To view the domain account access policies that may be configured execute
+
+  -w|--smbpasswd-style
+     This option sets the "smbpasswd" listing format.
+
+  -m|--machine
+     This option may only be used in conjunction with the -a option. It will make pdbedit to add a machine trust account instead of a user account (-u username will provide the machine name)
+     pdbedit -a -m -u w2k-wks
+  -e|--export passdb-backend
+    $ pdbedit -e smbpasswd:/root/samba-users.backup
+  -i|--import passdb-backend
+    $ pdbedit -i smbpasswd:/etc/smbpasswd.old
+
+
+*** TODO samba-tool group and user subcommand
+
+
+*** Identity Mapping (IDMAP)
+If your environment consists of users connecting to the Samba server from another domain, the idmap tool assists with mapping the UIDs and GIDs properly
+IDMAP can help overcome interoperability concerns between a security ID (SID) and a local UNIX UID or GID.
+If your Samba server is a member of a Windows domain, you can use Winbind to map an SID to a UID or GID. You can set the range of the idmap parameter and specify how long Winbind should cache the account information in the smb.conf file:
+  [global]
+  idmap uid = 20000-50000
+  idmap gid = 20000-50000
+  winbind cache time = 300
+The winbind cache time = 300 parameter instructs Winbind to cache account information for 300 seconds. By default, Winbind stores mappings in the winbind_idmap.tdb file.
+
+ # add groupmap
+ net groupmap add ntgroup="Domain Admins" unixgroup=adm rid=512 type=d
+ net groupmap list # list groupmap
+
+ # show user 
+ net rpc user info root
+
+*** force user and force group
+/force user/ specifies a UNIX user name that will be assigned as the default user for all users connecting to this service. 
+/force group/ specifies a UNIX group name that will be assigned as the default primary group for all users connecting to this service.
+              a '+' character prepended to it then the current user accessing the share only has the primary group default assigned to this group if they are already assigned as a member of that group.
+** Authentication, Authorization and Winbind
+Password format: show with /pdbedit -L -w/
+  User name.
+  UNIX user ID.
+  Legacy Lanman hash. (Because of a lack of security on this hash, it's effectively a plain-text password.)
+  The secure Windows NT hash. (This is the hash needed to authenticate modern clients.)
+  Account flags. 
+  The Last Changed Time (LCT) of the account. 
+
+*** Local password database options
+  smbpasswd 
+  tdbsam
+  Configuring the tdbsam back end. Add passdb /backend=tdbsam—optionally/ with a file name—to your global section, and restart Samba.
+  The default name of the TDB file with the authentication information is passdb.tdb.
+
+*** LDAP authentication
+
+**** Configure Samba to LDAP
+  passdb backend = ldapsam:ldap://ldap0.inetlinux.net
+  ldap suffix = dc=inetlinux,dc=net
+  ldap user suffix = ou=People
+  ldap group suffix = ou=Groups
+  ldap admin dn = uid=root,ou=people,dc=inetlinux,dc=net
+
+The /ldap admin dn/ is used in conjunction with the admin dn password stored in the private/secrets.tdb. smbpasswd -w passwd
+
+**** smbldap-tools
+
+smbldap-useradd [OPTIONS] USERNAME
+  -a is a Windows User
+  -d home
+  -g gid
+  -i is a trust account (Windows Workstation)
+  -m creates home directory and copies /etc/skel
+  -w is a Windows Workstation
+
+*** Winbind - Name Service Switch daemon for resolving names from NT servers
+
+ Background
+ Microsoft designed its domain authentication procedures with the needs of Windows in mind, it lacks certain features that Linux needs in its accounts, such as UNIX®-style user ID (UID) and group ID (GID) values. Instead, Windows domains use security identifiers (SID), which aren't directly mappable to Linux UIDs and GIDs.
+
+ Winbind relies on several different elements:
+  Winbind-specific options in smb.conf
+  Configuration options for the Pluggable Authentication Modules (PAM) subsystem
+  Configuration options for the Net Service Switch (NSS) subsystem
+  The winbindd server program
+ 
+ Configuration
+   winbind separator
+   winbind cache time - Winbind caches authentication data for a given period of time, which defaults to 300 seconds (5 minutes).
+   template shell - You set the users' default shell using this option. The default value is /bin/false, which is appropriate for systems that don't support shell access; but if you want users to be able to log in locally or via servers such as the Secure Shell (SSH), you should set this option to /bin/bash or some other legal Linux shell.
+   template homedir - You must set a default home directory for users. You'll typically use one or more Samba variables, such as %U for the user name and perhaps %D for the domain name. This parameter's default value is /home/%D/%U.
+   winbind enum users
+   winbind enum groups
+   winbind use default domain
+   idmap uid - You should specify a set of UIDs with this option, using a dash (-) as a separator, as in 10000-20000. Be sure that the range you use does not overlap with the locally defined UIDs in use on your system.
+   idmap gid
+
+
+
+
+**** Automatically create home folders
+In order to get the pam_mkhomedir module working you could create a file like /usr/share/pam-configs/mkhomedir:
+  Name: activate mkhomedir
+  Default: yes
+  Priority: 900
+  Session-Type: Additional
+  Session:
+      required                        pam_mkhomedir.so umask=0022 skel=/etc/skel
+and activate it by running pam-auth-update.
+
+**** [[https://help.ubuntu.com/community/ActiveDirectoryWinbindHowto][Active Directory Winbind Howto]]
+-------- configuration for winbindd --------
+[global]
+  security = ads
+  workgroup = AD
+  realm = ad.inetlinux.net
+#  password server = win2k8.ad.inetlinux.net
+# using security = [ads|domain] it is possible to get Samba to do all its username/password validation using a specific remote server
+
+  obey pam restrictions = Yes
+  log file = /var/log/samba.log
+  log level = 2 auth:3 winbind:5
+  max log size = 0
+
+  winbind cache time = 60
+  template shell = /bin/bash
+  template homedir = /home/%U
+  winbind enum users = Yes
+  winbind enum groups = Yes
+  winbind use default domain = Yes
+
+  idmap config * : backend = tdb # use ldap for ldap backend
+  idmap config * : range = 1000000-1999999
+#  idmap config * : ldap_user_dn = cn=admin,dc=inetlinux,dc=net
+#  idmap config * : ldap_base_dn = ou=idmap,dc=inetlinux,dc=net
+#  idmap config * : ldap_url = ldap://ldap1.inetlinux.net
+
+# if use ldap backend
+# The secret for the ldap_user_dn has to be set with "net idmap secret '*' password"
+
+
+**** TODO Samba4 [[http://wiki.samba.org/index.php/Samba4/Winbind][Samba4 Winbind]]
+
+
+-------- end of winbindd --------
+
+**** wbinfo - Query information from winbind daemon
+
+  -u, --domain-users                    Lists all domain users
+  -g, --domain-groups                   Lists all domain groups
+  -D|--domain-info domain               Show most of the info we have about the domain
+  -i, --user-info=USER                  Get user info
+  -U, --uid-to-sid=UID                  Converts uid to sid
+  -G, --gid-to-sid=GID                  Converts gid to sid
+  -S, --sid-to-uid=SID                  Converts sid to uid
+  -Y, --sid-to-gid=SID                  Converts sid to gid
+
+  -n, --name-to-sid=NAME                Converts name to sid
+  -s, --sid-to-name=SID                 Converts sid to name
+
+  -m, --trusted-domains                 List trusted domains
+      --all-domains                     List all domains (trusted and own domain)
+      --own-domain                      List own domain
+  -r, --user-groups=USER                Get user groups
+
+   $ get domain SID and local SID
+   # net getdomainsid
+   SID for local machine PDC is: S-1-5-21-3287594765-3502142567-2262014711
+   SID for domain AD is: S-1-5-21-3998035445-3449012832-787157674
+   # wbinfo -D PDC
+   Name              : PDC
+   Alt_Name          : 
+   SID               : S-1-5-21-3287594765-3502142567-2262014711
+   Active Directory  : No
+   Native            : No
+   Primary           : No
+   # wbinfo -D AD
+   Name              : AD
+   Alt_Name          : ad.inetlinux.net
+   SID               : S-1-5-21-3998035445-3449012832-787157674
+   Active Directory  : Yes
+   Native            : Yes
+   Primary           : Yes
+
+*** TODO Sumary of libnss_winbind, libpam_winbind and libpam_smbpass
+In ubuntu and centos
+getent
+
+* Samba Domain Integration
+Domain Controller Types
+  NT4 style Primary Domain Controller
+  NT4 style Backup Domain Controller
+  ADS Domain Controller
+
+There are two ways that MS Windows machines may interact with each other, with other servers, and with domain controllers: either as standalone systems, more commonly called workgroup members, or as full participants in a security system, more commonly called domain members.
+  workgroup mode does not involve security machine accounts.
+  Domain member machines have a machine trust account in the domain accounts database. 
+
+** net command
+  [RPC|ADS] TESTJOIN
+    Check whether participation in a domain is still valid
+  [RPC|ADS] USER INFO target
+    List the domain groups of the specified user.
+  ADS SEARCH EXPRESSION ATTRIBUTES...
+    $ net ads search 'objectclass=user' distinguishedName name objectSid
+
+
+** Samba3 as an MS Windows NT4-style PDC
+  + For MS Windows NT4/200x/XP clients
+    Configuration of basic TCP/IP and MS Windows networking. [Same for 9x]
+    Correct designation of the server role (security = user). [Same for 9x]
+    Consistent configuration of name resolution. Network Browsing
+    Domain logons for Windows NT4/200x/XP Professional clients
+    Configuration of roaming profiles or explicit configuration to force local profile usage.
+    Configuration of network/system policies.
+    Adding and managing domain user accounts. [Same for 9x]
+  + For MS Windows 9x/Me clients:
+    Network logon configuration (since Windows 9x/Me/XP Home are not technically domain members, they do not really participate in the security aspects of Domain logons as such)
+    Roaming profile configuration
+    Configuration of system policy handling
+
+  + A domain controller is an SMB/CIFS server that:
+    Registers and advertises itself as a domain controller
+    Provides the NETLOGON service. (This is actually a collection of services that runs over multiple protocols.)
+    Provides a share called NETLOGON
+    
+*** configure for PDC
+Domain Control Parameters (Required)
+    /workgroup/ PDCAD
+    /os level/  > 32
+    /preferred master/  auto
+    /domain master/ yes
+    /security/ user
+    /encrypt passwords/ yes
+    /domain logons/ Yes - provide the netlogon service for Windows 9X network logons for the workgroup it is in. This will also cause the Samba server to act as a domain controller for NT4 style domain services
+    /domain master/ Yes - WAN-wide browse list collation, domain master browser for its given workgroup. Local master browsers in the same workgroup on broadcast-isolated
+    /preferred master/ Yes - If this is set to yes, on startup, nmbd will force an election, and it will have a slight advantage in winning the election
+Configure see temp/smb.conf.pdc
+
+*** Create Machine account
+  $ groupadd -r trust
+  $ useradd -d /dev/null -M -g trust -s /bin/false win7$
+  $ smbpasswd -a -m win7$    
+
+/add machine script/ - This is the full pathname to a script that will be run by smbd(8) when a machine is added to Samba's domain and a Unix account matching the machine's name appended with a "$" does not already exist.
+
+*** Adding computers to a domain
+    1. Create machine account on DC
+    2. for samba server
+       password server = PDC
+       domain logons = No
+       encrypt passwords = Yes
+       security = Domain
+    3. net join member -U root
+
+*** NETLOGON share
+NETLOGON and configure Samba to store users' Windows desktop settings on the domain controller.
+
+/logon scripts/ - This parameter specifies the batch file (.bat) or NT command file (.cmd) to be downloaded and run on a machine when a user successfully logs in. The file must contain the DOS style CR/LF line endings.
+   The script must be a relative path to the [netlogon] service. 
+[netlogon]
+   comment = Network Logon Service
+   path = /var/lib/samba/netlogon
+   guest ok = No
+   read only = Yes
+   write list = root
+Domain logon scripts are stored in the NETLOGON share. These scripts run on the domain client whenever a user logs on to a domain.
+In addition to network logon scripts, the NETLOGON share can hold a /system policies/ file (the policy file is called NTConfig.POL). This file can automatically make changes to the Windows registry file to help the computer fit into the domain.
+
+*** Creating roaming profiles
+Store users' desktop settings on a remote server, This is the job of a roaming profile.
+PROFILES share
+
+[profiles]
+   comment = NT Profiles Share
+   directory = /var/lib/samba/profiles
+   read only = No
+   create mode = 0600
+   directory mode = 0700
+   browseable = No
+
+/logon path/ - This parameter specifies the directory where roaming profiles (Desktop, NTuser.dat, etc) are stored.
+
+*** interdomain trusts
+relationships have two important properties:
+ 1. nontransitive - meaning that they affect only the domains for which they're explicitly configured. e.g. if the PHYSICS domain trusts GEOLOGY, and GEOLOGY trusts BIOLOGY, PHYSICS does not automatically trust BIOLOGY.
+ 2. trust relationships are one-way. e.g. PHYSICS can trust GEOLOGY without GEOLOGY trusting PHYSICS
+
+PHYSICS is then the trusting domain and GEOLOGY is the trusted domain. To begin configuring a trust relationship, you must first create both Linux and Samba accounts on the trusting domain (PHYSICS) for the trusted domain (GEOLOGY):
+ # useradd -d /dev/null -M -g trust -s /bin/false geology$
+ # smbpasswd -a -i geology
+ # net rpc trustdom establish physics # Type this command on a Linux member of the trusted domain (GEOLOGY)
+# terminate an interdomain trust
+ # net rpc trustdom revoke physics (GEOLOGY)
+ # net rpc trustdom del geology (PHYSICS)
+
+*** Samba4 as an AD compatible Domain Controller
+Integrates with AD services: DNS, Kerberos, NTP, LDAP
+
+/usr/local/samba/sbin/samba -i -M single
+
+**** server role
+**** samba-tool domain - Domain management
+     provision - Provision a domain. The provisioning creates a basic database, and is used when you are configuring your first Samba DC in its own domain.
+     --use-rfc2307  Use AD to store posix attributes
+     Re-run the provisioning, remove the /usr/local/samba/etc/smb.conf and /usr/local/samba/private/*
+     If your website is example.com, the domain of your AD should be a subdomain if it, like samdom.example.com (or ad.example.com, corp.example.com). Avoid using example.com internally.
+
+samba-tool domain provision --help
+
+* Samba Name Services
+
+** NetBIOS and WINS
+*** Understanding the NetBIOS
+In Linux, neither NetBIOS nor NetBEUI exists. Samba takes on the duties of both the SMB/CIFS protocols and the NetBIOS implementation. Instead of using NetBEUI, Samba communicates over TCP and User Datagram Protocol (UDP). The combination of NetBIOS over TCP/IP is sometimes referred to as NBT, whose duties include:
+  /The name service./ - In NetBEUI, IP addresses are not used—just names and hardware addresses. NBT therefore handles creating the IP addresses that are not required on SMB/CIFS over NetBIOS and NetBEUI networks.
+  /The datagram service./ - such as the browser elections
+  /The session service./ -  a longer-term connection for most data-transfer requests, such as when a user mounts a file share
+NetBIOS names come in two parts:
+  /The machine name/ 
+  /The workgroup name/ - This name applies to all the related computers on a network. In a simple (non-domain) SMB/CIFS configuration, the workgroup name is just a way of organizing computers for purposes of browsing. In a network that's configured as a domain, the workgroup name is given to the domain, which provides domain-level services
+
+All NetBIOS names are exactly 16 characters in length. The 16th character is reserved. It is used to store a 1-byte value that indicates service level information for the NetBIOS name that is registered.
+Unique NetBIOS Names
+|-----------------+-------------------------------------------------|
+| MACHINENAME<00> | Server Service is running on MACHINENAME        |
+|-----------------+-------------------------------------------------|
+| MACHINENAME<03> | Generic machine name (NetBIOS name)             |
+|-----------------+-------------------------------------------------|
+| MACHINENAME<20> | LanMan server service is running on MACHINENAME |
+|-----------------+-------------------------------------------------|
+| WORKGROUP<1b>   | Domain master browser                           |
+|-----------------+-------------------------------------------------|
+Group Names
+|---------------+-----------------------------------------------------|
+| WORKGROUP<03> | Generic name registered by all members of WORKGROUP |
+|---------------+-----------------------------------------------------|
+| WORKGROUP<1c> | Domain cntrollers/netlogon servers                  |
+|---------------+-----------------------------------------------------|
+| WORKGROUP<1d> | Local master browsers                               |
+|---------------+-----------------------------------------------------|
+| WORKGROUP<1e> | Browser election service                            |
+|---------------+-----------------------------------------------------|
+
+This two-tier naming system is one of the reasons that NetBIOS networking is local in scope.  
+
+*** NetBIOS name resolution
+Four different methods of name resolution exist on an NBT network  
+/Broadcast resolution/ - B mode name resolution.  a computer that uses this method exclusively is called a B-node. see [[http://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/NetworkBrowsing.html#id2580162][Network Browsing]]
+/Using a name server./ - P-mode name resolution. The client can contact an NBNS server, or WINS server. Like a DNS server, a WINS server maintains a mapping of IP addresses and host names. A WINS server, however, collects these mappings based on the broadcasts computers make when they boot rather than based on a locally maintained configuration file and consultation with other servers. 
+/Using lmhosts./
+/Using DNS./ - you can configure Samba to use DNS for NetBIOS name resolution
+
+*** WINS Server
+A WINS server, whether it's a Linux computer running Samba or a Windows server, must listen for name broadcasts, maintain a mapping of IP addresses to NetBIOS names, and answer queries about these mappings from clients. As a practical matter, this means that the WINS server must be available at all times—or as close to that as you can manage. Frequently, a domain controller is an excellent candidate to function as a WINS server. If your computer hosts its own DNS server, that computer might be a good choice, too. You must explicitly configure your chosen computer as a WINS server
+
+*** Configuration
+
+**** client options
+/netbios name/ This option sets the NetBIOS name that the server claims. If you omit this option, it defaults to the machine name portion of your DNS host name, such as TUNESMITH if the DNS host name is tunesmith.example.com.
+/netbios aliases/ A single computer can claim more than one NetBIOS name. To do so, you use this option, as in netbios aliases = PRILL HALRLOPRILLALAR. These names are claimed in addition to any set via the netbios name option.
+/workgroup/ You set the workgroup or domain name with this option. For browsing and domain features to work correctly, you must set this option to the correct value. The default is WORKGROUP.
+/name resolve order/ This parameter takes one or more of four options to control which of the four name resolution methods the programs in the Samba suite use. Although it has little practical effect on the server side, this option does affect how tools such as smbclient resolve names.
+/wins server/ You can specify the host names or IP addresses of computers configured to function as WINS servers with this option. Note that specifying this option does not guarantee that these servers will be consulted; the name resolve order option determines that detail
+To use name resolve order, you specify one or more of four options in a space-separated list:
+lmhosts. This option refers to the /etc/samba/lmhosts file, which is described in more detail shortly.
+host. This option refers to normal TCP/IP name resolution, which can include a DNS server, an /etc/hosts file, or other methods, depending on your local TCP/IP configuration.
+wins. This option refers to name resolution via a WINS server. You specify the server via the wins server option.
+bcast. If you include this option, Samba clients will use NetBIOS broadcast name resolution.
+
+**** WINS server
+/wins support/
+/wins proxy/ - This Boolean option determines whether Samba will respond to broadcast requests asking about names other than its own. Setting this option to Yes (the default is No) can improve NetBIOS name resolution reliability if your network spans multiple subnets or if some computers are configured to use broadcasts and others to use a WINS server.
+/dns proxy/ If this Boolean option is set to Yes (as it is by default) and your Samba WINS server doesn't have a NetBIOS name on file that matches a lookup request, it performs a DNS lookup using the locally configured DNS settings to try to find a name.
+/max wins ttl/ When working as a WINS server, Samba keeps information on names it has collected for a limited period of time, as determined by the client's request and this parameter. You should specify a time in seconds. The default value is 518400 (6 days).
+/min wins ttl/ This option works much like min wins ttl, except that it sets a minimum time to store the name data. The default value is 21600 (6 hours).
+
+You'll need to configure your clients to tell them about the WINS server. The easiest way to do this, at least for Windows clients, is to adjust your DHCP server configuration. You should set two options, which may already be present near the top of the configuration file:
+option netbios-name-servers 192.168.7.2;
+option netbios-node-type 8;
+
+NetBIOS node types:
+  1. Clients should use broadcasts alone; that is, they function as B-nodes.
+  2. Clients should use the WINS server alone; that is, they function as P-nodes.
+  4. Clients should use broadcasts first, but, if that fails, use the WINS server. Such a client is sometimes called an M-node.
+  8. Clients should use the WINS server first, but, if that fails, use broadcasts. Such a client is sometimes called an H-node.
+
+** browsing
+In the context of SMB/CIFS, browsing refers to the process of discovering what resources are available on your network. Browsing relies on one computer, known as a master browser, to compile the lists of computers. When a client browses the network, it contacts the master browser to obtain this list. The master browser is, of course, a server. This server might not need much configuration, but if you're to avoid browsing disasters, such as browse lists that suddenly empty for no obvious reason, you must understand a bit about how browsing works.
+Two types of master browsers exist:
+ 1. local master browser
+    These master browsers serve a single subnet. They listen for the broadcast messages that computers use to announce themselves and claim a NetBIOS name and maintain their browse lists from these broadcasts.
+    They also respond to broadcast queries intended to locate master browsers.  
+    Local master browsers are designated by a process known as an election, so in principle any computer can become a local master browser.
+    
+ 2. domain master browser
+    They communicate with local master browsers on multiple subnets and exchange browse lists, enabling computers on these different subnets to "see" each other.
+
+*** Master browser elections
+    The election begins when the computer that called for it broadcasts its election criteria. These criteria can be ranked, as described shortly.
+    
+    The criteria used in a master browser election, in order of decreasing priority, are as follows:
+      1. Election protocol version. 
+      2. Operating system level. 0 ~ 255, 0 to 255
+      3. Primary domain controller (PDC) status.
+      4. WINS server status. 
+      5. Preferred master browser. 
+      6. Current master browser
+      7. Former master browser
+      8. Running backup browser.
+    two additional tie-breaking criteria
+      Up time. 
+      NetBIOS name. 
+
+*** Configuration
+**** Configuring Samba to win an election
+local master. When this option is set to Yes (its default), Samba participates in local master browser elections; when set to No, it doesn't participate at all and so cannot win an election.
+browse list. This Boolean parameter, whose default value is Yes, determines whether the server maintains a browse list. If it does, it can become a backup or master browser. (If you set this option to No, Samba won't participate in elections.)
+os level. 
+domain logons. This Boolean option configures a Samba server to function as a PDC
+wins support. 
+preferred master. Setting this Boolean option to Yes tells Samba to call an election whenever it starts up. It also sets the preferred master browser flag used in elections. The default value is No.
+
+browsing problems troubleshooting
+ $ Unreliable local master browsers. 
+ If a computer that functions as a master browser is shut down or disconnected from the network, the result is a disruption in browsing. This might happen in a peer-to-peer network with many computers at the same operating system level if users shut down their computers from time to time. In such a situation, a good solution is to configure a reliable Samba server to win the election by boosting its operating system level and perhaps changing other options.
+ $ Too many preferred master browsers.
+ If more than one computer is configured as a preferred master browser, the result can be repeated calls for elections, each of which disrupts browsing for a brief period.  Ensure that at most one Samba server per network segment is configured as a preferred master browser. If a Windows computer is a preferred master (as when it's configured as a domain controller), ensure that no Samba server is so configured.
+
+**** Enabling cross-subnet browsing in a workgroup
+/remote browse sync/ Samba will exchange browse lists with those Samba servers or with the master browsers it finds on the specified networks.
+/remote announce/ Samba can announce its presence to a remote network by passing an IP address (including a broadcast address) and an optional workgroup name, as in 192.168.8.255/PAK, where it announces itself as a local master browser for the PAK workgroup on the 192.168.8.0/24 subnet. Unlike remote browse sync, this option works to exchange browse lists with any type of master browser, not just Samba servers.
+/enhanced browsing/ This Boolean option, which defaults to Yes, causes Samba to search for and exchange browse lists with domain master browsers it finds via a WINS server or in any other way. This option can make cross-subnet browsing more reliable, but it can also keep defunct workgroups from disappearing from browse lists, so you may want to set it to No if you experience that problem.
+
+**** local browsing options
+/preload/ You can specify a list of shares that you want to be available in browse lists even if they wouldn't ordinarily be available. For instance, you might include specific users' home shares, as in preload = LOUIS to display that user's home share to all comers. This option is also called auto services
+/browseable/ This Boolean option defaults to Yes except for a few special share types. When set to Yes, it makes a share visible in browse lists. Setting the value to No hides shares but does not make them inaccessible to users who know the share's name.
+
+
+*** Test 
+Both of these tools rely on lower-level tools, such as nmblookup and smbclient
+findsmb - test NetBIOS name resolution and browsing features. findsmb program is a tool that sends out a broadcast query for NetBIOS computers on the network and reports the results
+smbtree - A text based smb network browser
+
+** Active Directory Name Resolution
+AD DS has its foundations in the following Internet standards:
+ $ Domain Name System (DNS) for name resolution
+ $ Kerberos version 5 for user authentication
+ $ Lightweight Directory Access Protocol (LDAP) version 3 for directory services
+
+The Winbind daemon facilitates authentication for users to the AD DS domain. As such, you should configure the Pluggable Authentication Modules (PAM) to use the pam_winbind module.
+
+*** Managing access control lists with smbcacls
+You can use the smbcacls tool to change group and user ownership or manage access control list permissions on shares provided by a Windows Server machine in a domain:
+   $ smbcacls -G LPIC302.LOCAL\accounting //wins2.lpic302.local/budget private.doc
+This code uses the smbcacls command to change the group permissions on the file private.doc to the accounting group on the shared directory budget on a Windows Server machine to the accounting group within the AD DS domain.

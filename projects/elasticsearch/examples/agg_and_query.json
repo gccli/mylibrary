@@ -1,0 +1,17 @@
+{
+ "aggs": {
+     "modules": {"terms": {"field": "hit_modules.name"}}
+ },
+ "query": {
+     "filtered": {
+	 "filter": {
+	     "bool": {
+		 "must": [
+		     {"range": {"tsapi.received": {"gte": "2014-11-05||","lt": "2014-11-06||"}}}
+		 ],
+                 "must_not": []
+	     }
+	 }
+     }
+ }
+}

@@ -1,0 +1,5 @@
+{
+  "query": {
+    "match": {"range": {"mached_rule_count": {"ge": 0}}}
+  }
+}

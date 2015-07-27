@@ -1,0 +1,18 @@
+{
+"size": 5,
+"query": {
+  "filtered": {
+    "filter": {
+     "geo_distance": {
+      "distance": "1km", 
+      "distance_type": "plane",
+      "location": { 
+         "lat": 39.9840058489,
+         "lon": 116.3076809822
+       }
+     }
+
+   }
+  }
+ }
+}

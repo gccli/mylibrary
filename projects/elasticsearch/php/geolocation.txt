@@ -1,0 +1,4 @@
+* Geohashes
+Geohashes divide the world into a grid of 32 cells—4 rows and 8 columns—each represented by a letter or number.
+Each cell can be further divided into another 32 cells, which can be divided into another 32 cells, and so on. 
+The gc cell covers Ireland and England, gcp covers most of London and part of Southern England, and gcpuuz94k is the entrance to Buckingham Palace, accurate to about 5 meters.

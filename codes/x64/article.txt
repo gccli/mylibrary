@@ -1,0 +1,4 @@
+1. 64-bit
+http://en.wikipedia.org/wiki/64-bit
+2. Porting Linux applications to 64-bit systems
+http://www.ibm.com/developerworks/library/l-port64/index.html

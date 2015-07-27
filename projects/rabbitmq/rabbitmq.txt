@@ -1,0 +1,36 @@
+* Install rabbitmq on Ubuntu
+Add the following line to your /etc/apt/sources.list:
+  deb http://www.rabbitmq.com/debian/ testing main
+
+Optional
+$ wget https://www.rabbitmq.com/rabbitmq-signing-key-public.asc
+$ apt-key add rabbitmq-signing-key-public.asc
+
+$ apt-get update
+$ apt-get install rabbitmq-server
+pip install pika
+
+* Get Start
+http://www.rabbitmq.com/getstarted.html
+
+rabbitmqctl list_queues
+rabbitmqctl list_consumers
+rabbitmq-plugins list
+
+# enable management plugin
++ # rabbitmq-plugins enable rabbitmq_management
+  The following plugins have been enabled:
+    mochiweb
+    webmachine
+    rabbitmq_web_dispatch
+    amqp_client
+    rabbitmq_management_agent
+    rabbitmq_management
+  Plugin configuration has changed. Restart RabbitMQ for changes to take effect.
+
+* Python AMQP API
+https://pika.readthedocs.org/en/0.9.14/index.html
+
+* AMQP Protocol
+http://www.rabbitmq.com/amqp-0-9-1-reference.html
+

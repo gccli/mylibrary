@@ -1,0 +1,818 @@
+* Introduce
+OpenStack is a free and open-source software cloud computing software platform. Users primarily deploy it as an infrastructure as a service (IaaS) solution. The technology consists of a series of interrelated projects that control pools of processing, storage, and networking resources throughout a data centerâwhich users manage through a web-based dashboard, command-line tools, or a RESTful API.
+
+* [[https://wiki.openstack.org/wiki/Programs][Components]]
+
+** [[https://wiki.openstack.org/wiki/Nova][Compute (Nova)]]
+   Use OpenStack Compute to host and manage cloud computing systems.
+*** API
+ + nova-api service
+   Accepts and responds to end user compute API calls. The service supports the OpenStack Compute API, the Amazon EC2 API, and a special Admin API for privileged users to perform administrative actions. It enforces some policies and initiates most orchestration activities, such as running an instance.
+ + nova-api-metadata service
+   Accepts metadata requests from instances. The nova-api-metadata service is generally used when you run in multi-host mode with nova-network installations. For details, see Metadata service in the OpenStack Cloud Administrator Guide.
+*** Compute core
+ + nova-compute service
+   A worker daemon that creates and terminates virtual machine instances through hypervisor APIs. For example:
+    XenAPI for XenServer/XCP
+    libvirt for KVM or QEMU
+    VMwareAPI for VMware
+   Processing is fairly complex. Basically, the daemon accepts actions from the queue and performs a series of system commands such as launching a KVM instance and updating its state in the database.
+ + nova-scheduler service
+   Takes a virtual machine instance request from the queue and determines on which compute server host it runs.
+ + nova-conductor module
+   Mediates interactions between the nova-compute service and the database. It eliminates direct accesses to the cloud database made by the nova-compute service. The nova-conductor module scales horizontally. However, do not deploy it on nodes where the nova-compute service runs. For more information, see A new Nova service: nova-conductor.
+*** Networking for VMs
+ + nova-network worker daemon
+   Similar to the nova-compute service, accepts networking tasks from the queue and manipulates the network. Performs tasks such as setting up bridging interfaces or changing IPtables rules
+ + Console interface
+   nova-consoleauth daemon - Authorizes tokens for users that console proxies provide. This service must be running for console proxies to work.
+   nova-novncproxy daemon - Provides a proxy for accessing running instances through a VNC connection. Supports browser-based novnc clients.
+   nova-cert daemon - x509 certificates
+*** Image management (EC2 scenario)
+ + nova-objectstore daemon
+   An S3 interface for registering images with the OpenStack Image Service. 
+
+** [[https://wiki.openstack.org/wiki/Swift][Object Storage (Swift)]]
+** [[https://wiki.openstack.org/wiki/Cinder][Block Storage (Cinder)]]
+The OpenStack Block Storage service (cinder) adds persistent storage to a virtual machine. Block Storage provides an infrastructure for managing volumes, and interacts with OpenStack Compute to provide volumes for instances. The service also enables management of volume snapshots, and volume types.
+ + cinder-api
+   Accepts API requests, and routes them to the cinder-volume for action.
+ + cinder-volume
+   Interacts directly with the Block Storage service, and processes such as the cinder-scheduler. It also interacts with these processes through a message queue. The cinder-volume service responds to read and write requests sent to the Block Storage service to maintain state. It can interact with a variety of storage providers through a driver architecture.
+ + cinder-scheduler daemon
+   Selects the optimal storage provider node on which to create the volume. A similar component to the nova-scheduler.
+ + Messaging queue
+   Routes information between the Block Storage processes.
+** [[https://wiki.openstack.org/wiki/Neutron][Networking (Neutron)]]
+
+** [[https://wiki.openstack.org/wiki/Neutron][Dashboard (Horizon)]]
+** [[https://wiki.openstack.org/wiki/Glance][Image Service (Glance)]]
+It accepts API requests for disk or server images, and image metadata from end users or OpenStack Compute components. It also supports the storage of disk or server images on various repository types, including OpenStack Object Storage.
+*** glance-api
+    Accepts Image API calls for image discovery, retrieval, and storage
+*** glance-registry
+    Stores, processes, and retrieves metadata about images. Metadata includes items such as size and type.
+*** Database
+    Stores image metadata and you can choose your database depending on your preference. Most deployments use MySQL or SQLite.
+*** Storage repository for image files
+    Various repository types are supported including normal file systems, Object Storage, RADOS block devices, HTTP, and Amazon S3. Note that some repositories will only support read-only usage.
+
+
+** [[https://wiki.openstack.org/wiki/Keystone][Identity (Keystone)]]
+*** Concepts
++ User
+  Digital representation of a person, system, or service who uses OpenStack cloud services. 
++ Credentials 
+  Data that confirms the user's identity. For example: user name and password, user name and API key, or an authentication token provided by the Identity Service.
++ Authentication
+  The process of confirming the identity of a user. OpenStack Identity confirms an incoming request by validating a set of credentials supplied by the user.
++ Token
+  An alpha-numeric string of text used to access OpenStack APIs and resources. 
++ Tenant
+  A container used to group or isolate resources. Tenants also group or isolate identity objects. Depending on the service operator, a tenant may map to a customer, account, organization, or project.
++ Service
+   It provides one or more endpoints in which users can access resources and perform operations.
++ Endpoint
+  A network-accessible address where you access a service, usually a URL address.
++ Role
+  A personality with a defined set of user rights and privileges to perform a specific set of operations.
++ Keystone Client
+  A command line interface for the OpenStack Identity API. For example, users can run the keystone service-create and keystone endpoint-create commands to register services in their OpenStack installations.
+
+** Telmetry
++ functions
+  Efficiently collects the metering data about the CPU and network costs.
+  Collects data by monitoring notifications sent from services or by polling the infrastructure.
+  Configures the type of collected data to meet various operating requirements. It accesses and inserts the metering data through the REST API.
+  Expands the framework to collect custom usage data by additional plug-ins.
+  Produces signed metering messages that cannot be repudiated.
+
+
+* Get Started - DevStack
+  https://wiki.openstack.org/wiki/DevStack
+
+** Create a VM for install DevStack
+virt-install -n devstack -r 2048 --disk path=/opt/devstack.img,bus=virtio,size=20 -c ~/ubuntu-14.04.1-server-amd64.iso --accelerate --network network=default,model=virtio --connect=qemu:///system --vnc -v
+*** Define livbirt networking
+  <ip address='192.168.10.1' netmask='255.255.255.0'>
+  <dhcp>
+   <range start="192.168.10.2" end="192.168.10.254" />
+   <host mac="00:16:3e:e2:ed" name="foo.example.com" ip="192.168.122.10" />
+  </dhcp>
+  </ip>
+
+
+2) 
+mkdir /mnt/ubuntu
+mount -o loop Ubuntu.iso /mnt/ubuntu
+virt-install -n compute0 -r 2048 --disk path=/opt/compute0.img,bus=virtio,size=60 --accelerate --network network=default,model=virtio --nographics --extra-args='console=ttyS0' -v -l /mnt/ubuntu
+
+* Usage:
+export OS_AUTH_URL=http://localhost:500/v2.0
+
+
+
+* Three-node architecture with OpenStack Networking (neutron)
+
+** Prepare environment
+1) create a compute node (virutal machine)
+virt-install -n compute0 -r 2048 --disk path=/opt/compute0.img,bus=virtio,size=60 -c /opt/ubuntu-14.04.1-server-amd64.iso --accelerate --network network=default,model=virtio --connect=qemu:///system --vnc -v
+
+** Identity Service - keystone : controller
+*** configure keystone [[http://docs.openstack.org/icehouse/install-guide/install/apt/content/keystone-install.html][install]]
+# openssl rand -hex 10
+d3fa970fe386fc696fcd
+[DEFAULT]
+# A "shared secret" between keystone and other openstack services
+admin_token = d3fa970fe386fc696fcd
+
+CREATE DATABASE keystone;
+GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'localhost' IDENTIFIED BY 'cc';
+GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%' IDENTIFIED BY 'cc';
+
+*** Define users, tenants, and roles
+export OS_SERVICE_TOKEN=d3fa970fe386fc696fcd
+export OS_SERVICE_ENDPOINT=http://controller:35357/v2.0
+
+# Create Admin user
+keystone user-create --name=admin --pass=cc --email=admin@openstack.org
+keystone role-create --name=admin
+keystone tenant-create --name=admin --description="Admin Tenant"
+# link the admin user, admin role, and admin tenant together using the user-role-add option
+keystone user-role-add --user=admin --tenant=admin --role=admin
+keystone user-role-add --user=admin --role=_member_ --tenant=admin
+
+# Create Normal user
+keystone user-create --name=demo --pass=cc --email=demo@openstack.org
+keystone tenant-create --name=demo --description="Demo Tenant"
+keystone user-role-add --user=demo --role=_member_ --tenant=demo
+
+# Create a service tenant
+keystone tenant-create --name=service --description="Service Tenant"
+
+*** Define services and API endpoints
+1. Create a service entry for the Identity Service:
+# Use the OS_SERVICE_TOKEN environment variable, for authentication
+keystone service-create --name=keystone --type=identity --description="OpenStack Identity"
+
+2. Specify an API endpoint for the Identity Service by using the returned service ID
+1. Create a service entry for the Identity Service:
+# Use the OS_SERVICE_TOKEN environment variable, for authentication
+keystone service-create --name=keystone --type=identity --description="OpenStack Identity"
+  +-------------+----------------------------------+
+  |   Property  |              Value               |
+  +-------------+----------------------------------+
+  | description |        OpenStack Identity        |
+  |   enabled   |               True               |
+  |      id     | 02e7f1ccda9b49c8bd4675e389796418 |
+  |     name    |             keystone             |
+  |     type    |             identity             |
+  +-------------+----------------------------------+
+  
+2. Specify an API endpoint for the Identity Service by using the returned service ID
+keystone endpoint-create --service-id=02e7f1ccda9b49c8bd4675e389796418 --publicurl=http://controller:5000/v2.0 --internalurl=http://controller:5000/v2.0 --adminurl=http://controller:35357/v2.0
+
+3. Verify identity service
+unset OS_SERVICE_TOKEN OS_SERVICE_ENDPOINT
+# Request a authentication token by using the admin user and the password you chose for that user
+keystone --os-username=admin --os-password=cc --os-auth-url=http://controller:35357/v2.0 token-get
+keystone --os-username=admin --os-password=cc --os-tenant-name=admin --os-auth-url=http://controller:35357/v2.0 token-get
++ admin-openrc.sh
+  export OS_USERNAME=admin
+  export OS_PASSWORD=cc
+  export OS_TENANT_NAME=admin
+  export OS_AUTH_URL=http://controller:35357/v2.0
+. admin-openrc.sh
+keystone token-get
+keystone user-list
+keystone user-role-list --user admin --tenant admin
+
+** Install openstack clients
+|------------------+------------+-------------------------+----------------------------------------------------------------------------------|
+| Block Storage    | cinder     | python-cinderclient     | Create and manage volumes.                                                       |
+| Compute          | nova       | python-novaclient       | Create and manage images, instances, and flavors.                                |
+| Database Service | trove      | python-troveclient      | Create and manage databases.                                                     |
+| Identity         | keystone   | python-keystoneclient   | Create and manage users, tenants, roles, endpoints, and credentials.             |
+| Image Service    | glance     | python-glanceclient     | Create and manage images.                                                        |
+| Networking       | neutron    | python-neutronclient    | Configure networks for guest servers. This client was previously called quantum. |
+| Object Storage   | swift      | python-swiftclient      | Gather statistics, list items, update metadata, and upload, download,            |
+|                  |            |                         | and delete files stored by the Object Storage service.                           |
+|                  |            |                         | Gain access to an Object Storage installation for ad hoc processing.             |
+| Orchestration    | heat       | python-heatclient       | Launch stacks from templates, view details of running stacks including events    |
+|                  |            |                         | and resources, and update and delete stacks.                                     |
+| Telemetry        | ceilometer | python-ceilometerclient | Create and collect measurements across OpenStack.                                |
+|------------------+------------+-------------------------+----------------------------------------------------------------------------------|
++ apt-get install python-pip -y
+  pip install python-cinderclient
+  pip install python-novaclient
+  pip install python-troveclient
+  pip install python-keystoneclient
+  pip install python-glanceclient
+  pip install python-neutronclient
+  pip install python-swiftclient 
+  pip install python-heatclient
+  pip install python-ceilometerclient
+
+
+** Image service - Glance
++ mysql -u root -p < create_glance.sql
+  DROP DATABASE IF EXISTS glance;
+  CREATE DATABASE glance;
+  GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'localhost' IDENTIFIED BY 'cc';
+  GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'%' IDENTIFIED BY 'cc';
+
+sed -i '/^\[database\]/aconnection = mysql://glance:cc@controller/glance' /etc/glance/glance-registry.conf
+sed -i '/^\[database\]/aconnection = mysql://glance:cc@controller/glance' /etc/glance/glance-api.conf
+sed -i 's/\(^sqlite_db.*\)/#\1/'  /etc/glance/glance-registry.conf
+sed -i 's/\(^sqlite_db.*\)/#\1/'  /etc/glance/glance-api.conf
+sed -i 's/\(^backend.*\)/#\1/'  /etc/glance/glance-registry.conf
+sed -i 's/\(^backend.*\)/#\1/'  /etc/glance/glance-api.conf
+
+su -s /bin/sh -c "glance-manage db_sync" glance
+
+keystone user-create --name=glance --pass=cc --email=glance@openstack.org
+keystone user-role-add --user=glance --tenant=service --role=admin
+
+[keystone_authtoken]
+auth_uri = http://controller:5000
+auth_host = controller
+auth_port = 35357
+auth_protocol = http
+admin_tenant_name = service
+admin_user = glance
+admin_password = cc
+
+[paste_deploy]
+...
+flavor = keystone
+
+keystone service-create --name=glance --type=image --description="OpenStack Image Service"
+keystone endpoint-create --service-id=$(keystone service-list | awk '/ image / {print $2}') --publicurl=http://controller:9292 --internalurl=http://controller:9292 --adminurl=http://controller:9292
+
+
+service glance-registry restart
+service glance-api restart
+
+*** Verify
+mkdir /tmp/images
+cd /tmp/images/
+wget http://cdn.download.cirros-cloud.net/0.3.2/cirros-0.3.2-x86_64-disk.img
+
+source admin-openrc.sh
+glance image-create --name "cirros-0.3.2-x86_64" --disk-format qcow2 --container-format bare --is-public True --progress < /tmp/images/cirros-0.3.2-x86_64-disk.img
+glance image-create --name="cirros-0.3.2-x86_64" --disk-format=qcow2 --container-format=bare --is-public=true --copy-from http://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img
+
+
+# create a windows image
+# ////////
+# http://docs.openstack.org/image-guide/content/windows-image.html
+qemu-img create -f qcow2 -o preallocation=metadata win7x64.qcow2 10G
+qemu-img create -f qcow2 win7x64.qcow2 8G
+virt-install --connect qemu:///system --name win7x64 --ram 768 --vcpus 1 \
+  --network network=default,model=virtio --disk path=win7x64.qcow2,format=qcow2,device=disk,bus=virtio \
+  --cdrom 7600.16385.090713-1255_x64fre_enterprise_en-us_EVAL_Eval_Enterprise-GRMCENXEVAL_EN_DVD.iso \
+  --disk path=virtio-win-0.1-100.iso,device=cdrom \
+  --vnc --os-type windows --os-variant win7
+
+glance image-create --name WIN7 --disk-format qcow2 --container-format bare --is-public true --file /opt/win7x64.qcow2
+# ////////
+
+** Compute service - Nova
+*** Install Compute controller
+
+1. apt-get install nova-api nova-cert nova-conductor nova-consoleauth nova-novncproxy nova-scheduler python-novaclient -y
+
+2. Configure /etc/nova/nova.conf file:
+[database]
+connection = mysql://nova:cc@controller/nova
+
+[DEFAULT]
+...
+rpc_backend = rabbit
+rabbit_host = controller
+rabbit_password = cc
+
+my_ip = 192.168.10.2
+vncserver_listen = 192.168.10.2
+vncserver_proxyclient_address = 192.168.10.2
+
+3. database
+rm /var/lib/nova/nova.sqlite
+CREATE DATABASE nova;
+GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'localhost' IDENTIFIED BY 'cc';
+GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'%' IDENTIFIED BY 'cc';
+
+su -s /bin/sh -c "nova-manage db sync" nova
+
+4. auth
+keystone user-create --name=nova --pass=cc --email=nova@openstack.org
+keystone user-role-add --user=nova --tenant=service --role=admin
+
+Configure /etc/nova/nova.conf file:
+[DEFAULT]
+...
+auth_strategy = keystone
+
+
+[keystone_authtoken]
+...
+auth_uri = http://controller:5000
+auth_host = controller
+auth_port = 35357
+auth_protocol = http
+admin_tenant_name = service
+admin_user = nova
+admin_password = cc
+
+
+keystone service-create --name=nova --type=compute --description="OpenStack Compute"
+keystone endpoint-create --service-id=$(keystone service-list | awk '/ compute / {print $2}') --publicurl=http://controller:8774/v2/%\(tenant_id\)s --internalurl=http://controller:8774/v2/%\(tenant_id\)s --adminurl=http://controller:8774/v2/%\(tenant_id\)s
+
+service nova-api restart
+service nova-cert restart
+service nova-consoleauth restart
+service nova-scheduler restart
+service nova-conductor restart
+service nova-novncproxy restart
+
+*** Configure a compute node - on Compute0 node
+1. apt-get install nova-compute-kvm -y 
+
+2. Configure /etc/nova/nova.conf
+
+[DEFAULT]
+...
+auth_strategy = keystone
+...
+[database]
+connection = mysql://nova:cc@controller/nova
+ 
+[keystone_authtoken]
+auth_uri = http://controller:5000
+auth_host = controller
+auth_port = 35357
+auth_protocol = http
+admin_tenant_name = service
+admin_user = nova
+admin_password = cc
+
+[DEFAULT]
+...
+rpc_backend = rabbit
+rabbit_host = controller
+rabbit_password = cc
+
+
+my_ip = 192.168.10.12 
+vnc_enabled = True
+vncserver_listen = 0.0.0.0
+vncserver_proxyclient_address = 192.168.10.12
+novncproxy_base_url = http://controller:6080/vnc_auto.html
+
+
+glance_host = controller
+
+rm /var/lib/nova/nova.sqlite
+service nova-compute restart
+
+
+** Networking service - neutron
+OpenStack Networking (neutron) manages all of the networking facets for the Virtual Networking Infrastructure (VNI) and the access layer aspects of the Physical Networking Infrastructure (PNI) in your OpenStack environment. OpenStack Networking allows tenants to create advanced virtual network topologies including services such as firewalls, load balancers, and virtual private networks (VPNs).
+
+
++ networks, subnets, and routers
+  networks contain subnets, and routers route traffic between different subnet and networks.
++ one external network
+  It represents the view into a slice of the external network that is accessible outside the OpenStack installation
++ one or more internal networks
+  Software-defined networks connect directly to the VMs.
+  Only the VMs on any given internal network, or those on subnets connected through interfaces to a similar router, can access VMs connected to that network directly
++ routers
+  For the outside network to access VMs, and vice versa, routers between the networks are needed.
+  Each router has one gateway that is connected to a network and many interfaces that are connected to subnets.
+  Allocate IP addresses on external networks to ports on the internal network. 
++ security groups
+  Security groups enable administrators to define firewall rules in groups.
++ plug-in 
+  Each plug-in that Networking uses has its own concepts. All Networking installations use a core plug-in and a security group plug-in
+
+*** Modular Layer 2 (ML2) plug-in
+**** configure controller node
+
+CREATE DATABASE neutron;
+GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'localhost' IDENTIFIED BY 'cc';
+GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'%' IDENTIFIED BY 'cc';
+
+
+keystone user-create --name neutron --pass cc --email neutron@openstack.org
+keystone user-role-add --user neutron --tenant service --role admin
+keystone service-create --name neutron --type network --description "OpenStack Networking"
+
+keystone endpoint-create --service-id $(keystone service-list | awk '/ network / {print $2}') --publicurl http://controller:9696 --adminurl http://controller:9696 --internalurl http://controller:9696
+
+apt-get install neutron-server neutron-plugin-ml2 -y
+
+Configure /etc/neutron/neutron.conf
+
+[database]
+...
+connection = mysql://neutron:cc@controller/neutron
+
+[DEFAULT]
+...
+auth_strategy = keystone
+
+...
+rpc_backend = neutron.openstack.common.rpc.impl_kombu
+rabbit_host = controller
+rabbit_password = cc
+
+notify_nova_on_port_status_changes = True
+notify_nova_on_port_data_changes = True
+nova_url = http://controller:8774/v2
+nova_admin_username = nova
+nova_admin_tenant_id = ee2be433047d43e9b2afc600e04c86bd
+nova_admin_password = cc
+nova_admin_auth_url = http://controller:35357/v2.0
+
+
+core_plugin = ml2
+service_plugins = router
+allow_overlapping_ips = True
+
+
+[keystone_authtoken]
+...
+auth_uri = http://controller:5000
+auth_host = controller
+auth_protocol = http
+auth_port = 35357
+admin_tenant_name = service
+admin_user = neutron
+admin_password = cc
+
+****  Configure network node
+
++ configure/etc/sysctl.conf
+  net.ipv4.ip_forward=1
+  net.ipv4.conf.all.rp_filter=0
+  net.ipv4.conf.default.rp_filter=0
+
+sysctl -p
+apt-get install neutron-plugin-ml2 neutron-plugin-openvswitch-agent openvswitch-datapath-dkms neutron-l3-agent neutron-dhcp-agent -y
+
+Configure Networking common component - /etc/neutron/neutron.conf
+[keystone_authtoken]
+...
+auth_uri = http://controller:5000
+auth_host = controller
+auth_protocol = http
+auth_port = 35357
+admin_tenant_name = service
+admin_user = neutron
+admin_password = cc
+
+[DEFAULT]
+...
+auth_strategy = keystone
+
+rpc_backend = neutron.openstack.common.rpc.impl_kombu
+rabbit_host = controller
+rabbit_password = cc
+core_plugin = ml2
+service_plugins = router
+allow_overlapping_ips = True
+
+Configure the Layer-3 (L3) agent - /etc/neutron/l3_agent.ini 
+[DEFAULT]
+...
+interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
+use_namespaces = True
+
+Configure the DHCP agent - /etc/neutron/dhcp_agent.ini
+[DEFAULT]
+...
+interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
+dhcp_driver = neutron.agent.linux.dhcp.Dnsmasq
+use_namespaces = True
+verbose = True
+
+dnsmasq_config_file = /etc/neutron/dnsmasq-neutron.conf
+
+Confugure /etc/neutron/dnsmasq-neutron.conf
+dhcp-option-force=26,1454
+
+killall dnsmasq
+
+Configure the metadata agent - /etc/neutron/metadata_agent.ini
+[DEFAULT]
+...
+auth_url = http://controller:5000/v2.0
+auth_region = regionOne
+admin_tenant_name = service
+admin_user = neutron
+admin_password = cc
+nova_metadata_ip = controller
+metadata_proxy_shared_secret = cc
+verbose = True
+
+On the controller node
+ /etc/nova/nova.conf
+ [DEFAULT]
+ ...
+ service_neutron_metadata_proxy = true
+ neutron_metadata_proxy_shared_secret = METADATA_SECRET
+ service nova-api restart
+
+
+Configure the Modular Layer 2 (ML2) plug-in
++ /etc/neutron/plugins/ml2/ml2_conf.ini:
+  [ml2]
+  ...
+  type_drivers = gre
+  tenant_network_types = gre
+  mechanism_drivers = openvswitch
+  [ml2_type_gre]
+  ...
+  tunnel_id_ranges = 1:1000
+
+  [ovs]
+  ...
+  local_ip = 192.168.11.22
+  tunnel_type = gre
+  enable_tunneling = True
+
+  [securitygroup]
+  ...
+  firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+  enable_security_group = True
+
+Configure the Open vSwitch (OVS) service
+  service openvswitch-switch restart
+  ovs-vsctl add-br br-int
+  ovs-vsctl add-br br-ex
+  ovs-vsctl add-port br-ex eth2
+
+service neutron-plugin-openvswitch-agent restart
+service neutron-l3-agent restart
+service neutron-dhcp-agent restart
+service neutron-metadata-agent restart
+
+** Block Storage service
+*** Configure a Block Storage service controller
+
+apt-get install cinder-api cinder-scheduler -y
+CREATE DATABASE cinder;
+GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'localhost' IDENTIFIED BY 'cc';
+GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'%' IDENTIFIED BY 'cc';
+
+su -s /bin/sh -c "cinder-manage db sync" cinder
+
+keystone user-create --name=cinder --pass=cc --email=cinder@openstack.org
+keystone user-role-add --user=cinder --tenant=service --role=admin
+
+Edit /etc/cinder/cinder.conf 
+[database]
+connection = mysql://cinder:cc@controller/cinder
+
+[keystone_authtoken]
+auth_uri = http://controller:5000
+auth_host = controller
+auth_port = 35357
+auth_protocol = http
+admin_tenant_name = service
+admin_user = cinder
+admin_password = cc
+
+[DEFAULT]
+...
+rpc_backend = rabbit
+rabbit_host = controller
+rabbit_port = 5672
+rabbit_userid = guest
+rabbit_password = cc
+
+
+keystone service-create --name=cinder --type=volume --description="OpenStack Block Storage"
+keystone service-create --name=cinderv2 --type=volumev2 --description="OpenStack Block Storage v2"
+keystone endpoint-create --service-id=$(keystone service-list | awk '/ volume / {print $2}') --publicurl=http://controller:8776/v1/%\(tenant_id\)s --internalurl=http://controller:8776/v1/%\(tenant_id\)s --adminurl=http://controller:8776/v1/%\(tenant_id\)s
+keystone endpoint-create  --service-id=$(keystone service-list | awk '/ volumev2 / {print $2}') --publicurl=http://controller:8776/v2/%\(tenant_id\)s --internalurl=http://controller:8776/v2/%\(tenant_id\)s --adminurl=http://controller:8776/v2/%\(tenant_id\)s
+
+service cinder-scheduler restart
+service cinder-api restart
+
+
+*** Configure a Block Storage service node
+**** prepare for a block0 node
+**** install lvm2
+apt-get install lvm2 -y
+
+pvcreate /dev/sdb
+vgcreate cinder-volumes /dev/sdb
+
+apt-get install cinder-volume
+
+/etc/lvm/lvm.conf
+devices {
+...
+filter = [ "a/sda1/", "a/sdb/", "r/.*/"]
+...
+}
+
+[DEFAULT]
+...
+rpc_backend = rabbit
+rabbit_host = controller
+rabbit_port = 5672
+rabbit_userid = guest
+rabbit_password = cc
+
+my_ip = 10.228.10.14
+glance_host = controller
+
+
+[keystone_authtoken]
+auth_uri = http://controller:5000
+auth_host = controller
+auth_port = 35357
+auth_protocol = http
+admin_tenant_name = service
+admin_user = cinder
+admin_password = cc
+
+[database]
+...
+connection = mysql://cinder:cc@controller/cinder
+
+service cinder-volume restart
+service tgt restart
+
+**** Configure compute node
+/etc/sysctl.conf
+  net.ipv4.conf.all.rp_filter=0
+  net.ipv4.conf.default.rp_filter=0
+sysctl -p
+
+apt-get install neutron-common neutron-plugin-ml2 neutron-plugin-openvswitch-agent openvswitch-datapath-dkms -y
+
+Configure Networking common component - /etc/neutron/neutron.conf
+[keystone_authtoken]
+...
+auth_uri = http://controller:5000
+auth_host = controller
+auth_protocol = http
+auth_port = 35357
+admin_tenant_name = service
+admin_user = neutron
+admin_password = cc
+
+[DEFAULT]
+...
+auth_strategy = keystone
+
+rpc_backend = neutron.openstack.common.rpc.impl_kombu
+rabbit_host = controller
+rabbit_password = cc
+core_plugin = ml2
+service_plugins = router
+allow_overlapping_ips = True
+
+
+Configure the Modular Layer 2 (ML2) plug-in
++ /etc/neutron/plugins/ml2/ml2_conf.ini:
+  [ml2]
+  ...
+  type_drivers = gre
+  tenant_network_types = gre
+  mechanism_drivers = openvswitch
+  [ml2_type_gre]
+  ...
+  tunnel_id_ranges = 1:1000
+
+  [ovs]
+  ...
+  local_ip = 192.168.11.12
+  tunnel_type = gre
+  enable_tunneling = True
+
+  [securitygroup]
+  ...
+  firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+  enable_security_group = True
+
+Configure the Open vSwitch (OVS) service
+  service openvswitch-switch restart
+  ovs-vsctl add-br br-int
+
+Configure Compute to use Networking - /etc/nova/nova.conf 
+[DEFAULT]
+...
+network_api_class = nova.network.neutronv2.api.API
+neutron_url = http://controller:9696
+neutron_auth_strategy = keystone
+neutron_admin_tenant_name = service
+neutron_admin_username = neutron
+neutron_admin_password = cc
+neutron_admin_auth_url = http://controller:35357/v2.0
+linuxnet_interface_driver = nova.network.linux_net.LinuxOVSInterfaceDriver
+firewall_driver = nova.virt.firewall.NoopFirewallDriver
+security_group_api = neutron
+
+service nova-compute restart
+service neutron-plugin-openvswitch-agent restart
+
+4. Create initial networks
+External network
+source admin-openrc.sh
+neutron net-create ext-net --shared --router:external=True
+neutron subnet-create ext-net --name ext-subnet --allocation-pool start=192.168.200.2,end=192.168.200.100 --disable-dhcp --gateway 192.168.200.1 192.168.200.0/24
+
+Tenant network - provides internal network access for instances. The architecture isolates this type of network from other tenants
+source demo-openrc.sh
+neutron net-create demo-net
+neutron subnet-create demo-net --name demo-subnet --gateway 192.168.100.1 192.168.100.0/24
+neutron router-create demo-router
+neutron router-interface-add demo-router demo-subnet
+neutron router-gateway-set demo-router ext-net
+
+** Object Storage service - swift
+*** Object node
+Edit /etc/rsyncd.conf:
+uid = swift
+gid = swift
+log file = /var/log/rsyncd.log
+pid file = /var/run/rsyncd.pid
+address = 10.228.10.20
+ 
+[account]
+max connections = 2
+path = /srv/node/
+read only = false
+lock file = /var/lock/account.lock
+ 
+[container]
+max connections = 2
+path = /srv/node/
+read only = false
+lock file = /var/lock/container.lock
+ 
+[object]
+max connections = 2
+path = /srv/node/
+read only = false
+lock file = /var/lock/object.lock
+
+Edit /etc/default/rsync
+RSYNC_ENABLE=true
+
+*** Proxy node
+
+Build Rings
+
+# cd /etc/swift
+swift-ring-builder account.builder create 10 3 1
+swift-ring-builder account.builder add r1z1-10.227.8.60:6002/sdb1 100
+swift-ring-builder account.builder add r1z1-10.227.8.60:6002/sdc1 100
+swift-ring-builder account.builder add r1z1-10.227.8.61:6002/sdb1 100
+swift-ring-builder account.builder add r1z1-10.227.8.61:6002/sdc1 100
+swift-ring-builder account.builder add r1z1-10.227.8.62:6002/sdb1 100
+swift-ring-builder account.builder add r1z1-10.227.8.62:6002/sdc1 100
+swift-ring-builder account.builder
+
+
+swift-ring-builder container.builder create 10 3 1
+swift-ring-builder container.builder add r1z1-10.227.8.60:6001/sdb1 100
+swift-ring-builder container.builder add r1z1-10.227.8.60:6001/sdc1 100
+swift-ring-builder container.builder add r1z1-10.227.8.61:6001/sdb1 100
+swift-ring-builder container.builder add r1z1-10.227.8.61:6001/sdc1 100
+swift-ring-builder container.builder add r1z1-10.227.8.62:6001/sdb1 100
+swift-ring-builder container.builder add r1z1-10.227.8.62:6001/sdc1 100
+swift-ring-builder container.builder
+swift-ring-builder container.builder rebalance
+
+
+swift-ring-builder object.builder create 10 3 1
+swift-ring-builder object.builder add r1z1-10.227.8.60:6000/sdb1 100
+swift-ring-builder object.builder add r1z1-10.227.8.60:6000/sdc1 100
+swift-ring-builder object.builder add r1z1-10.227.8.61:6000/sdb1 100
+swift-ring-builder object.builder add r1z1-10.227.8.61:6000/sdc1 100
+swift-ring-builder object.builder add r1z1-10.227.8.62:6000/sdb1 100
+swift-ring-builder object.builder add r1z1-10.227.8.62:6000/sdc1 100
+swift-ring-builder object.builder
+swift-ring-builder object.builder rebalance
+
+
+** Launch an instance
+1. source demo-openrc.sh
+   nova keypair-list
+   nova flavor-list
+   nova image-list
+   neutron net-list
+   nova secgroup-list
+   
+
+nova boot --flavor m1.tiny --image cirros --nic net-id=ff67b697-e5f9-4353-866f-265e5b295e1a --security-group default --key-name demo-key demo1
+nova list
+nova floating-ip-list # floatingip-create ext-net
+nova secgroup-list-rules default # nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0; nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
+nova floating-ip-associate demo1 192.168.200.6

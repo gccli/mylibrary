@@ -1,0 +1,20 @@
+{
+   "query" : {
+      "filtered" : {
+         "filter" : {
+            "bool" : {
+              "must" : [
+                { "term" : {"tsapi.product.name" : "wsg7.8"}}, 
+                { "bool" : { 
+                  "must" : [
+                    { "term" : {"score" : 4}}, 
+                    { "term" : {"tag":"TP"}} 
+                  ]
+                }}
+              ]
+           }
+         }
+      }
+   }
+}
+

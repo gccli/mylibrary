@@ -1,0 +1,14 @@
+{
+    "query" : {
+        "filtered" : {
+            "filter" : {
+                "range" : {
+                    "score" : {
+                        "gte" : 1,
+                        "lt"  : 9
+                    }
+                }
+            }
+        }
+    }
+}

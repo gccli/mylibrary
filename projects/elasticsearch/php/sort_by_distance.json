@@ -1,0 +1,34 @@
+{
+  "size": 5,
+  "query": {
+    "filtered": {
+      "filter": {
+        "geo_bounding_box": {
+          "type":       "indexed",
+          "location": {
+            "top_left": {
+              "lat": 39.998341,
+              "lon": 116.290828
+            },
+            "bottom_right": {
+              "lat": 39.966905,
+              "lon": 116.321341
+            }
+          }
+        }
+      }
+    }
+  },
+  "sort": [
+      {"_geo_distance": {
+        "location": { 
+          "lat": 39.9840058489,
+          "lon": 116.3076809822
+        },
+        "order":         "asc",
+        "unit":          "km", 
+        "distance_type": "plane" 
+      }
+    }
+  ]
+}

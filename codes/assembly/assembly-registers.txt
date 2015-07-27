@@ -1,0 +1,89 @@
+General-Purpose Registers
+ * The 32-bit general-purpose registers EAX, EBX, ECX, EDX, ESI, EDI, EBP, and ESP
+   are provided for holding the following items:
+  - Operands for logical and arithmetic operations
+  - Operands for address calculations
+  - Memory pointers
+  Many instructions assign specific registers to hold operands. For example, string
+  instructions use the contents of the ECX, ESI, and EDI registers as operands.
+
+  * EAX — Accumulator for operands and results data
+  * EBX — Pointer to data in the DS segment
+  * ECX — Counter for string and loop operations
+  * EDX — I/O pointer
+  * ESI — Pointer to data in the segment pointed to by the DS register; 
+           source pointer for string operations
+  * EDI — Pointer to data (or destination) in the segment pointed to by the ES register; 
+           destination pointer for string operations
+  * ESP — Stack pointer (in the SS segment)
+  * EBP — Pointer to data on the stack (in the SS segment)
+
+Segment Registers
+ * The segment registers (CS, DS, SS, ES, FS, and GS) hold 16-bit segment selectors.
+   A segment selector is a special pointer that identifies a segment in memory. To
+   access a particular segment in memory, the segment selector for that segment must
+   be present in the appropriate segment register.
+ * Each of the segment registers is associated with one of three types of storage: code,
+   data, or stack.
+
+ * code segment (CS)
+  instructions being executed are stored.
+ 
+ * data segment (DS, ES, FS, GS)
+   The availability of four data segments permits efficient and secure 
+   access to different types of data structures.
+ * stack segment (SS) 
+  where the procedure stack is stored for the program, task, or handler currently
+  being executed
+  All stack operations use the SS register to find the stack segment
+
+EFLAGS Register
+ * The 32-bit EFLAGS register contains a group of status flags, a control flag, and a
+   group of system flags
+ * The following instructions can be used to move groups of flags to and from the procedure
+   stack or the EAX register: LAHF, SAHF, PUSHF, PUSHFD, POPF, and POPFD.
+
+ * Status Flags
+  The status flags (bits 0, 2, 4, 6, 7, and 11) of the EFLAGS register indicate the results
+  of arithmetic instructions, such as the ADD, SUB, MUL, and DIV instructions.
+  - CF (bit 0): 
+    Carry flag — Set if an arithmetic operation generates a carry or
+    a borrow out of the most-significant bit of the result; cleared otherwise. 
+    This flag indicates an overflow condition for unsigned-integer arithmetic.
+    It is also used in multiple-precision arithmetic.
+  - PF (bit 2):
+    Parity flag — Set if the least-significant byte of the result
+    contains an even number of 1 bits; cleared otherwise.
+  - AF (bit 4): 
+    Adjust flag — Set if an arithmetic operation generates a carry
+    or a borrow out of bit 3 of the result; cleared otherwise. This flag
+    is used in binary-coded decimal (BCD) arithmetic.
+  - ZF (bit 6): Zero flag — Set if the result is zero; cleared otherwise
+  - SF (bit 7):
+    Sign flag — Set equal to the most-significant bit of the result,
+    which is the sign bit of a signed integer.
+    (0 indicates a positive value and 1 indicates a negative value.)
+  - OF (bit 11)
+    Overflow flag — Set if the integer result is too large a positive
+    number or too small a negative number (excluding the sign-bit)
+    to fit in the destination operand; cleared otherwise. This flag
+    indicates an overflow condition for signed-integer (two’s complement) arithmetic.
+
+ * DF Flag
+  The direction flag (DF, located in bit 10 of the EFLAGS register) controls string
+  instructions (MOVS, CMPS, SCAS, LODS, and STOS). Setting the DF flag causes the
+  string instructions to auto-decrement (to process strings from high addresses to low
+  addresses). Clearing the DF flag causes the string instructions to auto-increment
+  (process strings from low addresses to high addresses).
+  The STD and CLD instructions set and clear the DF flag, respectively
+ * System Flags and IOPL Field
+   IOPL (bits 12 and 13) - I/O privilege level field
+
+INSTRUCTION POINTER
+ * The instruction pointer (EIP) register contains the offset in the current code segment
+   for the next instruction to be executed. It is advanced from one instruction boundary
+   to the next in straight-line code or it is moved ahead or backwards by a number of
+   instructions when executing JMP, Jcc, CALL, RET, and IRET instructions.
+ * The EIP register cannot be accessed directly by software; it is controlled implicitly by
+   control-transfer instructions (such as JMP, Jcc, CALL, and RET), interrupts, and exceptions.
+

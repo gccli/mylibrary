@@ -1,0 +1,21 @@
+MYLIBRARY=$(shell pwd |sed 's/\(.*mylibrary\).*/\1/')
+
+LIB=$(MYLIBRARY)/lib
+INC=$(MYLIBRARY)/inc
+PROTOCOL=$(MYLIBRARY)/protocol
+
+MYSQL_INC=/usr/include/mysql
+MYSQL_LIB=/usr/lib/mysql
+
+MYSQLEXT=$(MYLIBRARY)/libmysqlext
+UTILEXT=$(MYLIBRARY)/libutil
+
+prefix = /usr/local
+bindir = ${exec_prefix}/bin
+sbindir= ${exec_prefix}/sbin
+etcdir = ${prefix}/etc
+mandir = ${prefix}/share/man
+
+CC=gcc
+CXX=g++
+INSTALL=install

@@ -1,0 +1,19 @@
+{
+"query" : {
+  "nested": {
+    "path": "field2",
+    "score_mode": "avg",
+    "query": {
+      "bool": {
+        "must": [
+          {
+            "match": {
+              "field2.first": "xff1"
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+}

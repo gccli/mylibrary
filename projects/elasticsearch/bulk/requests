@@ -1,0 +1,8 @@
+{ "index" : { "_index" : "test", "_type" : "type1", "_id" : "1" } }
+{ "field1" : "value1", "tags": ["elasticsearch", "lucene"], "lists": [{"name": "prog", "s":100, "e":200}, {"name": "driver", "s":400, "e":800}] }
+{ "index" : { "_index" : "test", "_type" : "type1", "_id" : "2" } }
+{ "field1" : "value2", "tags": ["storage", "mongodb"], "lists": [{"name": "mongo", "s":50, "e": 150}, {"name": "mysql", "s":500, "e":900}] }
+{ "index" : { "_index" : "test", "_type" : "type1", "_id" : "3" } }
+{ "field2" : [{"first": "f1", "last": "l1"}, {"first": "f2", "last": "l2"}, {"first": "f3", "last": "l3"}] }
+{ "index" : { "_index" : "test", "_type" : "type1", "_id" : "4" } }
+{ "field2" : [{"first": "xff1", "last": "xll1"}, {"first": "xff2", "last": "xll2"}, {"first": "xff3", "last": "xll3"}] }

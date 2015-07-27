@@ -1,0 +1,83 @@
+
+1. Setting Up the Server
+# http://git-scm.com/book/en/v2/Git-on-the-Server-Setting-Up-the-Server
+
+# adduser git
+$ su - git
+$ mkdir archive.git && cd archive.git && git init --bare
+
+# root
+rm -rf archive && mkdir archive && cd archive 
+# copy some stuff to this directory
+git init && git add . && git commit -m 'initial commit'
+git remote add origin git@localhost:~/archive.git
+git push origin master
+
+# lijing
+git clone git@localhost:~/archive.git
+cd archive
+emacs README
+git commit -am "add readme file"
+git push
+
+
+2. Git Branching
+# http://git-scm.com/book/en/v2/Git-Branching-Branches-in-a-Nutshell
+
+# Create a branch
+$ git branch dev
+# Switching branches
+$ git checkout dev
+
+# git log command that shows you where the branch pointers are pointing. 
+git log --oneline --decorate
+
+# Divergent history
+git log --oneline --decorate --graph --all
+
+
++ You’ll follow these steps:
+  1. Do work on a web site.
+  2. Create a branch for a new story you’re working on.
+  3. Do some work in that branch.
+  At this stage, you’ll receive a call that another issue is critical and you need a hotfix. You’ll do the following:
+  1. Switch to your production branch.
+  2. Create a branch to add the hotfix.
+  3. After it’s tested, merge the hotfix branch, and push to production.
+  4. Switch back to your original story and continue working.
+
+#  To create a branch and switch to it at the same time
+$ git checkout -b br-new-feature
+$ emacs demo.c
+$ git commit -a -m 'modify demo.c'
+
+# fix a bug immediately
+# It's best to have a clean working state when you switch branches
+$ git co master
+$ git checkout -b hotfix
+$ emacs demo.c
+$ git commit -a -m 'fixed a bug at demo.c'
+
+# merge it back into your master branch to deploy to production.
+$ git checkout master
+$ git merge hotfix
+
+# delete the hotfix branch, because you no longer need it
+$ git branch -d hotfix
+
+# Now you can switch back to your work-in-progress branch
+$ git checkout br-new-feature
+$ emacs demo.c
+$ git commit -a -m 'finish demo.c'
+
+# Basic Merging
+
+
+** Branch Management
+# --merged and --no-merged options can filter this list to branches that you have or have not yet merged into the branch you're currently on
+$ git branch -v
+$ git branch --merged
+$ git branch --no-merged
+# Delete unmerged branch
+$ git branch -D 
+

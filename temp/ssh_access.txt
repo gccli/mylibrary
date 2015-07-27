@@ -1,0 +1,25 @@
+Access
+
+Interactive Shell sessions persist for 4 hours once created. Authorized developers that have been granted shell access for a project can create/connect to an Interactive Shell with:
+
+ssh -t USER,PROJECT@shell.sourceforge.net create
+
+NOTE: Be sure to substitute your SourceForge.net login username for USER, and the respective SourceForge.net project UNIX name for PROJECT.
+If you do not have an active Interactive Shell session a help page can be viewed with:
+
+ssh USER@shell.sourceforge.net
+
+File access paths will match what is available via our [[https://sourceforge.net/p/forge/documentation/File%20Management/#common-sftp-clients][File Management service]]
+
+
+
+ssh -t jingccli,jingli@shell.sourceforge.net create
+ssh jingccli,jingli@shell.sourceforge.net
+
+
+
+timeleft - Show the time left (of the 4 hour window) before the current shell expires.
+adminrepo - For managing classic CVS/SVN repositories; see adminrepo --help for more information
+
+
+rsync -avP -e ssh site/ jingccli@web.sourceforge.net:/home/project-web/jingli/htdocs

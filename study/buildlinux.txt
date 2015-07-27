@@ -1,0 +1,7 @@
+1. make menuconfig
+2. make all
+3. copy stuff to /boot (bzImage,.config,System.map)
+4. make modules_install
+5. mkinitramfs -v -o initrd.img-VERSION VERSION
+6. update-grub
+

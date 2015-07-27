@@ -1,0 +1,120 @@
+* MAAS: Metal As A Service 
+Metal as a Service – MAAS – lets you treat physical servers like virtual machines in the cloud.
+
+** A Typical MAAS setup
+MAAS is designed to work with your physical hardware, whether your setup includes thousands of server boxes or only a few. The key components of the MAAS software are:
+
++ Region controller
+  Cluster controller(s)
+  Nodes
+
+For small (in terms of number of nodes) setups, you will probably just install the Region controller and a cluster controller on the same server - it is only worth having multiple region controllers if you need to organise your nodes into different subnets.
+
+[[http://www.youtube.com/playlist%3Flist%3DPLvn2jxYHUxFlxNmc1dAbw524aoPmHxNpC][Video: Building a Virtual MAAS Test Lab on KVM]]
+
+* libvirt
+libvirt is a virtualization API and a daemon for managing virtual machines (VMs) -- remote or locally, using multiple virtualization back-ends (QEMU/KVM, VirtualBox, Xen, etc), communally called hypervisors.
+
+** Instance management
+
+*** libvirt on Ubuntu
+    # install virtinst
+    sudo apt-get install virtinst
+    
+**** install a virtual machine
+  virt-install -n web_devel -r 256 --disk path=web_devel.img,bus=virtio,size=4 -c jeos.iso --accelerate --network network=default,model=virtio --connect=qemu:///system --vnc --noautoconsole -v
+  -n web_devel: the name of the new virtual machine
+  -r 256: specifies the amount of memory the virtual machine will use in megabytes
+  --disk path=web_devel.img,size=4: indicates the path to the virtual disk which can be a file, partition, or logical volume. In this example a file named web_devel.img, with a size of 4 gigabytes, and using virtio for the disk bus.
+  -c jeos.iso: file to be used as a virtual CDROM. The file can be either an ISO file or the path to the host's CDROM device.
+  --accelerate: enables the kernel's acceleration technologies
+  --network provides details related to the VM's network interface. Here the default network is used, and the interface model is configured for virtio.
+  --vnc: exports the guest's virtual console using VNC.
+  --noautoconsole: will not automatically connect to the virtual machine's console.
+  -v: creates a fully virtualized guest.
+
++ Example.
+virt-install --connect qemu:///system\
+ -n node1 -r 1024 --arch=x86_64\
+ --network=network:default,model=virtio,mac=52:54:00:7f:04:01\
+ --accelerate\
+ --disk=/home/maas/node1.img,bus=virtio,size=8\
+ --boot hd,network --vnc --pxe
+
+virt-install --connect qemu:///system\
+ -n node2 -r 1024 --arch=x86_64\
+ --network=network:default,model=virtio,mac=52:54:00:7f:04:02\
+ --accelerate\
+ --disk=/home/maas/node2.img,bus=virtio,size=8\
+ --boot hd,network --vnc --pxe
+
+
+virt-install --connect qemu:///system\
+ -n node3 -r 1024 --arch=x86_64\
+ --network=network:default,model=virtio,mac=52:54:00:7f:04:03\
+ --accelerate\
+ --disk=/home/maas/node3.img,bus=virtio,size=8\
+ --boot hd,network --vnc --pxe
+
+**** clone a virtual machine  
+  virt-clone
+  virt-clone -o web_devel -n database_devel -f /path/to/database_devel.img --connect=qemu:///system 
+  -o: original virtual machine.
+  -n: name of the new virtual machine.
+  -f: path to the file, logical volume, or partition to be used by the new virtual machine.
+  --connect: specifies which hypervisor to connect to.
+  use -d or --debug option to help troubleshoot problems with virt-clone.
+
+**** management
+1. To list virtual machines:
+   virsh -c qemu:///system list
+   virsh -c qemu:///system list --all
+2. To start/shutdown/reboot a virtual machine:
+   virsh -c qemu:///system start web_devel
+   virsh -c qemu:///system shutdown web_devel
+   virsh -c qemu:///system reboot web_devel
+3. snapshot/restore
+   virsh -c qemu:///system save web_devel web_devel-022708.state
+   virsh -c qemu:///system restore web_devel-022708.state
+
+4. Deleting a Virtual Machine
+   To delete a virtual machine, first terminate it (if running), and then undefine it:
+   $ virsh destroy foo_new
+   $ virsh undefine foo_new
+
+5. view
+   virt-manager
+   virt-viewer -c qemu:///system web_devel
+
+https://wiki.edubuntu.org/SecurityTeam/TestingMAAS
+
+
+** Networking
+*** virtual network switch routing types
+http://wiki.libvirt.org/page/VirtualNetworking#Other_virtual_network_switch_routing_types
+
++ Routed mode
+  With routed mode, the virtual switch is connected to the physical host LAN.
+  The virtual switch sees the IP addresses in each packet, using that information when deciding what to do. It is thus necessary to configure routers in the physical network (e.g. using a static route)
+  
++ Isolated mode
+  In this mode, guests connected to the virtual switch can communicate with each other, and with the host. However, their traffic will not pass outside of the host, nor can they receive traffic from outside the host.  
+
+*** Changing the ip address of virbr0
+virsh net-dumpxml default > /tmp/default.xml
+vi /tmp/default.xml # edit the ip address
+virsh net-destroy default
+virsh net-define /tmp/default.xml
+virsh net-start default
+virsh net-autostart default
+
+
+
+
+
+* Troubleshooting
++ Start maas dhcp server after network interface virbr0 added
+Add line to maas-dhcp-server.conf
+start on net-device-added INTERFACE=virbr0
+http://manpages.ubuntu.com/manpages/trusty/en/man5/init.5.html
+

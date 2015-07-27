@@ -1,0 +1,5 @@
+alias cdldap='cd /usr/local/etc/openldap'
+alias cdsmb='cd /usr/local/samba'
+alias grep='egrep --color'
+alias less='less -r'
+alias emacs='emacs -nw'

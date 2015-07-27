@@ -1,0 +1,11 @@
+{
+"query": {
+ "filtered" : {
+   "filter" : {
+     "bool" : {
+       "must" : { "term" : { "tags" : "lucene" } }
+     }
+   }
+ }
+}
+}

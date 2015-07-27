@@ -1,0 +1,17 @@
+{
+"size": 5,
+"query" : {
+  "filtered" : {
+    "filter" : {
+      "geo_distance_range" : {
+        "from" : "1km",
+        "to" : "3km",
+        "location" : {
+          "lat": 39.9840058489,
+          "lon": 116.3076809822
+         }
+      }
+    }
+  }
+}
+}

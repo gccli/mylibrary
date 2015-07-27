@@ -1,0 +1,16 @@
+{
+"query": {
+ "filtered" : {
+   "query" : { "match_all" : {} },
+   "filter" : {
+     "bool" : {
+       "must_not" : [
+         {"term" : { "busy.slot" : 49}},
+         {"term" : { "busy.slot" : 56}}
+       ]
+      }
+    }
+   }
+  }
+
+}

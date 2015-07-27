@@ -1,0 +1,112 @@
+Linux Assembly
+
+Resource
+  * http://www.ibm.com/developerworks/linux/library/l-ia/index.html
+  * http://setiathome.ssl.berkeley.edu/~korpela/djgpp_asm.html
+  * http://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html
+  * http://www.cs.virginia.edu/~evans/cs216/guides/x86.html
+  * Intel 64 and IA-32 Architectures Software Developer's Manual 
+   
+ 
+
+
+AT&T syntax
+  * Register names are prefixed with %, 
+  * Operands order 
+    The order of operands is source(s) first, and destination last, as opposed to the Intel convention of destination first and sources last.
+  * Operand size
+    The operand size is specified as a suffix to the instruction name. The suffix is b for (8-bit) byte, w for (16-bit) word, and l for (32-bit) long. 
+  * Immediate operands
+    marked with a $ prefix
+    addl $5,%eax (add immediate long value 5 to register %eax).
+  * Missing operand prefix indicates that it is memory-contents;
+    movl $foo,%eax puts the address of variable foo into register %eax
+    movl foo,%eax puts the contents of variable foo into register %eax.
+  * Indexing or indirection 
+    Indexing or indirection is done by enclosing the index register or indirection memory cell address in parentheses
+    testb $0x80,17(%ebp) (test the high bit of the byte value at offset 17 from the cell pointed to by %ebp).
+
+  * Referencing memory
+    immed32(basepointer,indexpointer,indexscale)
+    immed32 + basepointer + indexpointer * indexscale
+    + Addressing a particular C variable:
+      _var
+     the underscore ("_") is how you get at static (global) C variables from assembler.
+     This only works with global variables. Otherwise, you can use extended asm to have variables preloaded into registers for you. I address that farther down
+    + Addressing what a register points to:
+      (%eax)
+    + Addressing a variable offset by a value in a register:
+      _var(%eax)
+    + Addressing a value in an array of integers (scaling up by 4):
+      _array(,%eax,4)
+    + You can also do offsets with the immediate value:
+      C code: *(p+1) where p is a char *
+      1(%eax) where eax has the value of p
+    + Addressing a particular char in an array of 8-character records:
+      eax holds the number of the record desired. ebx has the wanted char's offset within the record.
+      _array(%ebx,%eax,8)
+    + You can do some simple math on the immediate value:
+      _struct_pointer+8
+
+Extended inline assembly
+  The assembler template consists of assembly instructions.
+  Each operand is described by an operand-constraint string followed by the C expression in parentheses.
+  A colon separates the assembler template from the first output operand and another separates the last output operand from the first input, if any.
+  Commas separate the operands within each group.
+  The total number of operands is limited to ten or to the maximum number of operands in any instruction pattern in the machine description, whichever is greater. 
+
+    asm ( "statements" : output_registers : input_registers : clobbered_registers);
+
+    int a=10, b;
+    asm ("movl %1, %%eax; 
+          movl %%eax, %0;"
+          :"=r"(b)        /* output */
+          :"r"(a)         /* input */
+          :"%eax"         /* clobbered register */
+         );       
+    * "b" is the output operand, referred to by %0 and "a" is the input operand, referred to by %1.
+    * "r" is a constraint on the operands. We’ll see constraints in detail later. 
+      For the time being, "r" says to GCC to use any register for storing the operands.
+      output operand constraint should have a constraint modifier "=". And this modifier says that it is the output operand and is write-only. 
+    * There are two %’s prefixed to the register name. This helps GCC to distinguish between the operands and registers. operands have a single % as prefix. 
+    * The clobbered register %eax after the third colon tells GCC that the value of %eax is to be modified inside "asm",
+      so GCC won’t use this register to store any other value. 
+
+  * "constraint" (C expression) is the general form. For output operands an additional modifier will be there.
+    Constraints are primarily used to decide the addressing modes for operands. They are also used in specifying the registers to be used. 
+  * ordinary output operands must be write-only; GCC will assume that the values in these operands before the instruction are dead and need not be generated.
+    Extended asm also supports input-output or read-write operands
+
+  * Clobber List
+   * Some instructions clobber some hardware registers. We have to list those registers in the clobber-list, ie the field after the third ’:’ in the asm function.
+     This is to inform gcc that we will use and modify them ourselves. So gcc will not assume that the values it loads into these registers will be valid.
+     We shoudn’t list the input and output registers in this list. Because, gcc knows that "asm" uses them (because they are specified explicitly as constraints).
+     If the instructions use any other registers, implicitly or explicitly (and the registers are not present either in input or in the output constraint list),
+     then those registers have to be specified in the clobbered list. 
+   * If our instruction can alter the condition code register, we have to add "cc" to the list of clobbered registers. 
+   * If our instruction modifies memory in an unpredictable fashion, add "memory" to the list of clobbered registers.
+     This will cause GCC to not keep memory values cached in registers across the assembler instruction. 
+     We also have to add the volatile keyword if the memory affected is not listed in the inputs or outputs of the asm. 
+  * Constraints
+   * Register operand constraint(r)
+     +---+--------------------+
+     | r |    Register(s)     |
+     +---+--------------------+
+     | a |   %eax, %ax, %al   |
+     | b |   %ebx, %bx, %bl   |
+     | c |   %ecx, %cx, %cl   |
+     | d |   %edx, %dx, %dl   |
+     | S |   %esi, %si        |
+     | D |   %edi, %di        |
+     +---+--------------------+
+  * Memory operand constraint(m)  
+  * Matching(Digit) constraints 
+   * In some cases, a single variable may serve as both the input and the output operand. Such cases may be specified in "asm" by using matching constraints 
+   S
+    
+   
+GCC Rule:
+  * 32-bit arguments are pushed down stack in reverse syntactic order (hence accessed/popped in the right order), above the 32-bit near return address.
+    %ebp, %esi, %edi, %ebx are callee-saved, other registers are caller-saved; %eax is to hold the result, or %edx:%eax for 64-bit results.
+  * 
+ 

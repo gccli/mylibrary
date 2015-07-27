@@ -1,0 +1,8 @@
+* Openstack Documents
+** OpenStack Docs [[http://docs.openstack.org]]
+** OpenStack Wiki [[https://wiki.openstack.org/wiki/Main_Page]]
+
+** [[http://en.wikipedia.org/wiki/OpenStack][OpenStack - Wikipedia]]
+** OpenStack Components [[Programs][https://wiki.openstack.org/wiki/Programs]]
+
+** [[http://docs.openstack.org/admin-guide-cloud/content/][OpenStack Cloud Administrator Guide]]

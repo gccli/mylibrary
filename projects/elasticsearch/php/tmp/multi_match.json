@@ -1,0 +1,8 @@
+{
+"query": {
+  "multi_match" : {
+    "query":    "Jeck0", 
+    "fields": [ "name", "desc" ] 
+  }
+}
+}

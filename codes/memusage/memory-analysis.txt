@@ -1,0 +1,14 @@
+
+* RSS
+Your process's RSS increases every time it looks at a new piece of memory (and thereby establishes a page table entry for it). It decreases as the kernel removes PTEs that haven't been used sufficiently recently; how fast this happens depends on how much memory pressure the overall system is under. The more memory pressure, the more the kernel tries to steal pages from processes and decrease their RSS.
+
+A large RSS on an active system (one under memory pressure) means that your process touches a lot of memory (often rapidly) during its operation. A growing RSS means that it is increasing the amount of memory it touches. A constant RSS doesn't mean that the process is touching the same memory over and over; it just means that it's touching about the same amount of memory per unit time.
+
+
+
+* Reference
+[[http://utcc.utoronto.ca/~cks/space/blog/linux/LinuxMemoryStats][What you can find out about the memory usage of your Linux programs]]
+
+
+
+smem-1.4/smem --bar pid -c pid name rss uss vss

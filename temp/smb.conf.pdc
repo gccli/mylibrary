@@ -1,0 +1,52 @@
+[global]
+  server string = Domain Master %h server, DC
+  workgroup = PDCAD
+
+  os level = 33
+  encrypt passwords = Yes
+#provide the netlogon service for Windows 9X network logons for the workgroup it is in. This will also cause the Samba server to act as a domain controller for NT4 style domain services
+  domain logons = Yes
+#WAN-wide browse list collation, domain master browser for its given workgroup
+#Local master browsers in the same workgroup on broadcast-isolated
+  domain master = Yes
+#If this is set to yes, on startup, nmbd will force an election, and it will have a slight advantage in winning the election
+  preferred master = Yes
+  security = User
+  admin users = root
+  username map = /etc/samba/usermap
+  logon script = LOGON.BAT
+  logon home = \\%L\%U
+  logon drive = H:
+  logon path = \\%L\profiles\%U
+  add machine script = /usr/sbin/useradd -M -g trust -c Machine -d /dev/null -s /bin/false %u
+
+  log level = 2 auth:2 smb:3 lanman:5 idmap:0 vfs:0 printdrivers:0 locking:0
+  log file = /var/log/samba.log
+  max log size = 0
+
+[netlogon]
+   comment = Network Logon Service
+   # world writable
+   path = /var/lib/samba/netlogon
+   guest ok = No
+   read only = Yes
+   write list = root lijing
+
+[profiles]
+   comment = NT Profiles Share
+   # world writable
+   path = /var/lib/samba/profiles
+   read only = No
+   create mode = 0600
+   directory mode = 0700
+   browseable = No
+
+[homes]
+  comment = Home (S:%U G:%G) (U:%u G:%g) Server (V:%v,%h,%L) Client(%M,%m)
+  read only = No
+  create mask = 0644
+  security mask = 0640
+  force security mode = 0644
+  browseable = No
+  guest ok = No
+  valid users = %S

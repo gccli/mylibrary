@@ -1,0 +1,21 @@
+TARGET=libgprof_so.so s
+
+SRCS=$(wildcard *.cpp)
+OBJS=$(subst .cpp,.o,$(SRCS))
+CC=g++
+CXXFLAGS=-pg -g -Wall
+LDFLAGS=-pg
+
+all:$(TARGET)
+
+s:gprof.o
+	$(CC) -o $@ $^ -L. -lgprof_so $(LDFLAGS)
+
+libgprof_so.so:gprof_so.o
+	$(CC) -shared -Wl,-soname,libgprof_so.so -o $@ $^ $(LDFLAGS)
+
+%.o:%.cpp
+	$(CC) $(CXXFLAGS) -fPIC -c $^ -o $@ $(LDFLAGS)
+
+clean:
+	$(RM) $(OBJS) $(TARGET)

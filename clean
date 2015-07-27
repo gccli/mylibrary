@@ -1,0 +1,13 @@
+#! /bin/sh
+
+for dir in `find -type d`
+do
+  makefile="$dir/Makefile"
+  if [ -f $makefile ]; then
+      make -C $dir clean
+  fi
+done
+
+find . -type f -name "*.o" |xargs rm -fv
+find . -type f -name "a.out" |xargs rm -fv
+find . -type f -name "core.*" |xargs rm -fv

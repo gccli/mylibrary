@@ -1,0 +1,111 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>经纬度坐标与地理像素坐标相互转换</title>
+  <style type="text/css">
+    body{margin:0;height:100%;width:100%;position:absolute;background-color:#FFF;}
+    #mapContainer{position: absolute;top:0;left: 0;right:0;bottom:150px;}
+    
+    #btnDiv{
+    position:absolute;
+    bottom: 0;
+    left:10px;
+    height:150px;
+    font-size:12px;
+    }
+    
+    #btnDiv input{
+    height:23px;
+    outline:none;
+    border:1px solid #ddd;
+    padding-left:5px;
+    border-radius:3px;
+    }
+    
+    #btnDiv input[type='button']{
+    height:28px;
+    line-height:28px;
+    outline:none;
+    text-align:center;
+    padding-left:5px;
+    padding-right:5px;
+    color:#FFF;
+    background-color:#0D9BF2;
+    border:0;
+    border-radius: 3px;
+    margin-top:5px;
+    margin-left:5px;
+    cursor:pointer;
+    margin-right:10px;
+    }
+    
+    </style>
+</head>
+<body>
+  <div id="mapContainer"></div>
+  <div id="btnDiv"> 
+    <div>
+      <br>地图经纬度坐标：(<b>鼠标左键在地图上单击获取经纬度坐标</b>)
+      <br>X：<input type="text" id="lngX"/>&nbsp;Y：<input type="text" id="latY"/>
+      <br>地图地理像素坐标：
+      <br>X：<input type="text" id="pixelx"/>&nbsp;Y：<input type="text" id="pixely"/>
+      </div>
+    <div>
+      <input id="lng2pixel" type="button" value="经纬度坐标转换成地理像素坐标"/>  
+      <input id="pixel2lng" type="button" value="地理像素坐标转换成经纬度坐标"/> 
+      </div>
+    </div>
+  
+  <script type="text/javascript" src="http://webapi.amap.com/maps?v=1.3&key=d53539bf197b0382a1c6de7590d4e5d1"></script>
+  <script type="text/javascript">
+    //初始化地图对象，加载地图
+    var map = new AMap.Map('mapContainer', {
+    resizeEnable: true
+    });
+    AMap.event.addListener(map,'click',getLnglat);
+    //鼠标在地图上点击，获取经纬度坐标
+    function getLnglat(e){  
+    document.getElementById('lngX').value = e.lnglat.getLng();  
+    document.getElementById('latY').value = e.lnglat.getLat();   
+    } 
+
+    // 
+    var hotspot;
+    map.plugin('AMap.HotSpot', function () {
+      hotspot = new AMap.HotSpot(mapObj);
+      AMap.event.addListener(hotspot, 'click', openInfo);//点击热点时打开信息窗体
+    });
+
+    var marker = new Array();
+    var lngX = 39.9840058489;
+    var latY = 116.3076809822;  
+    var markerOption = {
+        map:map,
+        icon:"http://webapi.amap.com/images/0.png",  
+        position:new AMap.LngLat(lngX, latY)  
+    };            
+    var mar =new AMap.Marker(markerOption); 
+    marker.push(new AMap.LngLat(lngX, latY));
+
+    //经纬度坐标转换为地理像素坐标
+    document.getElementById('lng2pixel').onclick = function(){
+    var px = document.getElementById('lngX').value;  
+    var py = document.getElementById('latY').value;  
+    var pixel = map.lnglatToPixel(new AMap.LngLat(px,py),10);  
+    document.getElementById('pixelx').value = pixel.getX();  
+    document.getElementById('pixely').value = pixel.getY();  
+    };
+    
+    //地理像素坐标转换为经纬度坐标
+    document.getElementById('pixel2lng').onclick = function(){
+    var lnglatX = parseInt(document.getElementById('pixelx').value);  
+    var lnglatY = parseInt(document.getElementById('pixely').value);  
+    var ll = map.pixelToLngLat(new AMap.Pixel(lnglatX,lnglatY),10);  
+    document.getElementById('lngX').value = ll.getLng();  
+    document.getElementById('latY').value = ll.getLat(); 
+    };
+    
+    </script>
+</body>
+</html>

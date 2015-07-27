@@ -1,0 +1,82 @@
+* Google Cloud SDK
+Google Cloud SDK contains tools and libraries that enable you to easily create and manage resources on Google Cloud Platform, including _App Engine_, _Compute Engine_, _Cloud Storage_, _BigQuery_, _Cloud SQL_, and _Cloud DNS_.
+
+Download and Install Google Cloud SDK
+$ curl 2>/dev/null https://sdk.cloud.google.com | bash
+
+
+
+* Service
+** [[https://developers.google.com/appengine/][App Engine]] - Platform as a Service ([[https://developers.google.com/appengine/docs/python/][python]])
+*** Introduction
+App Engine executes your Python application code using a pre-loaded Python interpreter in a safe "sandboxed" environment. Your app receives web requests, performs work, and sends responses by interacting with this environment.
+A Python web app interacts with the App Engine web server using the WSGI protocol, so apps can use any WSGI-compatible web application framework. App Engine includes a simple web application framework, called webapp2, to make it easy to get started.
+The secured "sandbox" environment isolates your application for service and security. 
+
+*** The Python SDK and tools
+**** App Engine Python SDK
+     [[https://developers.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python][App Engine Python SDK]]
+     $ Download Latest AppEngine SDK
+     $ curl https://developers.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python 2>/dev/null | grep 'http.*google_appengine.*\.zip' | awk -F '"' '{print $2}'
+
+**** dev_appserver.py - The Python Development Server
+Command-line arguments
+--host=...
+  The host address to use for the server
+--port=...
+  The port number to use for the server. Default is 8080. If multiple servers are launched, they will be assigned subsequent ports (e.g. 8081, 8082, etc)
+--log_level=...
+  Possible values are debug, info, warning, error, and critical
+--logs_path=LOGS_FILE
+  By default, development server logs are stored in memory only. 
+
+# Start app 
+$ dev_appserver.py --host=0.0.0.0 --port=80 --log_level=debug gae
+
+**** appcfg.py - Uploading, Downloading, and Managing a Python App
+***** Uploading the app
+$ appcfg.py --email=jingccli@gmail.com update gae
+e.g. 
+$ appcfg.py --oauth2 --email=jingccli@gmail.com update gae
+
+***** Downloading source code
+$ appcfg.py download_app -A <your_app_id> -V <your_app_version> <output-dir>
+e.g. 
+$ aappcfg.py --email=jingccli@gmail.com download_app -A jingccli gae
+
+***** Downloading logs
+$ appcfg.py --email=jingccli@gmail.com --oauth2 request_logs myapp mylogs.txt
+
+***** Password-less Login with OAuth2
+To set this up, use the --oauth2 option. (Or, if your browser is on a different machine, perhaps because you're shelled into it, pass --noauth_local_webserver --oauth2.) This will store your OAuth2 credentials in your home directory in a file called .appcfg_oauth2_tokens. If you don't want to permanently log in by storing your OAuth2 token on disk, also use the --no_cookies option.
+
+$ appcfg.py --oauth2 --noauth_local_webserver update gae/
+
+***** cacerts
+google-cloud-sdk/platform/google_appengine/lib/cacerts/cacerts.txt
+
+# change the cacerts, add goagent certs
+google_appengine/lib/cacerts/cacerts.txt
+
+*** Test GAE - Using GoAgent for test
+/DIRECTORY/: mylibrary/miniproxy/goagent
+1. deploy app to google cloud
+   
+2. start local proxy - goagent
+   cd mylibrary/miniproxy/goagent/goagent_3.1.20/local
+   ./proxy.py inetlinuxdemo
+3. using curl access
+   $ curl -v -L -x http://localhost:8087 www.lpi.org
+   $ curl -v -L -x http://localhost:8087 www.python.org # --max-redirs=5
+   $ curl -v -L --max-redirs 5 -x http://localhost:8087 http://cloud.google.com # set max redirect count
+   $ curl -v -L --cacert CA.crt -x http://10.227.1.234:8087 www.google.com # remote access, 10.227.1.234 is local address
+   $ curl -v -L -x http://localhost:8087 http://www.uotechnology.edu.iq/dep-cse/lectures/3/computer/Computer%20architecture.pdf -o Computer_Architecture.pdf # download file with autorange
+   download logs
+   $ cd mylibrary/miniproxy/goagent/goagent_3.1.20
+   $ appcfg.py --email=jingccli@gmail.com --oauth2 request_logs server mylogs.txt
+
+*** [[https://developers.google.com/appengine/docs/python/tools/webapp2][The webapp2 Framework]]
+    http://webapp-improved.appspot.com/
+
+** [[https://developers.google.com/cloud-dns/what-is-cloud-dns][Google Cloud DNS]]
+   

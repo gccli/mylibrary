@@ -1,0 +1,162 @@
+#! /bin/bash
+
+# version: 1.1.4
+# 1.1.4 add bash completion for my own functions
+
+# Global settings for bash
+alias less='less -r'
+alias grep='egrep --color'
+alias pst='ps -Lopid,tid,pcpu,pmem,stat,start_time,etime,time,rss,vsz,cmd'
+alias psex='ps -opid,ppid,nlwp,pcpu,pmem,stat,start_time,etime,time,sz,rss,vsz,cmd'
+alias cscope-delete='find . -name "cscope.*" | xargs rm -f'
+alias cscope-reload='cscope -qbR'
+
+ulimit -c unlimited
+export PS1='[\u@\h \W]\$ '
+export SSH_ENV=$HOME/.ssh/environment
+
+function find_parent {
+    if [ -z "$1" ]; then
+	echo "usage: $0 progname"
+    fi
+    local prog=$1
+    local pids=$(pidof $prog)
+    local n=0
+
+    for p in $pids
+    do
+	[ ! -r /proc/$p/stat ] && continue
+	n=$(ps -oppid -p$p | sed '1d')
+	for pid in $pids
+	do
+	    if [ $n -eq $pid ]; then
+		echo $n
+		return 0
+	    fi
+	done
+    done
+    echo 0
+    return 1
+}
+
+function lsofp() {
+    if [ -z "$1" ]; then
+	echo "usage: $0 progname"
+    fi
+    local prog=$1
+    local pid=$(pidof $prog)
+    if [ $(echo $pid | wc -w) -eq 1 ]; then
+	lsof -p $pid
+    fi
+}
+
+function psp() {
+    if [ -z "$1" ]; then
+	echo "usage: $0 progname"
+    fi
+    local prog=$1
+    local pids=$(pidof $prog)
+    local npid=$(echo $pids | wc -w)
+    local parent=$(find_parent $prog)
+    echo "Number of processes $npid"
+    if [ -n "$pids" ]; then
+	psex -p $pids | sed "s#^$parent.*#\x1b[32m\x1b[1m&\x1b[0m#; s#\s*PID.*#\x1b[7m&\x1b[0m#"
+    fi
+}
+
+function mywhois {
+  host=$1
+  whois -H $host | sed 's#.*ID:#\x1b[31m&\x1b[0m#'
+}
+
+# function for submit code changes to server
+function gitsubmit() {
+    local message="ok"
+    if [ -n "$1" ]; then
+	message=$1
+    else
+	echo "usage: gitsubmit <message>"
+	return
+    fi
+    git commit -a -m "$message"
+    if [ $? -ne 0 ]; then
+	echo "error occur when commit changes"
+	return 
+    fi
+    echo "commit changes ok"
+    git push
+    echo "done"
+}
+
+function gitupdate() {
+    local files=$@
+    echo "upload files - $files ..."
+    git commit -m "update files" $files
+    if [ $? -ne 0 ]; then
+	echo "error occur when commit changes"
+	return 
+    fi
+    echo "commit changes ok"
+    git push
+    echo "done"
+}
+
+# functions for ssh agent
+function sigint()
+{
+    echo "catch ctrl-c, exit bash!"
+    ssh-agent -k
+    sleep 1
+    # default trap
+    trap INT
+    exit 0
+}
+
+# start ssh agent
+function start_agent() {
+    trap sigint INT 
+    echo "initialising new ssh agent"
+    ssh-agent > $SSH_ENV
+    sed -i '/^echo/d' $SSH_ENV
+    chmod 600 $SSH_ENV
+    source $SSH_ENV
+    ssh-add
+    status=$?
+    trap INT
+    if [ $status -ne 0 ]; then
+	echo "failed to add ssh keys, kill agent!"
+	ssh-agent -k
+	sleep 1
+	exit 1
+    fi
+}
+
+function check_keys() {
+    output=$(ssh-add -l 2>&1)
+    status=$?
+    if [ $status -ne 0 ]; then
+	echo "check ssh keys error($status) - $output, kill agent!"
+	ssh-agent -k
+	sleep 1
+	exit 1
+    fi
+}
+
+function addrsa() {
+    local rsa=$HOME/mylibrary/temp/RSA_key
+    if [ ! -f $rsa ]; then
+	echo "RSA $rsa not exists"
+	return 
+    fi
+    chmod 400 $rsa
+    ssh-add $rsa
+    ssh-add -l
+}
+
+# bash completioin for my own functions
+_psp()
+{
+    local cur=${COMP_WORDS[COMP_CWORD]}
+    COMPREPLY=( $(compgen -W "mc_managerd mc_workerd psf_service_centerd psf_server_managerd" -- $cur) )
+}
+complete -F _psp psp

@@ -1,0 +1,57 @@
+* Emacs basic
+  1. M-< moves to the beginning of the whole text
+  2. M-> moves to the end of the whole text
+  3. C-@ Mark set C-w
+
+
+** Emacs org mode
+
+*** Table
+ + C-c |         (org-table-create-or-convert-from-region)
+ + C-c C-c       (org-table-align)
+ + C-c RET        Re-align the table and move down to next row. Creates a new row if necessary.
+ + M-<left>      (org-table-move-column-left)
+ + M-<right>     (org-table-move-column-right)
+   Move the current column left/right. 
+
+| name    | sex |       phone | birthday | address |
+|---------+-----+-------------+----------+---------|
+| Jing Li |     | 01010010    |          |         |
+|---------+-----+-------------+----------+---------|
+|         |     |             |          |         |
+
+
+* emacs autocomplete cscope
+
+** cscope
+https://github.com/dkogan/xcscope.el
+apt-get install cscope -y
+apt-get install cscope-el -y
+
+add following line to ~/.emacs
+(add-hook 'c-mode-common-hook '(lambda () (require 'xcscope)))
+
+Each cscope search adds its results to the cscope buffer.
+  n/p navigates over individual results
+  k kills individual results
+  M-k kills file results
+  M-K kills result sets
+
+C-c s s Find symbol.
+C-c s = Find assignments to this symbol
+C-c s d Find global definition.
+C-c s g Find global definition (alternate binding).
+C-c s G Find global definition without prompting.
+C-c s c Find functions calling a function.
+C-c s C Find called functions (list functions called from a function).
+
+C-c s b Display cscope buffer.
+C-c s B Auto display cscope buffer toggle.
+C-c s n Next symbol.
+C-c s N Next file.
+C-c s p Previous symbol.
+C-c s P Previous file.
+C-c s u Pop mark.
+
+
+** autocomplete

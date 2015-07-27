@@ -1,0 +1,39 @@
+* Configure 
+** for interface ubuntu
+# add the following lines to interfaces see interfaces(5) and resolvconf(8)
+dns-nameservers IPADDR
+dns-search inetlinux.net
+
+* DIG - DNS lookup utility
+  dig [@server] [-b address] [-c class] [-f filename] [-k filename] [-m] [-p port#] [-q name] [-t type] [-x addr] [-y [hmac:]name:key] [-4] [-6] [name] [type] [class] [queryopt...]
+
+  dig @server name type
+    server - If no server argument is provided, dig consults /etc/resolv.conf;
+    name - is the name of the resource record that is to be looked up.
+    type - indicates what type of query is required — ANY, A, MX, SIG, etc. type can be any valid query type. Default type A
+
+  -b - sets the source IP address of the query to address. An optional port may be
+       specified by appending "#<port>"
+  -f - operate in batch mode by reading a list of lookup requests to process from the file filename.
+  -t - The -t option sets the query type to type. It can be any valid query type which is supported in BIND 9.
+  -x - Reverse lookups — mapping addresses to names
+
+** QUERY OPTIONS
+   - set or reset flag bits in the query header
+   - determine which sections of the answer get printed
+   - determine the timeout and retry strategies 
+   +[no]tcp
+     Use [do not use] TCP when querying name servers. The default behavior is to use UDP unless an AXFR or IXFR query is requested, in which case a TCP connection is used
+   +[no]search
+     Use [do not use] the search list defined by the searchlist or domain directive in resolv.conf (if any). The search list is not used by default.
+   +time=T
+     Sets the timeout for a query to T seconds. The default timeout is 5 seconds. An attempt to set T to less than 1 will result in a query timeout of 1 second being applied.
+   +tries=T
+     Sets the number of times to try UDP queries to server to T instead of the default, 3. If T is less than or equal to zero, the number of tries is silently rounded up to 1.
+   +retry=T
+     Sets the number of times to retry UDP queries to server to T instead of the default, 2. Unlike +tries, this does not include the initial query.     
+	   
+* HOWTO
+** How to list all DNS records in a domain ? 
+   dig -tAXFR mycompany.com
+   host -l domain.com

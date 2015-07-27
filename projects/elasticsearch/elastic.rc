@@ -1,0 +1,7 @@
+#! /bin/bash
+
+export ESBASE=http://localhost:9200
+export my_index=stock
+
+alias escat="curl -i $ESBASE/_cat/indices"
+alias essearch="curl -i $ESBASE/$my_index/_search?pretty"

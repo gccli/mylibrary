@@ -1,0 +1,5 @@
+vlc -vvv S7450VDER.mp4 --sout '#transcode{vcodec=h264,acodec=mpga,vb=800,ab=128,deinterlace}:rtp{mux=ts,dst=225.1.1.1,sdp=sap,name="TestStream"}'
+vlc rtp://225.1.1.1
+
+vlc -vvv S7450VDER.mp4 --sout '#rtp{dst=225.1.1.1,port=10000,sdp=rtsp://10.230.0.247:10000/test.sdp}'
+vlc rtsp://10.230.0.247:10000/test.sdp

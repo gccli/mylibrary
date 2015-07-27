@@ -1,0 +1,35 @@
+1. download smbldap-tools
+   $ wget http://download.gna.org/smbldap-tools/sources/0.9.10/smbldap-tools-0.9.10.tar.gz
+   $ ./configure && make && make install
+
+1.1 prepare ldap
+    scp /etc/openldap/schema/samba.schema ldap0:/usr/local/etc/openldap/schema
+    scp /etc/openldap/schema/samba.schema ldap1:/usr/local/etc/openldap/schema
+    
+    $ make slapd bind a non-security port, change the init script
+    /usr/local/libexec/slapd -h "ldaps:/// ldap://:666/"
+
+    restart slapd
+
+1.2 samba configure
+        passdb backend = ldapsam:ldap://ldap0.inetlinux.net:666
+        ldap suffix = dc=inetlinux,dc=net
+        ldap user suffix = ou=People
+        ldap group suffix = ou=Groups
+        ldap admin dn = uid=root,ou=people,dc=inetlinux,dc=net
+    
+2. config
+smbldap-config
+
+3. magration
+   smbldap-populate
+   $ set the password for the administrative DN 
+   smbpasswd -w passwd
+
+
+4. utilities
+   smbldap-usershow john # show user info
+
+   $ add user
+   smbldap-useradd -a lijing
+

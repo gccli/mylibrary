@@ -1,0 +1,10 @@
+* IPython
+
+ipython [subcommand] [options] [-c cmd | -m mod | file] [--] [arg] ...
+
+apt-get install ipython python-numpy ipython-qtconsole python-matplotlib python-pandas -y
+
+ipython qtconsole --pylab
+
+git clone https://github.com/pydata/pydata-book.git
+# export DISPLAY=

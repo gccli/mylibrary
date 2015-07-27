@@ -1,0 +1,52 @@
+#ifndef LINUX_MEMORY_USAGE_H__
+#define LINUX_MEMORY_USAGE_H__
+
+// http://man7.org/linux/man-pages/man5/proc.5.html
+typedef enum _PROC_STAT {
+   stat_pid=0,
+   stat_comm ,
+   stat_state,
+   stat_ppid,
+   stat_pgrp,
+   stat_session,
+   stat_tty_nr,
+   stat_tpgid,
+   stat_flags,
+   stat_minflt,
+   stat_cminflt=10,
+   stat_majflt,
+   stat_cmajflt,
+   stat_jflt,
+   stat_utime,
+   stat_stime,
+   stat_cutime,
+   stat_priority,
+   stat_nice,
+   stat_num_threads,
+   stat_itrealvalue=20,
+   stat_starttime,
+   stat_vsize,
+   stat_rss,
+   stat_rsslim,
+   stat_startcode,
+   stat_endcode,
+   stat_startstack,
+   stat_kstkesp,
+   stat_kstkeip,
+   stat_signal=30,
+   stat_blocked,
+   stat_sigignore,
+   stat_sitcatch,
+   stat_wchan,
+   stat_nswap,
+   stat_cnswap,
+   stat_exit_signal,
+   stat_processor,
+   stat_rt_priority,
+   stat_policy=40,
+   stat_delayacct_blkio_ticks,
+   stat_guest_time,
+   stat_cguest_time
+} PROC_STAT;
+
+#endif

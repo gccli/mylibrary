@@ -1,0 +1,14 @@
+#! /bin/sh
+
+BACKUPFILE=$1
+if [ -z "$BACKUPFILE" ]; then
+	echo
+	echo "usage: ./backup backupfile"
+	echo
+	exit 0
+fi
+
+bas=$(basename $BACKUPFILE)
+time=$(date +'%Y%m%d%H%M%S')
+
+tar -cjvf $bas-$time.tar.bz2 $BACKUPFILE

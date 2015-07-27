@@ -1,0 +1,32 @@
+#! /bin/bash
+
+iso=ubuntu-14.04.1-server-amd64.iso 
+# apt-get install system-config-kickstart genisoimage -y
+
+umount /mnt/ubuntu >/dev/null 2>&1
+mkdir -p /mnt/ubuntu
+mount -o loop $iso /mnt/ubuntu
+
+rm -rf /tmp/ubuntuiso
+mkdir -p /tmp/ubuntuiso
+cp -rT /mnt/ubuntu /tmp/ubuntuiso
+cd /tmp/ubuntuiso/
+# Prevent the language selection menu from appearing
+echo en > isolinux/lang
+system-config-kickstart --generate ks.cfg # save file to ks.cfg
+
+# Add a preseed file, to suppress other questions
+echo 'd-i partman/confirm_write_new_label boolean true
+d-i partman/choose_partition select Finish partitioning and write changes to disk
+d-i partman/confirm boolean true' > ks.preseed
+
+# Edit isolinux/txt.cfg
+sed -i 's#\(.*ubuntu-server.seed\)\s*.*#\1 initrd=/install/initrd.gz ks=cdrom:/ks.cfg preseed/file=/cdrom/ks.preseed --#' isolinux/txt.cfg 
+
+# Make ISO
+mkisofs -D -r -V "ATTENDLESS_UBUNTU" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o /tmp/autoinstall.iso /tmp/ubuntuiso
+umount /mnt/ubuntu >/dev/null 2>&1
+mount -o loop /tmp/autoinstall.iso /mnt/ubuntu
+
+# Install Ubuntu from ISO
+virt-install -n compute0 -r 2048 --disk path=/opt/compute0.img,bus=virtio,size=60 --accelerate --network network=default,model=virtio --nographics --extra-args='console=ttyS0' -v -l /mnt/ubuntu

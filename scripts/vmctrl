@@ -1,0 +1,54 @@
+#! /bin/sh
+
+vmhost=$1
+action=$2
+UBUNTU_PATH=/ubuntu/Ubuntu.vmx
+FEDORA_PATH=/vg/lv0/fedora/Fedora.vmx
+
+function fedora() {
+    action=$1
+    if [ "$action" == "start" -o "$action" == "stop" ]; then
+	/usr/bin/vmrun -T ws $action $FEDORA_PATH nogui	
+    else
+	printf "error parameters: $action\n"
+    fi
+}
+
+function ubuntu() {
+    action=$1
+    if [ "$action" == "start" -o "$action" == "stop" ]; then
+	/usr/bin/vmrun -T ws $action $UBUNTU_PATH nogui	
+    else
+	printf "error parameters: $action\n"
+    fi
+}
+
+
+
+
+if [ -z "$vmhost" ]; then
+    vmhost=all
+fi
+if [ -z "$action" ]; then
+    action=start
+fi
+
+
+printf "host:   $vmhost\n"
+printf "action: $action\n"
+
+case $vmhost in 
+    ubuntu)
+#	ubuntu $action
+	;;
+    fedora)
+	fedora $action
+	;;
+    all)
+#	ubuntu $action
+	fedora $action
+	;;
+    *)
+	printf "error argument $vmhost\n"
+	;;
+esac

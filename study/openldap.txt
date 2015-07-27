@@ -1,0 +1,295 @@
+* Server command
+** start slapd server
+   /usr/local/libexec/slapd -h ldaps:/// -d any
+   /usr/local/libexec/slapd -h "ldaps:/// ldap://:666" -d any
+
+* Client Command
+** General parameters
+   -d debuglevel
+      Set the LDAP debugging level to debuglevel.
+   -v Run in verbose mode, with many diagnostics written to standard output.
+   -n Show what would be done,  but don't actually make action.
+   -x Use simple authentication instead of SASL.
+   -W Prompt for simple authentication.
+   -w passwd
+      Use passwd as the password for simple authentication.
+   -y passwdfile
+      Use complete contents of passwdfile as the password for simple authentication.
+   -H ldapuri
+   -h ldaphost
+   -P {2|3}
+      Specify the LDAP protocol version to use.
+   -D binddn
+      Use the Distinguished Name binddn to bind to the LDAP directory.
+   -Z[Z]
+      Issue StartTLS (Transport Layer Security) extended operation. If you use-ZZ, the command will require the operation to be successful.
+
+SASL Authentication. - The form of IDs depends on the actual SASL mechanism used.
+   -I Enable SASL Interactive mode. Always prompt. Default is to prompt only as needed.
+   -U authcid
+      Specify the authentication ID for SASL bind.
+   -R realm
+      Specify the realm of authentication ID for SASL bind.
+   -X authzid
+      Authorization ID. uthzid must be one of the following formats: dn:_distinguished name_ or u:_username_
+   -Y mech
+      Specify the SASL mechanism to beused for authentication
+
+** search
+   -b searchbase
+   -s {base|one|sub|children}
+   -C follow referral
+
+   ldapsearch -v -xW -LLL '(&(objectclass=posixGroup)(gidNumber<=500))' gidNumber
+   ldapsearch -v -xW -LLL '(&(objectclass=posixAccount)(uidNumber<=500))' uidNumber
+
+
+** ldappasswd - change user password
+   ldappasswd -s ting -xW uid=chengting,ou=people,dc=inetlinux,dc=net
+
+** authenticate client
+
+* OpenLDAP Configuration
+** 390.1 OpenLDAP Replication (weight: 3)
+*** Replication concepts.
+   In _previous_ releases, replication was discussed in terms of _a master server and some number of slave servers_. A master accepted directory updates from other clients, and a slave only accepted updates from a (single) master. The replication structure was rigidly defined and _any particular database could only fulfill a single role_, either _master or slave_.
+   As OpenLDAP now supports a wide variety of replication topologies: /provider and consumer/ A provider replicates directory updates to consumers; consumers receive replication updates from providers.
+   provider/consumer roles are quite fluid: replication updates received in a consumer can be further propagated by that consumer to other servers, so a consumer can also act simultaneously as a provider. Also, a consumer need not be an actual LDAP server; it may be just an LDAP client.
+
+   The LDAP Sync Replication engine, syncrepl for short, is a consumer-side replication engine that enables the consumer LDAP server to maintain a shadow copy of a DIT fragment.
+   Syncrepl supports both pull-based and push-based synchronization. In pull-based replication the consumer periodically polls the provider for updates. In push-based replication the consumer listens for updates that are sent by the provider in realtime.
+  
+**** LDAP sync replication: pull-based/push-based synchronization, refreshOnly and refreshAndPersist
+   /refreshOnly/ the provider uses _pull-based_ synchronization where the consumer servers need not be tracked and no history information is maintained. 
+     _Polling is implemented by the refreshOnly operation._ The consumer polls the provider using an LDAP Search request with an LDAP Sync control attached. The consumer copy is synchronized to the provider copy at the time of polling using the information returned in the search. The provider finishes the search operation by returning SearchResultDone at the end of the search operation as in the normal search.
+   /refreshAndPersist/ the provider uses a _push-based_ synchronization. The provider keeps track of the consumer servers that have requested a persistent search and sends them necessary updates as the provider replication content gets modified.
+     _Listening is implemented by the refreshAndPersist operation._ As the name implies, it begins with a search, like refreshOnly. Instead of finishing the search after returning all entries currently matching the search criteria, the synchronization search remains persistent in the provider. Subsequent updates to the synchronization content in the provider cause additional entry updates to be sent to the consumer
+
+**** LDAP syncrepl
+  The syncrepl engine utilizes both the refreshOnly and the refreshAndPersist operations of the LDAP Sync protocol.
+  syncrepl is a consumer-side replication engine, the syncrepl specification is defined in slapd.conf(5) of the consumer server.
+
+syncrepl rid=<replica ID>
+       provider=ldap[s]://<hostname>[:port]
+       [type=refreshOnly|refreshAndPersist]
+       [interval=dd:hh:mm:ss]
+       [retry=[<retry interval> <# of retries>]+]
+       searchbase=<base DN>
+       [filter=<filter str>]
+       [scope=sub|one|base]
+       [attrs=<attr list>]
+       [attrsonly]
+       [sizelimit=<limit>]
+       [timelimit=<limit>]
+       [schemachecking=on|off]
+       [bindmethod=simple|sasl]
+       [binddn=<DN>]
+       [saslmech=<mech>]
+       [authcid=<identity>]
+       [authzid=<identity>]
+       [credentials=<passwd>]
+       [realm=<realm>]
+       [secprops=<properties>]
+       [starttls=yes|critical]
+       [tls_cert=<file>]
+       [tls_key=<file>]
+       [tls_cacert=<file>]
+       [tls_cacertdir=<path>]
+       [tls_reqcert=never|allow|try|demand]
+       [tls_ciphersuite=<ciphers>]
+       [tls_crlcheck=none|peer|all]
+       [logbase=<base DN>]
+       [logfilter=<filter str>]
+       [syncdata=default|accesslog|changelog]
+  syncrepl - This directive specifies the current database as a replica of the master content by establishing the current slapd _as a replication consumer site running a syncrepl replication engine_. The master database is located at the replication provider site specified by the /provider/ parameter.
+  The content of the syncrepl replica is defined using a search specification as its result set. includes /searchbase/, /scope/, /filter/, /attrs/, /attrsonly/, /sizelimit/, and /timelimit/ parameters. The scope defaults to /sub/, attrs defaults to "*,+" to replicate all user and operational attributes,
+
+*** Configure OpenLDAP replication.
+**** Syncrepl
+  Because syncrepl is a consumer-side replication engine, the syncrepl specification is defined in slapd.conf(5) of the consumer server, not in the provider server's configuration file. The initial loading of the replica content can be performed either by _starting the syncrepl engine with no synchronization cookie_ or by _populating the consumer replica by loading an LDIF file dumped as a backup at the provider_.
+  + Set up the provider slapd
+    The contextCSN checkpoint is configured by the
+      syncprov-checkpoint <ops> <minutes> # 
+    The session log is configured by the
+      syncprov-sessionlog <size> # where <size> is the maximum number of session log entries the session log can record
+
+  + Set up the consumer slapd
+    syncrepl
+
+**** Delta-syncrepl
+  + master and replica server configuration
+    # define accesslog database
+    database hdb
+      suffix cn=accesslog
+      directory /db/accesslog
+      rootdn cn=accesslog
+      index default eq
+      index entryCSN,objectClass,reqEnd,reqResult,reqStart
+
+      overlay syncprov
+      syncprov-nopresent TRUE
+      syncprov-reloadhint TRUE
+      
+      # for primary DIT
+      overlay accesslog
+      logdb   "cn=deltalog"
+      logops  writes
+      logsuccess      TRUE
+      logpurge        2+00:00 1+00:00
+      overlay         syncprov
+      syncprov-checkpoint 10 2
+
+  + Consumer configuration
+    syncrepl ...
+          logbase="cn=accesslog"
+	  logfilter="(&(objectClass=auditWriteObject)(reqResult=0))" # optional
+	  syncdata=accesslog
+
+**** N-Way Multi-Master
+      Each provider must be uniquely identified using ServerID.
+
+
+*** Analyze replication log files and Understand replica hubs.
+http://www.openldap.org/doc/admin23/replication.htm
+  slurpd(8) provides the capability for a master slapd to propagate changes to slave slapd instances
+
+**** replog
+When slapd is configured to generate a replication logfile, it writes out a file containing LDIF change records. The replication log gives the replication site(s), a timestamp, the DN of the entry being modified, and a series of lines which specify the changes to make. In the example below, Barbara (uid=bjensen) has replaced the description value. The change is to be propagated to the slapd instance running on slave.example.net Changes to various operational attributes, such as modifiersName and modifyTimestamp, are included in the change record and will be propagated to the slave slapd.
+
+        replica: slave.example.com:389
+        time: 809618633
+        dn: uid=bjensen,dc=example,dc=com
+        changetype: modify
+        replace: multiLineDescription
+        description: A dreamer...
+        -
+        replace: modifiersName
+        modifiersName: uid=bjensen,dc=example,dc=com
+        -
+        replace: modifyTimestamp
+        modifyTimestamp: 20000805073308Z
+        -
+The modifications to modifiersName and modifyTimestamp operational attributes were added by the master slapd.  
+
+slurpd
+  -o "one-shot" mode. 
+  -r specifies an alternate slapd replication log file.
+
+
+**** master/slave server
+To bring up a replica slapd instance, you must configure the master and slave slapd instances for replication, then shut down the master slapd so you can copy the database. 
+   /one-shot mode/ - slurpd -r /usr/tmp/replog.slave.example.com:389 -o
+
+  + for master
+    Add a /replica/ directive for each replica. The binddn= parameter should match the _updatedn_ option in the _corresponding slave slapd configuration file_.
+    Add a /replogfile/ directive, which tells slapd where to log changes. This file will be read by slurpd.
+
+    replica uri=ldap://slave.example.com:389
+                binddn="cn=Replicator,dc=example,dc=com"
+                bindmethod=simple credentials=secret
+
+  + for slave
+    Do not include a replica and replogfile.
+    Do include an _updatedn_ line. The DN given should match the DN given in the _binddn= parameter of the corresponding replica= directive in the master slapd config file_.
+    Use the _updateref_ directive to define the URL the slave should return if an update request is received
+
+  + Replication errors. 
+    The reject file is located in the same directory as the per-replica replication logfile, and has the same name, but with the string ".rej" appended.
+    e.g. replica running on host slave.example.com, port 389
+      replog.slave.example.com:389.rej
+      /usr/local/var/openldap/replog.slave.example.com:389.rej
+
+   replica hub
+
+The following is a partial list of the used files, terms and utilities:
+
+*** referral
+    slapd supports /subordinate/ and /superior/ knowledge information. Subordinate knowledge information is held in _referral_ objects
+
+Subordinate Knowledge Information
+  Subordinate knowledge information may be provided to delegate a subtree. Subordinate knowledge information is maintained in the directory as a special _referral_ object at the delegate point.
+  The referral object acts as a delegation point, gluing two services together. This mechanism allows for hierarchical directory services to be constructed.
+  A referral object has a structural object class of referral and has the same Distinguished Name as the delegated subtree. Generally, the referral object will also provide the auxiliary object class extensibleObject.
+  e.g if the server a.example.net holds dc=example,dc=net and wished to delegate the subtree ou=subtree,dc=example,dc=net to another server b.example.net, the following named referral object would be added to a.example.net:
+        dn: dc=subtree,dc=example,dc=net
+        objectClass: referral
+        objectClass: extensibleObject
+        dc: subtree
+        ref: ldap://b.example.net/dc=subtree,dc=example,dc=net
+
+Superior Knowledge Information
+  Superior knowledge information may be specified using the referral directive.
+
+
+** 390.2 Securing the Directory (weight: 3)
+*** Securing the directory with SSL and TLS.
+    TLS uses X.509 certificates to carry client and server identities. 
+    The DN of a server certificate must use the CN attribute to name the server, and the CN must carry the server's fully qualified domain name.
+
+ server configuration
+   Typically a single CA will have issued the server certificate and all of the trusted client certificates, so the server only needs to trust that one signing CA.
+   TLSCACertificateFile <filename>
+     PEM-format file containing certificates for the CA's that slapd will trust. The certificate for the CA that signed the server certificate must be included among these certificates.
+   TLSCACertificatePath 
+     This directive specifies the path of a directory that contains individual CA certificates in separate files. In addition, this directory must be specially managed using the OpenSSL c_rehash utility
+   TLSCertificateFile <filename>
+     This directive specifies the file that contains the slapd server certificate. Certificates are generally public information and require no special protection.
+   TLSVerifyClient { never | allow | try | demand }
+
+ client configuration
+   TLS_CACERT <filename>
+   TLS_CACERTDIR <path>
+   TLS_CERT <filename>
+   TLS_KEY <filename>
+
+*** Authentication Methods
+****  "simple" method has three modes of operation:
+      1. anonymous,  # disallow bind_anon, require authc
+      2. unauthenticated, and
+      3. user/password authenticated
+
+Anonymous bind mechanism is enabled by default, but can be disabled by specifying /disallow bind_anon/, /require authc/.
+
+**** SASL method
+     There are several industry standard authentication mechanisms that can be used with SASL, including GSSAPI for Kerberos V, DIGEST-MD5, and PLAIN and EXTERNAL for use with Transport Layer Security (TLS).
+   $ Maintanence of SASL user DB.
+   $ Client/server certificates.
+
+*** Security Strength Factors (SSF)
+    A SSF of zero (0) indicates no protections are in place. A SSF of one (1) indicates integrity protection are in place. A SSF greater than one (>1) roughly correlates to the effective encryption key length. For example, DES is 56, 3DES is 112, and AES 128, 192, or 256. security controls disallow operations when appropriate protections are not in place. e.g. security ssf=1 update_ssf=112
+
+The following is a partial list of the used files, terms and utilities:
+   proxy authorization
+
+
+** 390.3 OpenLDAP Server Performance Tuning (weight: 2)
+   $ Measure OpenLDAP performance.
+   $ Tune software configuration to increase performance.
+   $ Understand indexes.
+The following is a partial list of the used files, terms and utilities:
+   index
+   DB_CONFIG
+
+* OpenLDAP as an Authentication Backend
+** LDAP Integration with PAM and NSS (weight: 2)
+   $ Configure PAM to use LDAP for authentication.
+   $ Configure NSS to retrieve information from LDAP.
+   $ Configure PAM modules in various Unix environments.
+The following is a partial list of the used files, terms and utilities:
+   PAM
+   NSS
+   /etc/pam.d/*
+   /etc/nsswitch.conf
+
+** 391.2 Integrating LDAP with Active Directory and Kerberos (weight: 2)
+   $ Kerberos integration with LDAP.
+   $ Cross platform authentication.
+   $ Single sign-on concepts.
+   $ Integration and compatibility limitations between OpenLDAP and Active Directory.
+The following is a partial list of the used files, terms and utilities:
+   Kerberos
+   Active Directory
+   single sign-on
+   DNS
+
+

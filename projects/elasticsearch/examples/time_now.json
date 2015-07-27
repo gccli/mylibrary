@@ -1,0 +1,15 @@
+{
+    "fields": ["tsapi.received"],
+    "query" : {
+	"filtered" : {
+            "filter" : {
+		"bool" : {
+		    "must" : [
+			{ "range" : {"tsapi.received" : {"lt": "now/d"} }}
+		    ]
+		}
+            }
+	}
+    }
+}
+

@@ -1,0 +1,3 @@
+#! /bin/bash
+
+docker.io run --rm -p 5601:5601 lijing/k4 /kibana/bin/kibana -e http://10.228.254.201:9200

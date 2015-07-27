@@ -1,0 +1,7 @@
+pdc     IN A 10.230.0.234
+bdc     IN A 10.230.0.235
+ldap0   IN A 10.230.0.240
+ldap1   IN A 10.227.1.202
+rhel    IN A 10.227.1.224
+centos0 IN A 10.230.0.224
+centos3 IN A 10.227.1.248

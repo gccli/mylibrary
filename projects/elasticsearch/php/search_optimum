@@ -1,0 +1,46 @@
+{
+"size":5,
+"query": {
+ "filtered": {
+  "filter": {
+   "bool": {
+    "must_not" : [
+     {"term" : { "busy.slot" : 49}},
+     {"term" : { "busy.slot" : 56}} ],
+      "must" : [
+       {"term" : { "schedule.slot" : 49}},
+       {"term" : { "schedule.slot" : 56}}
+    ]
+   }
+  },
+  "query": { 
+    "nested":{
+     "path":"agenda",
+     "query": {
+      "filtered": {
+        "filter": {
+        "geo_distance": {
+          "distance": "5km", 
+          "distance_type": "plane",
+          "agenda.end_point": { "lat": 39.9840058489, "lon": 116.3076809822}
+        }
+        }
+      }
+     }
+    }
+  }
+ }
+ },
+ "sort": [ {
+      "_geo_distance": {
+        "agenda.end_point": { 
+          "lat": 39.9840058489,
+          "lon": 116.3076809822
+        },
+        "order":         "asc",
+        "unit":          "km", 
+        "distance_type": "plane" 
+      }
+    } ]
+}
+}

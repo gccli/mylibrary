@@ -1,0 +1,292 @@
+* Install samba4
+
+# C-c C-l insert link or edit link when linux exists
+[[http://wiki.samba.org/index.php/Samba_AD_DC_HOWTO][Samba4 - How to configure AD DC]]
+
+** BUILD requirement
+*** [[https://wiki.samba.org/index.php/Samba_4_OS_Requirements][Samba4 - Build Requirements]]
+    For ubuntu install the following packages
+    apt-get install build-essential libacl1-dev libattr1-dev libblkid-dev libgnutls-dev libreadline-dev python-dev python-dnspython gdb pkg-config libpopt-dev libldap2-dev dnsutils libbsd-dev attr krb5-user docbook-xsl
+
+*** download and compile samba4
+  git clone git://git.samba.org/samba.git samba4
+
+  ./configure # --disable-gnutls --disable-cups 
+  make
+  make install
+
+** Test Samba4
+   $ start samba 
+   /usr/local/samba/sbin/samba -i -M single
+
+   $ configure username map
+
+   $ Get a list of shares available on a host
+   smbclient -L localhost -U%
+   smbclient -L localhost -UAdministrator%Li_px6e7
+   
+   $ Browse SMB servers using DNS
+   smbclient //localhost/netlogon -UAdministrator%Li_px6e7 -c 'ls'
+   smbclient //localhost/netlogon -UAdministrator%Li_px6e7
+   smb: \> put /root/mylibrary/study/samba4.txt samba4.txt
+
+   smbclient //ldap0/lijing -Ulijing%Li_px6e7
+   smb: \> put /root/mylibrary/study/samba4.txt samba4.txt
+
+* Samba4 AD DC
+** Provision a domain
+
+Installation Directory: /usr/local/samba/
+Server Hostname:        samba4
+DNS Domain Name:        inetlinux.net (This will also be your realm)
+NT4 Domain Name:        inetlinux
+IP Address:             10.227.1.207
+Server Role:            DC
+
+/provision/ - Provision a domain. The provisioning creates a basic database, and is used when you are configuring your first Samba DC in its own domain.
+  --use-rfc2307    Use AD to store posix attributes
+  --server-role    The server role (domain controller | dc | member server | member | standalone). Default is dc
+  --function-level The domain and forest function level (2000 | 2003 | 2008 | 2008_R2 - always native). Default is (Windows) 2003 Native.
+  
+     Re-run the provisioning, remove the /usr/local/samba/etc/smb.conf and /usr/local/samba/private/*
+     # rm -rf /usr/local/samba/etc/smb.conf /usr/local/samba/private/*
+     If your website is example.com, the domain of your AD should be a subdomain if it, like samdom.example.com (or ad.example.com, corp.example.com). Avoid using example.com internally.
+
+    samba-tool domain provision --domain=INETLINUX --realm=inetlinux.net --host-name=samba4 --adminpass=Li_px6e7 --server-role=dc -d 3 --use-rfc2307 --dns-backend=BIND9_DLZ
+    
+    # start samba4
+    /usr/local/samba/sbin/samba -i -M single
+
+
+/samba-tool domain/
+  1. Print basic info about a domain and the DC passed as parameter
+     samba-tool domain info 10.227.1.207 -d0
+  2. Password settings.
+     # show password settings
+     samba-tool domain passwordsettings show
+     # set maximum password age
+     samba-tool domain passwordsettings set --max-pwd-age=999
+
+  3. Join domain as either member or backup domain controller.     
+     Usage: samba-tool domain join <dnsdomain> [DC|RODC|MEMBER|SUBDOMAIN] [options]
+
+  4. classicupgrade
+     Usage: samba-tool domain classicupgrade [options] <classic_smb_conf>
+     Upgrade from Samba classic (NT4-like) database to Samba AD DC database.
+       --dbdir=DIR
+         Path to samba classic DC database directory
+       --testparm=PATH
+       --targetdir=DIR
+
+  5. Dump Kerberos keys of the domain into a keytab.
+     Usage: samba-tool domain exportkeytab <keytab> [options]
+
+  6. dcpromo - Promote an existing domain member or NT4 PDC to an AD DC.
+  7. demote  - Demote ourselves from the role of Domain Controller.
+
+** Kerberos
+   [[http://www.kerberos.org/docs/index.html][Kerberos Documentation]]
+   cp /usr/local/samba/share/setup/krb5.conf /etc
+   kinit administrator@INETLINUX.NET
+   klist
+
+
+** [[https://wiki.samba.org/index.php/Dns-backend_bind#Debugging_Bind_as_Samba_AD_backend][Integrate with Bind9]]
+    $ disable apparmor, because it can cause tricky things
+    /etc/init.d/apparmor stop
+    update-rc.d -f apparmor remove
+
+    # change owner
+    chown -R bind.bind /usr/local/samba/private/named.*
+    chown -R bind.bind /usr/local/samba/private/dns*
+
+    # edit bind config add the following lines
+    include "/usr/local/samba/private/named.conf";
+    options {
+     [...]
+     tkey-gssapi-keytab "/usr/local/samba/private/dns.keytab";
+     [...]
+    };
+
+    # Using bind 9.9 and restart bind9
+    edit /usr/local/samba/private/named.conf
+    service bind9 restart
+
+    # Administering DNS
+    # 1. samba4 should be started, 2. kinit Administrator@INETLINUX.NET in current console
+    1. query server infomation
+       samba-tool dns serverinfo samba4 
+
+    2. Query for zones.
+       samba-tool dns zonelist samba4
+    3. Query for zone information.
+       samba-tool dns zoneinfo samba4 inetlinux.net
+    4. Create a zone.
+       Usage: samba-tool dns zonecreate <server> <zone> [options]
+
+    5. Add a DNS record
+       Usage: samba-tool dns add <server> <zone> <name> <A|AAAA|PTR|CNAME|NS|MX|SRV|TXT> <data>
+       samba-tool dns add samba4 inetlinux.net ldap0 A  10.230.0.240
+       
+    6. query DNS record
+       Usage: samba-tool dns query <server> <zone> <name> <A|AAAA|CNAME|MX|NS|SOA|SRV|TXT|ALL> [options]
+       samba-tool dns query samba4 inetlinux.net samba4 A
+       samba-tool dns query samba4 inetlinux.net ldap0 A
+
+    7. Delete a DNS record
+       Usage: samba-tool dns delete <server> <zone> <name> <A|AAAA|PTR|CNAME|NS|MX|SRV|TXT> <data>
+       samba-tool dns delete samba4 inetlinux.net ldap0 A 10.230.0.240
+
+    8. Update a DNS record
+       Usage: samba-tool dns update <server> <zone> <name> <A|AAAA|PTR|CNAME|NS|MX|SOA|SRV|TXT> <olddata> <newdata>
+       samba-tool dns update samba4 inetlinux.net ldap1 A 10.227.1.202 1.1.1.1
+       samba-tool dns delete samba4 inetlinux.net ldap1 A 1.1.1.1
+
+    9. Add static records
+       ./dnsbuild
+
+    # test
+    samba_dnsupdate --verbose --all-names
+    dig -tAXFR  inetlinux.net
+    host -t SRV _ldap._tcp.inetlinux.net.
+    host -t SRV _kerberos._udp.inetlinux.net
+    host -t A ldap0.inetlinux.net
+    host -t A ldap1.inetlinux.net
+
+** User Admin
+/samba-tool user/
+  1. Create a new user.
+     Usage: samba-tool user add <username> [<password>] [options]
+       -H URL, --URL=URL     LDB URL for database or target server
+       --random-password     Generate random password
+       --rfc2307-from-nss    Copy Unix user attributes from NSS (will be overridden by explicit UID/GID/GECOS/shell)
+
+  # add a new user name lijing from local passwd database
+  samba-tool user create lijing cc --rfc2307-from-nss --gecos=admin
+  # get user sid
+    wbinfo -n lijing
+    S-1-5-21-1081752947-1061273080-126406192-1104 SID_USER (1)
+  # get user info
+    wbinfo -i lijing
+    INETLINUX\lijing:*:1000:100::/home/INETLINUX/lijing:/bin/false
+  # Converts sid to uid
+    wbinfo -S  S-1-5-21-1081752947-1061273080-126406192-1104
+    1000
+
+  # add another user
+    samba-tool user add jane password --given-name=Jane --surname=Doe --must-change-at-next-login
+
+** Join AD DC
+[libdefaults]
+ dns_lookup_realm = true
+ dns_lookup_kdc = true
+ default_realm = INETLINUX.NET
+
+# kinit administrator
+# klist
+nameserver 10.227.1.207
+samba-tool domain join INETLINUX DC -Uadministrator --realm=inetlinux.net --dns-backend=BIND9_DLZ
+
+** Filesystem
+    [[https://wiki.samba.org/index.php/Samba4/s3fs][s3fs]]
+    [[https://wiki.samba.org/index.php/Setup_and_configure_file_shares][Setup and configure file shares]]
+    $ configure filesystem
+    /dev/vg_root/samba /srv/samba ext4 user_xattr,acl 1 1
+    $ To configure share permissions, you need an account with 'SeDiskOperatorPrivilege'. To grant this privilege, e. g. to the "Domain Admin" group, run the following command on your server
+    net rpc rights grant 'INETLINUX\Domain Admins' SeDiskOperatorPrivilege -Uadministrator
+    $ Existing privileges you can reviewed by
+    net rpc rights list accounts -Uadministrator%Li_px6e7
+
+    $ list users
+    pdbedit -L -v
+    pdbedit -L -v -u Administrator
+
+* Samba servers and utilities
+
+** samba-tool (samba4)
+   $ samba-tool processes  # List processes
+
+** smbclient
+** net
+   $ [RPC|ADS] user
+   net -UAdministrator%Li_px6e7 rpc user # list all users
+   net -UAdministrator%Li_px6e7 rpc user info lijing # list the domain groups of the specified user
+
+   $ [RPC|ADS] group
+   net -UAdministrator%Li_px6e7 rpc group # List user groups.
+   
+   $ [RAP|RPC] share [targets]
+   net -UAdministrator%Li_px6e7 rap share # Enumerates all exported resources (network shares) on target server
+   
+   net -UAdministrator%Li_px6e7 getdomainsid # local machine SID and the SID of the current domain.
+   net -UAdministrator%Li_px6e7 rpc info # domain info
+
+   $ RPC RIGHTS # list, grant, and revoke
+   net -UAdministrator%Li_px6e7 rpc rights list # View available/assigned privileges
+   
+   $ net getdomainsid
+   Prints the local machine SID and the SID of the current domain.
+	SID for local machine CENTOS0 is: S-1-5-21-1829300019-4109256266-2524324939
+	SID for domain INETLINUX is: S-1-5-21-545836091-3699089684-4090264051   
+
+*** Windows net
+    net use
+    Maps a share to a Windows drive letter or displays information on current mappings
+    $ net use \\centos0\root
+
+    net view \\centos0
+
+    net config
+    Displays or updates various network settings, such as the computer's NetBIOS name and workgroup or domain name
+    $ net config server
+    $ net help config server
+
+
+** pdbedit
+
+** tdbdump
+   $ tdbdump secrets.tdb
+
+* Sample configure 
+[global]
+        workgroup = INETLINUX
+        realm = inetlinux.net
+        netbios name = LDAP0
+        server role = active directory domain controller
+        log level = 3
+        server services = s3fs, rpc, nbt, wrepl, ldap, cldap, kdc, drepl, winbind, ntp_signd, kcc, dnsupdate
+        idmap_ldb:use rfc2307 = yes
+
+        load printers = no
+        printing = bsd
+        printcap name = /dev/null
+        show add printer wizard = no
+        disable spoolss = yes
+
+[netlogon]
+        path = /usr/local/samba/var/locks/sysvol/inetlinux.net/scripts
+        read only = No
+
+[sysvol]
+        path = /usr/local/samba/var/locks/sysvol
+        read only = No
+
+[homes]
+	comment = Home Directories
+	browseable = no
+	writable = yes
+	valid users = %S
+	create mask = 0600
+	follow symlinks = yes
+
+    
+** force security mode and security mask
+   The force security mode forces bits to be set on a file when it is created or when the client tries to change permissions. By default, it is 000, which means that no bits are forced.
+   security mask performs an AND and clears bits, remove from samba4
+   create mode bit-wise AND
+
+   the file mode = force security mode & security mask | create mask
+
+   create mask = 0644
+   security mask = 0640
+   force security mode = 0644

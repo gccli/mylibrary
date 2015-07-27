@@ -1,0 +1,14 @@
+{
+    "query" : {
+        "filtered" : { 
+            "query" : {
+                "match_all" : {} 
+            },
+            "filter" : {
+                "term" : { 
+                    "score" : 2
+                }
+            }
+        }
+    }
+}

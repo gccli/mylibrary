@@ -1,0 +1,31 @@
+* Package Management tools for Ubuntu
+** dpkg
+*** To list all packages installed on the system
+    $ dpkg -l
+*** To list the files installed by a package, in this case the _openssl_ package
+    $ dpkg -L openssl
+*** which package installed a file 
+    $ dpkg -S /etc/host.conf
+
+** apt-cache
+*** performs a full text search on all available package lists
+    $ apt-cache --names-only search openssl
+    $ apt-cache -n search openssl
+    $ apt-cache -f search openssl
+
+*** show package information
+    $ apt-cache show openssl
+
+** apt-get
+***  completely removes a package and the associated configuration files.
+     $ apt-get purge <package_name>
+
+*** removes an installed package, leaving configuration files intact.
+    $ apt-get remove <package_name>
+
+** apt-cdrom is used to add a new CD-ROM to APT's list of available sources
+
+** group install
+   $ apt-get install build-essential
+   $ yum groupinstall 'Development Tools'
+

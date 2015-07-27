@@ -1,0 +1,550 @@
+In Getting Started we covered the basic tools in just enough detail to allow you to start searching your data with Elasticsearch. 
+It won't take long, though, before you find that you want more: more flexibility when matching user queries, more-accurate ranking of results, more-specific searches to cover different problem domains.
+To move to the next level, it is not enough to just use the match query.
+You need to understand your data and how you want to be able to search it.
+The chapters in this part explain how to index and query your data to allow you to take advantage of word proximity, partial matching, fuzzy matching, and language awareness.
+Understanding how each query contributes to the relevance _score will help you to tune your queries: to ensure that the documents you consider to be the best results appear on the first page, and to trim the "long tail" of barely relevant results.
+Search is not just about full-text search: a large portion of your data will be structured values like dates and numbers.
+We will start by explaining how to combine structured search with full-text search in the most efficient way.
+Structured search is about interrogating data that has inherent structure.
+Dates, times, and numbers are all structured: they have a precise format that you can perform logical operations on.
+Common operations include comparing ranges of numbers or dates, or determining which of two values is larger.
+Text can be structured too. A box of crayons has a discrete set of colors: red, green, blue.
+A blog post may be tagged with keywords distributed and search.
+Products in an ecommerce store have Universal Product Codes (UPCs) or some other identifier that requires strict and structured formatting.
+With structured search, the answer to your question is always a yes or no;
+something either belongs in the set or it does not. Structured search does not worry about document relevance or scoring;
+it simply includes or excludes documents.
+This should make sense logically. A number can't be more in a range than any other number that falls in the same range. 
+It is either in the range - or it isn't. Similarly, for structured text, a value is either equal or it isn't. There is no concept of more similar.
+When working with exact values, you will be working with filters.
+Filters are important because they are very, very fast.
+Filters do not calculate relevance (avoiding the entire scoring phase) and are easily cached.
+We'll talk about the performance benefits of filters later in All About Caching, but for now, just keep in mind that you should use filters as often as you can.
+We are going to explore the term filter first because you will use it often.
+This filter is capable of handling numbers, Booleans, dates, and text.
+Our goal is to find all products with a certain price.
+You may be familiar with SQL if you are coming from a relational database background.
+If we expressed this query as an SQL query, it would look like this:
+In the Elasticsearch query DSL, we use a term filter to accomplish the same thing.
+The term filter will look for the exact value that we specify. 
+By itself, a term filter is simple. It accepts a field name and the value that we wish to find
+The term filter isn't very useful on its own, though.
+As discussed in Query DSL, the search API expects a query, not a filter.
+To use our term filter, we need to wrap it with a filtered query
+{"query":{"filtered":{"query":{"match_all":{}},"filter":{"term":{"price":20}}}}}
+The filtered query accepts both a query and a filter.
+A match_all is used to return all matching documents.
+This is the default behavior, so in future examples we will simply omit the query section.
+The term filter that we saw previously. Notice how it is placed inside the filter clause.
+Once executed, the search results from this query are exactly what you would expect
+Filters do not perform scoring or relevance.
+The score comes from the  match_all query, which treats all docs as equal, so all results receive a neutral score of 1.
+As mentioned at the top of this section, the term filter can match strings just as easily as numbers.
+Instead of price, let's try to find products that have a certain UPC identification code.
+To do this with SQL, we might use a query like this
+SELECT product FROM products WHERE productID = "XHDK-A-1293-#fJ3"
+Translated into the query DSL, we can try a similar query with the term filter, like so
+{"query":{"filtered":{"filter":{"term":{"productID":"XHDK-A-1293-#fJ3"}}}}}
+Except there is a little hiccup: we don't get any results back! 
+Why is that? The problem isn't with the the term query; 
+it is with the way the data has been indexed.
+If we use the analyze API (Testing Analyzers), we can see that our UPC has been tokenized into smaller tokens:
+GET /my_store/_analyze?field=productID XHDK-A-1293-#fJ3
+There are a few important points here
+We have four distinct tokens instead of a single token representing the UPC.
+All letters have been lowercased
+We lost the hyphen and the hash (#) sign.
+So when our term filter looks for the exact value XHDK-A-1293-#fJ3, it doesn't find anything, because that token does not exist in our inverted index.
+Instead, there are the four tokens listed previously.
+Obviously, this is not what we want to happen when dealing with identification codes, or any kind of precise enumeration.
+To prevent this from happening, we need to tell Elasticsearch that this field contains an exact value by setting it to be not_analyzed.
+We saw this originally in Customizing Field Mappings. 
+To do this, we need to first delete our old index (because it has the incorrect mapping) and create a new one with the correct mappings
+Here we explicitly say that we don't want productID to be analyzed.
+Only now will our term filter work as expected. 
+Since the productID field is not analyzed, and the term filter performs no analysis, the query finds the exact match and returns document 1 as a hit.
+Internal Filter Operation
+Internally, Elasticsearch is performing several operations when executing a filter
+Find matching docs
+The term filter looks up the term XHDK-A-1293-#fJ3 in the inverted index and retrieves the list of documents that contain that term.
+In this case, only document 1 has the term we are looking for
+Build a bitset
+The filter then builds a bitset--an array of 1s and 0s -- that describes which documents contain the term.
+Matching documents receive a 1 bit. In our example, the bitset would be [1,0,0,0]
+Cache the bitset.
+Last, the bitset is stored in memory, since we can use this in the future and skip steps 1 and 2.
+This adds a lot of performance and makes filters very fast.
+When executing a filtered query, the filter is executed before the query.
+The resulting bitset is given to the query, which uses it to simply skip over any documents that have already been excluded by the filter.
+This is one of the ways that filters can improve performance.
+Fewer documents evaluated by the query means faster response times.
+The previous two examples showed a single filter in use.
+In practice, you will probably need to filter on multiple values or fields.
+For example, how would you express this SQL in Elasticsearch?
+SELECT product FROM products WHERE (price = 20 OR productID = "XHDK-A-1293-#fJ3") AND (price != 30)
+In these situations, you will need the bool filter.
+This is a compound filter that accepts other filters as arguments, combining them in various Boolean combinations.
+The bool filter is composed of three sections
+must All of these clauses must match. The equivalent of AND.
+must_not All of these clauses must not match. The equivalent of NOT.
+should At least one of these clauses must match. The equivalent of OR.
+And that's it! When you need multiple filters, simply place them into the different sections of the bool filter.
+Each section of the bool filter is optional (for example, you can have a must clause and nothing else), and each section can contain a single filter or an array of filters.
+To replicate the preceding SQL example, we will take the two term filters that we used previously and place them inside the should clause of a bool filter,
+and add another clause to deal with the NOT condition
+Note that we still need to use a filtered query to wrap everything
+These two term filters are children of the bool filter, and since they are placed inside the should clause, at least one of them needs to match.
+If a product has a price of 30, it is automatically excluded because it matches a must_not clause
+Our search results return two hits, each document satisfying a different clause in the bool filter
+Even though bool is a compound filter and accepts children filters, it is important to understand that bool is just a filter itself.
+This means you can nest bool filters inside other bool filters, giving you the ability to make arbitrarily complex Boolean logic.
+Because the term and the bool are sibling clauses inside the first Boolean should, at least one of these filters must match for a document to be a hit.
+These two term clauses are siblings in a must clause, so they both have to match for a document to be returned as a hit.
+The results show us two documents, one matching each of the should clauses:
+This was a simple example, but it demonstrates how Boolean filters can be used as building blocks to construct complex logical conditions.
+The term filter is useful for finding a single value, but often you'll want to search for multiple values.
+What if you want to find documents that have a price of $20 or $30?
+Rather than using multiple term filters, you can instead use a single terms filter (note the s at the end).
+The terms filter is simply the plural version of the singular term filter.
+It looks nearly identical to a vanilla term too.
+Instead of specifying a single price, we are now specifying an array of values
+And like the term filter, we will place it inside a filtered query to use it
+The terms filter as seen previously, but placed inside the filtered query
+The query will return the second, third, and fourth documents
+It is important to understand that term and terms are contains operations, not equals. What does that mean?
+If you have a term filter for { "term" : { "tags" : "search" } }, it will match both of the following documents:
+Recall how the term filter works: it checks the inverted index for all documents that contain a term, and then constructs a bitset.
+When a term filter is executed for the token search, it goes straight to the corresponding entry in the inverted index and extracts the associated doc IDs.
+As you can see, both document 1 and document 2 contain the token in the inverted index.
+Therefore, they are both returned as a result.
+The nature of an inverted index also means that entire field equality is rather difficult to calculate.
+How would you determine whether a particular document contains only your request term?
+You would have to find the term in the inverted index, extract the document IDs, and then scan every row in the inverted index, 
+looking for those IDs to see whether a doc has any other terms.
+As you might imagine, that would be tremendously inefficient and expensive.
+For that reason, term and terms are must contain operations, not must equal exactly.
+If you do want that behavior entire field equality the best way to accomplish it involves indexing a secondary field.
+In this field, you index the number of values that your field contains
+Using our two previous documents, we now include a field that maintains the number of tags
+Once you have the count information indexed, you can construct a bool filter that enforces the appropriate number of terms
+This query will now match only the document that has a single tag that is search, rather than any document that contains search
+When dealing with numbers in this chapter, we have so far searched for only exact numbers.
+In practice, filtering on ranges is often more useful.
+For example, you might want to find all products with a price greater than $20 and less than $40
+In SQL terms, a range can be expressed as follows:
+SELECT document FROM products WHERE price BETWEEN 20 AND 40
+Elasticsearch has a range filter, which, unsurprisingly, allows you to filter ranges
+{"range":{"price":{"gt":20,"lt":40}}}
+The range filter supports both inclusive and exclusive ranges, through combinations of the following options:
+gt: > greater than lt: < less than gte: >= greater than or equal to lte: <= less than or equal to
+If you need an unbounded range (for example, just >20), omit one of the boundaries:
+The range filter can be used on date fields too:
+When used on date fields, the range filter supports date math operations.
+For example, if we want to find all documents that have a timestamp sometime in the last hour
+{"range":{"timestamp":{"gt":"now-1h"}}}
+This filter will now constantly find all documents with a timestamp greater than the current time minus 1 hour, making the filter a sliding window across your documents
+Date math can also be applied to actual dates, rather than a placeholder like now.
+Just add a double pipe (||) after the date and follow it with a date math expression
+{"query":{"filtered":{"range":{"timestamp":{"gt":"2014-01-01 00:00:00","lt":"2014-01-01 00:00:00||+1M"}}}}}
+Date math is calendar aware, so it knows the number of days in each month, days in a year, and so forth.
+More details about working with dates can be found in the date format reference documentation.
+The range filter can also operate on string fields. String ranges are calculated lexicographically or alphabetically.
+For example, these values are sorted in lexicographic order: 5, 50, 6, B, C, a, ab, abb, abc, b
+Terms in the inverted index are sorted in lexicographical order, which is why string ranges use this order.
+Numeric and date fields are indexed in such a way that ranges are efficient to calculate.
+This is not the case for string fields, however.
+To perform a range on a string field, Elasticsearch is effectively performing a term filter for every term that falls in the range. 
+This is much slower than a date or numeric range.
+String ranges are fine on a field with low cardinality - a small number of unique terms.
+But the more unique terms you have, the slower the string range will be.
+Think back to our earlier example, where documents have a field named tags.
+This is a multivalue field. A document may have one tag, many tags, or potentially no tags at all.
+If a field has no values, how is it stored in an inverted index?
+That's a trick question, because the answer is, it isn't stored at all.
+Let's look at that inverted index from the previous section:
+How would you store a field that doesn't exist in that data structure? You can't! An inverted index is simply a list of tokens and the documents that contain them. 
+If a field doesn't exist, it doesn't hold any tokens, which means it won't be represented in an inverted index data structure.
+Ultimately, this means that a null, [] (an empty array), and [null] are all equivalent. 
+They simply don't exist in the inverted index!
+Obviously, the world is not simple, and data is often missing fields, or contains explicit nulls or empty arrays.
+To deal with these situations, Elasticsearch has a few tools to work with null or missing values.
+The first tool in your arsenal is the exists filter. This filter will return documents that have any value in the specified field.
+Our objective is to find all documents where a tag is set. 
+We don't care what the tag is, so long as it exists within the document. 
+In Elasticsearch, we use the exists filter: {"query":{"filtered":{"filter":{"exists":{"field":"tags"}}}}}
+The results are easy to understand. Any document that has terms in the tags field was returned as a hit. 
+The only two documents that were excluded were documents 3 and 4.
+The missing filter is essentially the inverse of exists: it returns documents where there is no value for a particular field, much like this SQL
+Let's swap the exists filter for a missing filter from our previous example:{"query":{"filtered":{"filter":{"missing":{"field":"tags"}}}}}
+Sometimes you need to be able to distinguish between a field that doesn't have a value, and a field that has been explicitly set to null.
+With the default behavior that we saw previously, this is impossible; the data is lost.
+Luckily, there is an option that we can set that replaces explicit null values with a placeholder value of our choosing.
+When specifying the mapping for a string, numeric, Boolean, or date field, you can also set a null_value that will be used whenever an explicit null value is encountered.
+A field without a value will still be excluded from the inverted index.
+When choosing a suitable null_value, ensure the following
+It matches the field's type. You can't use a string null_value in a field of type date
+It is different from the normal values that the field may contain, to avoid confusing real values with null values.
+The exists and missing filters also work on inner objects, not just core types.
+With the following document: {"name" : { "first" : "John", "last" :  "Smith" }}
+you can check for the existence of name.first and name.last but also just name
+However, in Types and Mappings, we said that an object like the preceding one is flattened internally into a simple field-value structure, much like this
+So how can we use an exists or missing filter on the name field, which doesn't really exist in the inverted index?
+Earlier in this chapter (Internal Filter Operation), we briefly discussed how filters are calculated.
+At their heart is a bitset representing which documents match the filter.
+Elasticsearch aggressively caches these bitsets for later use.
+Once cached, these bitsets can be reused wherever the same filter is used, without having to reevaluate the entire filter again.
+These cached bitsets are smart: they are updated incrementally. 
+As you index new documents, only those new documents need to be added to the existing bitsets, rather than having to recompute the entire cached filter over and over.
+Filters are real-time like the rest of the system; you don't need to worry about cache expiry.
+Each filter is calculated and cached independently, regardless of where it is used.
+If two different queries use the same filter, the same filter bitset will be reused
+Likewise, if a single query uses the same filter in multiple places, only one bitset is calculated and then reused
+Let's look at this example query, which looks for emails that are either of the following
+Even though one of the inbox clauses is a must clause and the other is a must_not clause, the two clauses themselves are identical.
+This means that the bitset is calculated once for the first clause that is executed, and then the cached bitset is used for the other clause. 
+By the time this query is run a second time, the inbox filter is already cached and so both clauses will use the cached bitset.
+This ties in nicely with the composability of the query DSL.
+It is easy to move filters around, or reuse the same filter in multiple places within the same query.
+This isn't just convenient to the developer-it has direct performance benefits.
+Most leaf filters-those dealing directly with fields like the term filter-are cached, while compound filters, like the bool filter, are not.
+Leaf filters have to consult the inverted index on disk, so it makes sense to cache them.
+Compound filters, on the other hand, use fast bit logic to combine the bitsets resulting from their inner clauses, so it is efficient to recalculate them every time
+Certain leaf filters, however, are not cached by default, because it doesn't make sense to do so
+The results from script filters cannot be cached because the meaning of the script is opaque to Elasticsearch
+The geolocation filters, which we cover in more detail in Geolocation , are usually used to filter results based on the geolocation of a specific user.
+Since each user has a unique geolocation, it is unlikely that geo-filters will be reused, so it makes no sense to cache them.
+Date ranges that use the now function (for example "now-1h"), result in values accurate to the millisecond
+Every time the filter is run, now returns a new time. Older filters will never be reused, so caching is disabled by default.
+However, when using now with rounding (for example, now/d rounds to the nearest day), caching is enabled by default.
+Sometimes the default caching strategy is not correct. Perhaps you have a complicated bool expression that is reused several times in the same query.
+Or you have a filter on a date field that will never be reused
+The default caching strategy can be overridden on almost any filter by setting the _cache flag:
+{"range":{"timestamp":{"gt":"2014-01-02 16:15:14"},"_cache":false}}
+It is unlikely that we will reuse this exact timestamp.
+Disable caching of this filter.
+Later chapters provide examples of when it can make sense to override the default caching strategy
+The order of filters in a bool clause is important for performance
+More-specific filters should be placed before less-specific filters in order to exclude as many documents as possible, as early as possible
+If Clause A could match 10 million documents, and Clause B could match only 100 documents, then Clause B should be placed before Clause A.
+Cached filters are very fast, so they should be placed before filters that are not cacheable
+Imagine that we have an index that contains one month's worth of log events
+However, we're mostly interested only in log events from the previous hour
+{"query":{"filtered":{"filter":{"range":{"timestamp":{"gt":"now-1h"}}}}}}
+This filter is not cached because it uses the now function, the value of which changes every millisecond.
+We could make this much more efficient by combining it with a cached filter:
+we can exclude most of the month's data by adding a filter that uses a fixed point in time, such as midnight last night
+{"bool":{"must":[{"range":{"timestamp":{"gt":"now-1h/d"}}},{"range":{"timestamp":{"gt":"now-1h"}}}]}}
+This filter is cached because it uses now rounded to midnight
+This filter is not cached because it uses now without rounding.
+The now-1h/d clause rounds to the previous midnight and so excludes all documents created before today
+The resulting bitset is cached because now is used with rounding, which means that it is executed only once a day, when the value for midnight-last-night changes
+The now-1h clause isn't cached because now produces a time accurate to the nearest millisecond.
+However, thanks to the first filter, this second filter need only check documents that have been created since midnight.
+The order of these clauses is important. This approach works only because the since-midnight clause comes before the last-hour clause.
+If they were the other way around, then the last-hour clause would need to examine all documents in the index, instead of just documents created since midnight.
+Now that we have covered the simple case of searching for structured data, it is time to explore full-text search: 
+how to search within full-text fields in order to find the most relevant documents.
+The two most important aspects of full-text search are as follows:
+Relevance: The ability to rank results by how relevant they are to the given query, whether relevance is calculated using TF/IDF (see What Is Relevance?), proximity to a geolocation, fuzzy similarity, or some other algorithm
+Analysis: The process of converting a block of text into distinct, normalized tokens (see Analysis and Analyzers) in order to (a) create an inverted index and (b) query the inverted index.
+As soon as we talk about either relevance or analysis, we are in the territory of queries, rather than filters.
+While all queries perform some sort of relevance calculation, not all queries have an analysis phase.
+Besides specialized queries like the bool or function_score queries, which don't operate on text at all, textual queries can be broken down into two families:
+Term-based queries
+Queries like the term or fuzzy queries are low-level queries that have no analysis phase.
+They operate on a single term.
+A term query for the term Foo looks for that exact term in the inverted index and calculates the TF/IDF relevance _score for each document that contains the term.
+It is important to remember that the term query looks in the inverted index for the exact term only;
+it won't match any variants like foo or FOO.
+It doesn't matter how the term came to be in the index, just that it is.
+If you were to index ["Foo","Bar"] into an exact value not_analyzed field,
+or Foo Bar into an analyzed field with the whitespace analyzer
+both would result in having the two terms Foo and Bar in the inverted index.
+Full-text queries: Queries like the match or query_string queries are high-level queries that understand the mapping of a field:
+If you use them to query a date or integer field, they will treat the query string as a date or integer, respectively.
+If you query an exact value (not_analyzed) string field, they will treat the whole query string as a single term.
+But if you query a full-text (analyzed) field, they will first pass the query string through the appropriate analyzer to produce the list of terms to be queried
+Once the query has assembled a list of terms, it executes the appropriate low-level query for each of these terms, 
+and then combines their results to produce the final relevance score for each document.
+We will discuss this process in more detail in the following chapters
+You seldom need to use the term-based queries directly. 
+Usually you want to query full text, not individual terms, and this is easier to do with the high-level full-text queries (which end up using term-based queries internally).
+If you do find yourself wanting to use a query on an exact value not_analyzed field, think about whether you really want a query or a filter.
+Single-term queries usually represent binary yes/no questions and are almost always better expressed as a filter, so that they can benefit from filter caching:
+The match query is the go-to query-the first query that you should reach for whenever you need to query any field.
+It is a high-level full-text query, meaning that it knows how to deal with both full-text fields and exact-value fields.
+That said, the main use case for the match query is for full-text search.
+So let's take a look at how full-text search works with a simple example.
+Our first example explains what happens when we use the match query to search within a full-text field for a single word:
+{"query":{"match":{"desc":"search"}}}
+Elasticsearch executes the preceding match query as follows:
+Check the field type.
+The title field is a full-text (analyzed) string field, which means that the query string should be analyzed too.
+Analyze the query string.
+The query string QUICK! is passed through the standard analyzer, which results in the single term quick. 
+Because we have a just a single term, the match query can be executed as a single low-level term query
+Find matching docs
+The term query looks up quick in the inverted index and retrieves the list of documents that contain that term-in this case, documents 1, 2, and 3
+Score each doc.
+The term query calculates the relevance _score for each matching document
+by combining the term frequency (how often quick appears in the title field of each document)
+with the inverse document frequency (how often quick appears in the title field in all documents in the index), 
+and the length of each field (shorter fields are considered more relevant). See What Is Relevance?
+If we could search for only one word at a time, full-text search would be pretty inflexible
+Fortunately, the match query makes multiword queries just as simple
+The preceding query returns all four documents in the results list:
+Document 4 is the most relevant because it contains "brown" twice and "dog" once.
+Documents 2 and 3 both contain brown and dog once each, and the title field is the same length in both docs, so they have the same score.
+Document 1 matches even though it contains only brown, not dog
+Because the match query has to look for two terms-["brown","dog"]-internally it has to execute two term queries and combine their individual results into the overall result.
+To do this, it wraps the two term queries in a bool query, which we examine in detail in Combining Queries.
+The important thing to take away from this is that any document whose title field contains at least one of the specified terms will match the query. 
+The more terms that match, the more relevant the document.
+Matching any document that contains any of the query terms may result in a long tail of seemingly irrelevant results.
+It's a shotgun approach to search. 
+Perhaps we want to show only documents that contain all of the query terms.
+In other words, instead of brown OR dog, we want to return only documents that match brown AND dog
+The match query accepts an operator parameter that defaults to or
+You can change it to and to require that all specified terms must match:
+{"query":{"match":{"desc":{"query":"match query","operator":"and"}}}}
+This query would exclude document 1, which contains only one of the two terms.
+The choice between all and any is a bit too black-or-white. 
+What if the user specified five query terms, and a document contains only four of them?
+Setting operator to and would exclude this document.
+Sometimes that is exactly what you want, but for most full-text search use cases, you want to include documents that may be relevant but exclude those that are unlikely to be relevant.
+In other words, we need something in-between.
+The match query supports the minimum_should_match parameter, which allows you to specify the number of terms that must match for a document to be considered relevant.
+While you can specify an absolute number of terms, it usually makes sense to specify a percentage instead, as you have no control over the number of words the user may enter:
+{"query":{"match":{"desc":{"query":"exactly what you want","minimum_should_match":"75%"}}}}
+When specified as a percentage, minimum_should_match does the right thing: in the preceding example with three terms, 75% would be rounded down to 66.6%, or two out of the three terms.
+No matter what you set it to, at least one term must match for a document to be considered a match.
+The minimum_should_match parameter is flexible, and different rules can be applied depending on the number of terms the user enters.
+To fully understand how the match query handles multiword queries, we need to look at how to combine multiple queries with the bool query.
+In Combining Filters we discussed how to , use the bool filter to combine multiple filter clauses with and, or, and not logic.
+In query land, the bool query does a similar job but with one important difference.
+Filters make a binary decision: should this document be included in the results list or not? Queries, however, are more subtle.
+They decide not only whether to include a document, but also how relevant that document is.
+Like the filter equivalent, the bool query accepts multiple query clauses under the must, must_not, and should parameters. 
+The results from the preceding query include any document whose title field contains the term quick, except for those that also contain lazy. 
+So far, this is pretty similar to how the bool filter works.
+The difference comes in with the two should clauses, which say that: a document is not required to contain either brown or dog, but if it does, then it should be considered more relevant:
+The bool query calculates the relevance _score for each document by adding together the _score from all of the matching must and should clauses, and then dividing by the total number of must and should clauses.
+The must_not clauses do not affect the score; their only purpose is to exclude documents that might otherwise have been included.
+All the must clauses must match, and all the must_not clauses must not match, but how many should clauses should match?
+By default, none of the should clauses are required to match, with one exception: if there are no must clauses, then at least one should clause must match.
+Just as we can control the precision of the match query, we can control how many should clauses need to match by using the minimum_should_match parameter, either as an absolute number or as a percentage:
+The results would include only documents whose title field contains "brown" AND "fox", "brown" AND "dog", or "fox" AND "dog".
+If a document contains all three, it would be considered more relevant than those that contain just two of the three.
+By now, you have probably realized that multiword match queries simply wrap the generated term queries in a bool query.
+With the default or operator, each term query is added as a should clause, so at least one clause must match.
+With the and operator, all the term queries are added as must clauses, so all clauses must match.
+Of course, we would normally write these types of queries by using the match query, but understanding how the match query works internally lets you take control of the process when you need to.
+Some things can’t be done with a single match query, such as give more weight to some query terms than to others. 
+Of course, the bool query isn’t restricted to combining simple one-word match queries. 
+It can combine any other query, including other bool queries.
+It is commonly used to fine-tune the relevance _score for each document by combining the scores from several distinct queries.
+Imagine that we want to search for documents about "full-text search," but we want to give more weight to documents that also mention "Elasticsearch" or "Lucene."
+By more weight, we mean that documents mentioning "Elasticsearch" or "Lucene" will receive a higher relevance _score than those that don’t, which means that they will appear higher in the list of results.
+A simple bool query allows us to write this fairly complex logic as follows:
+The content field must contain all of the words full, text, and search.
+If the content field also contains Elasticsearch or Lucene, the document will receive a higher _score.
+The more should clauses that match, the more relevant the document. So far, so good.
+But what if we want to give more weight to the docs that contain Lucene and even more weight to the docs containing Elasticsearch?
+We can control the relative weight of any query clause by specifying a boost value, which defaults to 1
+A boost value greater than 1 increases the relative weight of that clause. So we could rewrite the preceding query as follows:
+The boost parameter is used to increase the relative weight of a clause (with a boost greater than 1) or decrease the relative weight (with a boost between 0 and 1), but the increase or decrease is not linear.
+In other words, a boost of 2 does not result in double the _score.
+Instead, the new _score is normalized after the boost is applied.
+Each type of query has its own normalization algorithm, and the details are beyond the scope of this book.
+Suffice to say that a higher boost value results in a higher _score
+If you are implementing your own scoring model not based on TF/IDF and you need more control over the boosting process, you can use the function_score query to manipulate a document’s boost without the normalization step.
+We present other ways of combining queries in the next chapter, Multifield Search. But first, let’s take a look at the other important feature of queries: text analysis.
+Queries can find only terms that actually exist in the inverted index, so it is important to ensure that the same analysis process is applied both to the document at index time
+and to the query string at search time so that the terms in the query match the terms in the inverted index.
+Although we say document, analyzers are determined per field.
+Each field can have a different analyzer, either by configuring a specific analyzer for that field or by falling back on the type, index, or node defaults.
+At index time, a field’s value is analyzed by using the configured or default analyzer for that field.
+This means that, were we to run a low-level term query for the exact term fox, the english_title field would match but the title field would not.
+High-level queries like the match query understand field mappings and can apply the correct analyzer for each field being queried.
+The match query uses the appropriate analyzer for each field to ensure that it looks for each term in the correct format for that field
+While we can specify an analyzer at the field level, how do we determine which analyzer is used for a field if none is specified at the field level?
+Analyzers can be specified at several levels.
+Elasticsearch works through each level until it finds an analyzer that it can use.
+The _analyzer field allows you to specify a default analyzer for each document (for example, english, french, spanish) 
+while the analyzer parameter in the query specifies which analyzer to use on the query string.
+However, this is not the best way to handle multiple languages in a single index because of the pitfalls highlighted in Dealing with Human Language
+Occasionally, it makes sense to use a different analyzer at index and search time.
+for instance, at index time we may want to index synonyms (for example, for every occurrence of quick, we also index fast, rapid, and speedy).
+But at search time, we don’t need to search for all of these synonyms.
+Instead we can just look up the single word that the user has entered, be it quick, fast, rapid, or speedy.
+To enable this distinction, Elasticsearch also supports the index_analyzer and search_analyzer parameters, and analyzers named default_index and default_search.
+Taking these extra parameters into account, the full sequence at index time really looks like this
+The index_analyzer defined in the field mapping, else
+The analyzer defined in the field mapping, else
+The analyzer defined in the _analyzer field of the document, else
+The default index_analyzer for the type, which defaults to
+The default analyzer for the type, which defaults to
+The analyzer named default_index in the index settings, which defaults to
+The analyzer named default in the index settings, which defaults to
+The analyzer named default_index at node level, which defaults to
+The analyzer named default at node level, which defaults to
+The sheer number of places where you can specify an analyzer is quite overwhelming
+In practice, though, it is pretty simple.
+The first thing to remember is that, even though you may start out using Elasticsearch for a single purpose or a single application such as logging
+chances are that you will find more use cases and end up running several distinct applications on the same cluster.
+Each index needs to be independent and independently configurable.
+You don’t want to set defaults for one use case, only to have to override them for another use case later.
+This rules out configuring analyzers at the node level.
+Additionally, configuring analyzers at the node level requires changing the config file on every node and restarting every node, which becomes a maintenance nightmare.
+It’s a much better idea to keep Elasticsearch running and to manage settings only via the API.
+Most of the time, you will know what fields your documents will contain ahead of time
+The simplest approach is to set the analyzer for each full-text field when you create your index or add type mappings. 
+While this approach is slightly more verbose, it enables you to easily see which analyzer is being applied to each field.
+Typically, most of your string fields will be exact-value not_analyzed fields such as tags or enums, plus a handful of full-text fields that will use some default analyzer like standard or english or some other language
+Then you may have one or two fields that need custom analysis: perhaps the title field needs to be indexed in a way that supports find-as-you-type.
+You can set the default analyzer in the index to the analyzer you want to use for almost all full-text fields, and just configure the specialized analyzer on the one or two fields that need it. 
+If, in your model, you need a different default analyzer per type, then use the type level analyzer setting instead.
+A common work flow for time based data like logging is to create a new index per day on the fly by just indexing into it.
+While this work flow prevents you from creating your index up front, you can still use index templates to specify the settings and mappings that a new index should have.
+Before we move on to discussing more-complex queries in Multifield Search, let’s make a quick detour to explain why we created our test index with just one primary shard.
+Every now and again a new user opens an issue claiming that sorting by relevance is broken and offering a short reproduction:
+the user indexes a few documents, runs a simple query, and finds apparently less-relevant results appearing above more-relevant results.
+To understand why this happens, let’s imagine that we create an index with two primary shards and we index ten documents, six of which contain the word foo
+It may happen that shard 1 contains three of the foo documents and shard 2 contains the other three. In other words, our documents are well distributed.
+In What Is Relevance?, we described the default similarity algorithm used in Elasticsearch, called term frequency / inverse document frequency or TF/IDF.
+Term frequency counts the number of times a term appears within the field we are querying in the current document.
+The more times it appears, the more relevant is this document.
+The inverse document frequency takes into account how often a term appears as a percentage of all the documents in the index.
+The more frequently the term appears, the less weight it has.
+However, for performance reasons, Elasticsearch doesn’t calculate the IDF across all documents in the index.
+Instead, each shard calculates a local IDF for the documents contained in that shard
+Because our documents are well distributed, the IDF for both shards will be the same. 
+Now imagine instead that five of the foo documents are on shard 1, and the sixth document is on shard 2
+In this scenario, the term foo is very common on one shard (and so of little importance), but rare on the other shard (and so much more important).
+These differences in IDF can produce incorrect results.
+In practice, this is not a problem. The differences between local and global IDF diminish the more documents that you add to the index.
+With real-world volumes of data, the local IDFs soon even out.
+The problem is not that relevance is broken but that there is too little data.
+For testing purposes, there are two ways we can work around this issue.
+The first is to create an index with one primary shard, as we did in the section introducing the match query.
+If you have only one shard, then the local IDF is the global IDF.
+The second workaround is to add ?search_type=dfs_query_then_fetch to your search requests.
+The dfs stands for Distributed Frequency Search, and it tells Elasticsearch to first retrieve the local IDF from each shard in order to calculate the global IDF across the whole index.
+Don’t use dfs_query_then_fetch in production.
+It really isn’t required. Just having enough data will ensure that your term frequencies are well distributed.
+There is no reason to add this extra DFS step to every query that you run.
+Queries are seldom simple one-clause match queries. 
+We frequently need to search for the same or different query strings in one or more fields, 
+which means that we need to be able to combine multiple query clauses and their relevance scores in a way that makes sense.
+Perhaps we’re looking for a book called War and Peace by an author called Leo Tolstoy.
+Perhaps we’re searching the Elasticsearch documentation for “minimum should match,” which might be in the title or the body of a page. 
+Or perhaps we’re searching for users with first name John and last name Smith.
+In this chapter, we present the available tools for constructing multiclause searches and how to figure out which solution you should apply to your particular use case
+The simplest multifield query to deal with is the one where we can map search terms to specific fields.
+If we know that War and Peace is the title, and Leo Tolstoy is the author, it is easy to write each of these conditions as a match clause and to combine them with a bool query:
+The bool query takes a more-matches-is-better approach, so the score from each match clause will be added together to provide the final _score for each document.
+Documents that match both clauses will score higher than documents that match just one clause.
+Of course, you’re not restricted to using just match clauses: the bool query can wrap any other query type, including other bool queries. 
+We could add a clause to specify that we prefer to see versions of the book that have been translated by specific translators:
+Why did we put the translator clauses inside a separate bool query? 
+All four match queries are should clauses, so why didn’t we just put the translator clauses at the same level as the title and author clauses?
+The answer lies in how the score is calculated.
+The bool query runs each match query, adds their scores together, then multiplies by the number of matching clauses, and divides by the total number of clauses. 
+Each clause at the same level has the same weight.
+In the preceding query, the bool query containing the translator clauses counts for one-third of the total score.
+If we had put the translator clauses at the same level as title and author, they would have reduced the contribution of the title and author clauses to one-quarter each.
+It is likely that an even one-third split between clauses is not what we need for the preceding query.
+Probably we’re more interested in the title and author clauses then we are in the translator clauses. 
+We need to tune the query to make the title and author clauses relatively more important.
+The simplest weapon in our tuning arsenal is the boost parameter. To increase the weight of the title and author fields, give them a boost value higher than 1:
+The “best” value for the boost parameter is most easily determined by trial and error: set a boost value, run test queries, repeat. 
+A reasonable range for boost lies between 1 and 10, maybe 15. Boosts higher than that have little more impact because scores are normalized.
+The bool query is the mainstay of multiclause queries. It works well for many cases, especially when you are able to map different query strings to individual fields.
+The problem is that, these days, users expect to be able to type all of their search terms into a single field, and expect that the application will figure out how to give them the right results.
+It is ironic that the multifield search form is known as Advanced Search—it may appear advanced to the user, but it is much simpler to implement.
+There is no simple one-size-fits-all approach to multiword, multifield queries.
+To get the best results, you have to know your data and know how to use the appropriate tools.
+When your only user input is a single query string, you will encounter three scenarios frequently:
+When searching for words that represent a concept, such as “brown fox,” the words mean more together than they do individually. 
+Fields like the title and body, while related, can be considered to be in competition with each other.
+Documents should have as many words as possible in the same field, and the score should come from the best-matching field.
+A common technique for fine-tuning relevance is to index the same data into multiple fields, each with its own analysis chain.
+The main field may contain words in their stemmed form, synonyms, and words stripped of their diacritics, or accents. It is used to match as many documents as possible.
+The same text could then be indexed in other fields to provide more-precise matching.
+One field may contain the unstemmed version, another the original word with accents, and a third might use shingles to provide information about word proximity.
+These other fields act as signals to increase the relevance score of each matching document. The more fields that match, the better.
+For some entities, the identifying information is spread across multiple fields, each of which contains just a part of the whole:
+In this case, we want to find as many words as possible in any of the listed fields. 
+We need to search across multiple fields as if they were one big field.
+All of these are multiword, multifield queries, but each requires a different strategy. 
+We will examine each strategy in turn in the rest of this chapter.
+Imagine that we have a website that allows users to search blog posts, such as these two documents:
+The user types in the words “Brown fox” and clicks Search. 
+We don’t know ahead of time if the user’s search terms will be found in the title or the body field of the post, but it is likely that the user is searching for related words.
+To our eyes, document 2 appears to be the better match, as it contains both words that we are looking for.
+Document 1 contains the word brown in both fields, so both match clauses are successful and have a score.
+Document 2 contains both brown and fox in the body field but neither word in the title field. 
+The high score from the body query is added to the zero score from the title query, and multiplied by one-half, resulting in a lower overall score than for document 1.
+In this example, the title and body fields are competing with each other. We want to find the single best-matching field.
+What if, instead of combining the scores from each field, we used the score from the best-matching field as the overall score for the query?
+This would give preference to a single field that contains both of the words we are looking for, rather than the same word repeated in different fields.
+Instead of the bool query, we can use the dis_max or Disjunction Max Query. 
+Disjunction means or (while conjunction means and) so the Disjunction Max Query simply means return documents that match any of these queries, and return the score of the best matching query:
+What would happen if the user had searched instead for “quick pets”? 
+Both documents contain the word quick, but only document 2 contains the word pets.
+Neither document contains both words in the same field
+A simple dis_max query like the following would choose the single best matching field, and ignore the other:
+We would probably expect documents that match on both the title field and the body field to rank higher than documents that match on just one field, but this isn’t the case.
+Remember: the dis_max query simply uses the _score from the single best-matching clause.
+It is possible, however, to also take the _score from the other matching clauses into account, by specifying the tie_breaker parameter
+The tie_breaker parameter makes the dis_max query behave more like a halfway house between dis_max and bool
+It changes the score calculation as follows:
+Take the _score of the best-matching clause.
+Multiply the score of each of the other matching clauses by the tie_breaker.
+Add them all together and normalize
+With the tie_breaker, all matching clauses count, but the best-matching clause counts most.
+The tie_breaker can be a floating-point value between 0 and 1, where 0 uses just the best-matching clause and 1 counts all matching clauses equally. 
+The exact value can be tuned based on your data and queries, but a reasonable value should be close to zero, (for example, 0.1 - 0.4), in order not to overwhelm the best-matching nature of dis_max.
+The multi_match query provides a convenient shorthand way of running the same query against multiple fields.
+There are several types of multi_match query, three of which just happen to coincide with the three scenarios that we listed in Know Your Data: best_fields, most_fields, and cross_fields.
+By default, this query runs as type best_fields, which means that it generates a match query for each field and wraps them in a dis_max query. This dis_max query
+Field names can be specified with wildcards: any field that matches the wildcard pattern will be included in the search.
+You could match on the book_title, chapter_title, and section_title fields, with the following:
+Individual fields can be boosted by using the caret (^) syntax: just add ^boost after the field name, where boost is a floating-point number:
+The chapter_title field has a boost of 2, while the book_title and section_title fields have a default boost of 1.
+Full-text search is a battle between recall—returning all the documents that are relevant—and precision—not returning irrelevant documents.
+The goal is to present the user with the most relevant documents on the first page of results.
+To improve recall, we cast the net wide—we include not only documents that match the user’s search terms exactly, but also documents that we believe to be pertinent to the query.
+If a user searches for “quick brown fox,” a document that contains fast foxes may well be a reasonable result to return
+If the only pertinent document that we have is the one containing fast foxes, it will appear at the top of the results list.
+But of course, if we have 100 documents that contain the words quick brown fox, then the fast foxes document may be considered less relevant
+and we would want to push it further down the list
+After including many potential matches, we need to ensure that the best ones rise to the top
+A common technique for fine-tuning full-text relevance is to index the same text in multiple ways, each of which provides a different relevance signal.
+The main field would contain terms in their broadest-matching form to match as many documents as possible. 
+For instance, we could do the following:
+Use a stemmer to index jumps, jumping, and jumped as their root form: jump.
+Then it doesn’t matter if the user searches for jumped; we could still match documents containing jumping.
+Include synonyms like jump, leap, and hop.
+Remove diacritics, or accents: for example, ésta, está, and esta would all be indexed without accents as esta
+However, if we have two documents, one of which contains jumped and the other jumping, the user would probably expect the first document to rank higher, as it contains exactly what was typed in
+We can achieve this by indexing the same text in other fields to provide more-precise matching.
+One field may contain the unstemmed version, another the original word with diacritics, and a third might use shingles to provide information about word proximity.
+These other fields act as signals that increase the relevance score of each matching document. The more fields that match, the better.
+A document is included in the results list if it matches the broad-matching main field.
+If it also matches the signal fields, it gets extra points and is pushed up the results list.
+We discuss synonyms, word proximity, partial-matching and other potential signals later in the book, but we will use the simple example of stemmed and unstemmed fields to illustrate this technique.
+The first thing to do is to set up our field to be indexed twice: once in a stemmed form and once in an unstemmed form.
+To do this, we will use multifields, which we introduced in String Sorting and Multifields:
+This becomes a query for the two stemmed terms jump and rabbit, thanks to the english analyzer.
+The title field of both documents contains both of those terms, so both documents receive the same score
+If we were to query just the title.std field, then only document 2 would match.
+However, if we were to query both fields and to combine their scores by using the bool query, then both documents would match (thanks to the title field) and document 2 would score higher (thanks to the title.std field)
+We want to combine the scores from all matching fields, so we use the most_fields type. 
+This causes the multi_match query to wrap the two field-clauses in a bool query instead of a dis_max query.
+We are using the broad-matching title field to include as many documents as possible—to increase recall—but we use the title.std field as a signal to push the most relevant results to the top.
+The contribution of each field to the final score can be controlled by specifying custom boost values. 
+For instance, we could boost the title field to make it the most important field, thus reducing the effect of any other signal fields:
+Now we come to a common pattern: cross-fields entity search
+With entities like person, product, or address, the identifying information is spread across several fields. 

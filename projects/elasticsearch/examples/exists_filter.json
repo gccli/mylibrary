@@ -1,0 +1,9 @@
+{
+    "query" : {
+        "filtered" : {
+            "filter" : {
+                "exists" : { "field" : "virustotal" }
+            }
+        }
+    }
+}

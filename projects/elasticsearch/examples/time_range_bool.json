@@ -1,0 +1,17 @@
+{
+    "size": 1,
+    "fields": ["virustotal", "tsapi.received"],
+    "query" : {
+	"filtered" : {
+            "filter" : {
+		"bool" : {
+		    "must" : [
+			{ "term" : {"virustotal" : 1}}, 
+			{ "range" : {"tsapi.received" : {"gt" : 1111} }}
+		    ]
+		}
+            }
+	}
+    }
+}
+

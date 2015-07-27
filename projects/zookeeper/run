@@ -1,0 +1,24 @@
+#! /bin/bash
+
+IMAGE="lijing/zookeeper"
+
+function zookeeper_run() {
+    local index=$1
+    local ip=$2
+    local name="zk$1"
+    local opt="-p 2181:2181 -p 2888:2888 -p 3888:3888"
+    echo "docker run --name $name $opt -v /opt/zookeeper/$index $IMAGE"
+    docker run --name $name $opt -v /opt/zookeeper/$index $IMAGE
+    status=$?
+    if [ $status -ne 0 ]; then
+	echo -e "\033[32mContainer $name already exists\033[0m"
+	docker start $name
+    fi
+}
+
+#docker stop zk0 zk1 zk2 2>/dev/null
+zookeeper_run 0
+#zookeeper_run 1 172.17.42.3
+#zookeeper_run 2 172.17.42.4
+
+sleep 1 && docker.io ps

@@ -1,0 +1,22 @@
+{
+"query": {
+ "filtered" : {
+   "query" : { "match_all" : {} },
+   "filter" : {
+    "nested": {
+    "path": "schedule",
+    "query": {
+     
+      "bool": {
+        "must": [
+	  { "range" : {"schedule.begin" : {"lte" : "09:15:00"}} },
+	  { "range" : {"schedule.end" : {"gte" : "10:15:00"}} }
+        ]
+      }
+      }
+   }
+  }
+ }
+}
+
+}

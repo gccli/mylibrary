@@ -1,0 +1,45 @@
+1. PAM definition
+   Linux-PAM (Pluggable Authentication Modules for Linux) is a suite of shared libraries that enable the local system administrator to choose how applications authenticate users.
+   To separate the development of privilege granting software from the development of secure and appropriate authentication schemes. 
+   This PAM library is configured locally with a system file, /etc/pam.d.
+
+   Linux-PAM deals with four separate types of (management) task: /authentication management/; /account management/; /session management/; and /password management/. 
+
+2. configuration syntax
+   /etc/pam.d/service
+   type control module-path module-arguments
+   
+   type is the management group 
+   % account: non-authentication based account management. restrict/permit access to a service based on the time of day, currently available system resources, etc
+   % auth: it establishes that the user is who they claim to be, by instructing the application to prompt the user for a password or other means of identification
+     the module can grant group membership or other privileges through its credential granting properties.
+   % password:  updating the authentication token associated with the user. each 'challenge/response' based authentication (auth) type
+   % session: opening/closing of some data exchange with a user, mounting directories, etc.
+
+   control indicates the behavior of the PAM-API should the module fail to succeed in its authentication task. 
+   keyword
+   % required: failure of such a PAM will ultimately lead to the PAM-API returning failure but only after the remaining stacked modules (for this service and type) have been invoked.
+   % requisite: like required, however, in the case that such a module returns a failure, control is directly returned to the application or to the superior PAM stack. The return value is that associated with the first required or requisite module to fail.
+   % sufficient: if such a module succeeds and no prior required module has failed the PAM framework returns success to the application or to the superior PAM stack immediately without calling any further modules in the stack. A failure of a sufficient module is ignored and processing of the PAM module stack continues unaffected.
+   % optional: the success or failure of this module is only important if it is the only module in the stack associated with this service+type
+   % include: include all lines of given type from the configuration file specified as an argument to this control.
+   % substack: his differs from include in that evaluation of the done and die actions in a substack does not cause skipping the rest of the complete module stack, but only of the substack
+   
+   [value1=action1 value2=action2 ...]
+   valueN corresponds to the return code. default, implies 'all valueN's not mentioned explicitly
+   actionN 
+   % ignore return status will not contribute to the return code
+   % bad this action indicates that the return code should be thought of as indicative of the module failing.
+   % die equivalent to bad with the side effect of terminating the module stack and PAM immediately returning to the application
+   % ok this tells PAM that the administrator thinks this return code should contribute directly to the return code of the full stack of modules.
+   % done equivalent to ok with the side effect of terminating the module stack and PAM immediately returning to the application
+   
+
+   required
+   [success=ok new_authtok_reqd=ok ignore=ignore default=bad]
+   requisite
+   [success=ok new_authtok_reqd=ok ignore=ignore default=die]
+   sufficient
+   [success=done new_authtok_reqd=done default=ignore]
+   optional
+   [success=ok new_authtok_reqd=ok default=ignore]

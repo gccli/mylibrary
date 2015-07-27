@@ -1,0 +1,68 @@
+
+Test program
+
+# for ipv4
+# client 
+./i6udp -h 224.1.1.1 -c -4 -l 3 -d eth0 
+# server 
+./i6udp -mg 224.1.1.1 -d eth0 
+
+# for ipv6
+# server
+./i6udp -mg ff10::e100:1 -d eth0
+# client 
+./i6udp -h ff10::e100:1 -c -l 3 -d eth0 
+
+1. IPv6 address
+# /sbin/ip -6 addr show dev <interface>
+# /sbin/ifconfig <interface>
+# /sbin/ip -6 addr add <ipv6address>/<prefixlength> dev <interface> 
+# /sbin/ifconfig <interface> inet6 add <ipv6address>/<prefixlength>
+# /sbin/ip -6 addr del <ipv6address>/<prefixlength> dev <interface> 
+# /sbin/ifconfig <interface> inet6 del <ipv6address>/<prefixlength>
+
+e.g.
+/sbin/ip -6 addr add 2001:0db8:0:f101::1/64 dev eth0 # i5
+/sbin/ip -6 addr add 2001:0db8:0:f101::a/64 dev eth0 # ubuntu-i7
+
+2. Route
+2.1 show
+# /sbin/ip -6 route show [dev <device>]
+# /sbin/route -A inet6 
+2.2 add route
+# /sbin/ip -6 route add <ipv6network>/<prefixlength> via <ipv6address> [dev <device>]
+# /sbin/route -A inet6 add <ipv6network>/<prefixlength> gw [dev <device>]
+2.3 romove 
+# /sbin/ip -6 route del <ipv6network>/<prefixlength> via <ipv6address> [dev <device>]
+# /sbin/route -A inet6 del <network>/<prefixlength> gw <ipv6address> [dev <device>]
+
+3. Neighbor
+Neighbor discovery was the IPv6 successor for the ARP (Address Resolution Protocol) in IPv4.
+You can retrieve information about the current neighbors, in addition you can set and delete entries. The kernel keeps tracking of successful neighbor detection (like ARP in IPv4).
+
+# ip -6 neigh show [dev <device>]
+# ip -6 neigh add <IPv6 address> lladdr <link-layer address> dev <device>
+# ip -6 neigh del <IPv6 address> lladdr <link-layer address> dev <device>
+# tcpdump icmp6
+
+
+# Multicast
+ff10::225.0.0.1 <=> ff10::e100:1
+
+
+
+
+Resources
+
+http://en.wikipedia.org/wiki/IPv6
+http://tldp.org/HOWTO/Linux+IPv6-HOWTO/index.html
+
+Internet Protocol, Version 6 (IPv6) Specification
+  http://tools.ietf.org/html/rfc2460
+ICMPv6
+  http://tools.ietf.org/html/rfc2463
+Internet Protocol Version 6 (IPv6) Addressing Architecture
+  http://tools.ietf.org/html/rfc3513
+Special-Use IPv6 Addresses
+  http://tools.ietf.org/html/rfc5156
+

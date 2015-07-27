@@ -1,0 +1,9 @@
+{
+    "query" : {
+        "filtered" : {
+            "filter" : {
+                "missing" : { "field" : "virustotal" }
+            }
+        }
+    }
+}

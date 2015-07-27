@@ -1,0 +1,6 @@
+#! /bin/bash
+
+cat records.txt | awk '
+{
+  printf("samba-tool dns add samba4 inetlinux.net %s %s %s\n", $1, $3, $4)
+}'

@@ -1,0 +1,6 @@
+#! /bin/bash
+
+docker.io build -t lijing/zookeeper .
+echo 
+docker.io images
+

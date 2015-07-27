@@ -1,0 +1,41 @@
+{
+  "name": {
+    "type": "string",
+    "index" : "not_analyzed"
+  },
+  "cartype" : {
+    "type" : "integer"
+  },
+  "city": {
+    "type": "string",
+    "index" : "not_analyzed"
+  },
+  "update": {
+    "type": "date"
+  },
+  "location" : {
+    "type" : "geo_point",
+    "lat_lon" : true,
+    "geohash_prefix":     true, 
+    "geohash_precision":  "100m"
+  },
+  "agenda": {
+    "type": "nested",
+    "properties": {
+      "start" : {"type": "date", "format": "HH:mm:SS"},
+      "end"  : {"type": "date", "format": "HH:mm:SS"},
+      "start_point" : {
+          "type" : "geo_point"
+      },
+      "end_point" : {
+          "type" : "geo_point"
+      }
+    }
+  },
+
+  "schedule":{"properties": {"slot":{"type": "integer"}}},
+  "busy": {"properties": {"slot":{"type": "integer"}}},
+  "desc": {
+    "type": "string"
+  }
+}

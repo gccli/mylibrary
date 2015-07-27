@@ -1,0 +1,383 @@
+{
+  "title": "Test",
+  "services": {
+    "query": {
+      "list": {
+        "0": {
+          "query": "*",
+          "alias": "received",
+          "color": "#7EB26D",
+          "id": 0,
+          "pin": true,
+          "type": "lucene",
+          "enable": true
+        },
+        "1": {
+          "id": 1,
+          "color": "#EAB839",
+          "alias": "scanned",
+          "pin": true,
+          "type": "lucene",
+          "enable": true,
+          "query": "scanned:*"
+        },
+        "2": {
+          "id": 2,
+          "color": "#6ED0E0",
+          "alias": "detected",
+          "pin": true,
+          "type": "lucene",
+          "enable": true,
+          "query": "score > 0"
+        },
+        "3": {
+          "id": 3,
+          "color": "#EF843C",
+          "alias": "",
+          "pin": false,
+          "type": "lucene",
+          "enable": true,
+          "query": "DR.score:10"
+        },
+        "4": {
+          "id": 4,
+          "color": "#E24D42",
+          "alias": "",
+          "pin": false,
+          "type": "lucene",
+          "enable": true,
+          "query": "DR.score:9"
+        },
+        "5": {
+          "id": 5,
+          "color": "#1F78C1",
+          "alias": "",
+          "pin": false,
+          "type": "lucene",
+          "enable": true,
+          "query": "Dr.score:7"
+        }
+      },
+      "ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "filter": {
+      "list": {},
+      "ids": []
+    }
+  },
+  "rows": [
+    {
+      "title": "Total count of received files, scanned files, detected files",
+      "height": "150px",
+      "editable": true,
+      "collapse": false,
+      "collapsable": true,
+      "panels": [
+        {
+          "error": false,
+          "span": 6,
+          "editable": true,
+          "type": "column",
+          "loadingEditor": false,
+          "panels": [
+            {
+              "type": "histogram",
+              "mode": "max",
+              "value_field": "DR.value",
+              "time_field": "timestamp",
+              "timezone": "browser",
+              "x-axis": true,
+              "y-axis": true,
+              "scale": 1,
+              "y_format": "none",
+              "grid": {
+                "max": null,
+                "min": 0
+              },
+              "queries": {
+                "mode": "selected",
+                "ids": [
+                  4,
+                  5
+                ]
+              },
+              "annotate": {
+                "enable": false,
+                "query": "*",
+                "size": 20,
+                "field": "_type",
+                "sort": [
+                  "_score",
+                  "desc"
+                ]
+              },
+              "auto_int": false,
+              "resolution": 100,
+              "interval": "12h",
+              "intervals": [
+                "auto",
+                "1s",
+                "1m",
+                "5m",
+                "10m",
+                "30m",
+                "1h",
+                "3h",
+                "12h",
+                "1d",
+                "1w",
+                "1y"
+              ],
+              "lines": false,
+              "fill": 0,
+              "linewidth": 3,
+              "points": true,
+              "pointradius": 5,
+              "bars": true,
+              "stack": true,
+              "spyable": true,
+              "zoomlinks": true,
+              "options": true,
+              "legend": true,
+              "show_query": true,
+              "interactive": true,
+              "legend_counts": true,
+              "percentage": false,
+              "zerofill": true,
+              "derivative": false,
+              "tooltip": {
+                "value_type": "individual",
+                "query_as_alias": true
+              }
+            },
+            {
+              "loading": false,
+              "error": false,
+              "sizeable": false,
+              "draggable": false,
+              "removable": false,
+              "span": 10,
+              "height": "150px",
+              "editable": true,
+              "type": "stats",
+              "format": "float",
+              "display_breakdown": "yes",
+              "label_name": "DR.score",
+              "field": "DR.value",
+              "queries": {
+                "mode": "selected",
+                "ids": [
+                  3,
+                  4,
+                  5
+                ]
+              },
+              "style": {
+                "font-size": "24pt"
+              },
+              "mode": "mean",
+              "sort_field": "",
+              "sort_reverse": false,
+              "value_name": "Value",
+              "spyable": true,
+              "show": {
+                "count": true,
+                "min": true,
+                "max": true,
+                "mean": true,
+                "std_deviation": true,
+                "sum_of_squares": true,
+                "total": true,
+                "variance": true
+              }
+            },
+            {
+              "loading": false,
+              "error": false,
+              "sizeable": false,
+              "draggable": false,
+              "removable": false,
+              "span": 10,
+              "height": "150px",
+              "editable": true,
+              "type": "filtering"
+            }
+          ],
+          "title": "column"
+        },
+        {
+          "span": 6,
+          "editable": true,
+          "type": "histogram",
+          "loadingEditor": false,
+          "mode": "count",
+          "time_field": "tsapi.received",
+          "value_field": null,
+          "x-axis": true,
+          "y-axis": true,
+          "scale": 1,
+          "y_format": "none",
+          "grid": {
+            "max": null,
+            "min": 0
+          },
+          "queries": {
+            "mode": "selected",
+            "ids": [
+              0,
+              1,
+              2
+            ]
+          },
+          "annotate": {
+            "enable": false,
+            "query": "*",
+            "size": 20,
+            "field": "_type",
+            "sort": [
+              "_score",
+              "desc"
+            ]
+          },
+          "auto_int": false,
+          "resolution": 100,
+          "interval": "3h",
+          "intervals": [
+            "auto",
+            "1s",
+            "1m",
+            "5m",
+            "10m",
+            "30m",
+            "1h",
+            "3h",
+            "12h",
+            "1d",
+            "1w",
+            "1y"
+          ],
+          "lines": true,
+          "fill": 0,
+          "linewidth": 3,
+          "points": false,
+          "pointradius": 5,
+          "bars": false,
+          "stack": false,
+          "spyable": true,
+          "zoomlinks": true,
+          "options": true,
+          "legend": true,
+          "show_query": true,
+          "interactive": true,
+          "legend_counts": true,
+          "timezone": "utc",
+          "percentage": false,
+          "zerofill": true,
+          "derivative": false,
+          "tooltip": {
+            "value_type": "cumulative",
+            "query_as_alias": true
+          },
+          "title": "File Statistics"
+        }
+      ],
+      "notice": true
+    }
+  ],
+  "editable": true,
+  "failover": false,
+  "index": {
+    "interval": "none",
+    "pattern": "[logstash-]YYYY.MM.DD",
+    "default": "result_*",
+    "warm_fields": true
+  },
+  "style": "light",
+  "panel_hints": true,
+  "pulldowns": [
+    {
+      "type": "query",
+      "collapse": false,
+      "notice": false,
+      "enable": true,
+      "query": "*",
+      "pinned": true,
+      "history": [
+        "DR.score:9",
+        "DR.score:10",
+        "score > 0",
+        "scanned:*",
+        "*",
+        "tsapi.product.name:tscope-api-end-to-end",
+        "tsapi.product.name:X-Product-Version",
+        "tsapi.product.name:wsg7.8",
+        "score:10",
+        "score:9"
+      ],
+      "remember": 10
+    },
+    {
+      "type": "filtering",
+      "collapse": false,
+      "notice": true,
+      "enable": true
+    }
+  ],
+  "nav": [
+    {
+      "type": "timepicker",
+      "collapse": false,
+      "notice": false,
+      "enable": true,
+      "status": "Stable",
+      "time_options": [
+        "5m",
+        "15m",
+        "1h",
+        "6h",
+        "12h",
+        "24h",
+        "2d",
+        "7d",
+        "30d"
+      ],
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "timefield": "tsapi.received",
+      "now": true,
+      "filter_id": 0
+    }
+  ],
+  "loader": {
+    "save_gist": false,
+    "save_elasticsearch": true,
+    "save_local": true,
+    "save_default": true,
+    "save_temp": true,
+    "save_temp_ttl_enable": true,
+    "save_temp_ttl": "30d",
+    "load_gist": false,
+    "load_elasticsearch": true,
+    "load_elasticsearch_size": 20,
+    "load_local": false,
+    "hide": false
+  },
+  "refresh": false
+}

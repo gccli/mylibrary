@@ -1,0 +1,366 @@
+
+* OpenLDAP Configuration
+** OpenLDAP Replication (weight: 3)
+Description: Candidates should be familiar with the server replication available with OpenLDAP.
+
+*** Key Knowledge Areas:
+    Replication concepts.
+    Configure OpenLDAP replication.
+    Analyze replication log files.
+    Understand replica hubs.
+    LDAP referrals.
+    LDAP sync replication.
+*** utilities:
+    master/slave server
+    multi-master replication
+    consumer
+    replica hub
+    one-shot mode
+    referral
+    syncrepl
+    pull-based/push-based synchronization
+    refreshOnly and refreshAndPersist
+    replog
+
+** Securing the Directory (weight: 3)
+Description: Candidates should be able to configure encrypted access to the LDAP directory, and restrict access at the firewall level.
+*** Key Knowledge Areas:
+    Securing the directory with SSL and TLS.
+    Firewall considerations.
+    Unauthenticated access methods.
+    User/password authentication methods.
+    Maintanence of SASL user DB.
+    Client/server certificates.
+*** utilities:
+    SSL/TLS
+    Security Strength Factors (SSF)
+    SASL
+    proxy authorization
+    StartTLS
+    iptables
+
+** OpenLDAP Server Performance Tuning (weight: 2)
+Description: Candidates should be capable of measuring the performance of an LDAP server, and tuning configuration directives
+** Key Knowledge Areas:
+   Measure OpenLDAP performance.
+   Tune software configuration to increase performance.
+   Understand indexes.
+** utilities:
+   index
+   DB_CONFIG
+
+* OpenLDAP as an Authentication Backend
+** LDAP Integration with PAM and NSS (weight: 2)
+Description: Candidates should be able to configure PAM and NSS to retrieve information from an LDAP directory.
+*** Key Knowledge Areas:
+Configure PAM to use LDAP for authentication.
+Configure NSS to retrieve information from LDAP.
+Configure PAM modules in various Unix environments.
+*** terms and utilities:
+PAM
+NSS
+/etc/pam.d/*
+/etc/nsswitch.conf
+
+** Integrating LDAP with Active Directory and Kerberos (weight: 2)
+Description: Candidates should be able to integrate LDAP with Active Directory Services.
+*** Key Knowledge Areas:
+Kerberos integration with LDAP.
+Cross platform authentication.
+Single sign-on concepts.
+Integration and compatibility limitations between OpenLDAP and Active Directory.
+*** terms and utilities:
+Kerberos
+Active Directory
+single sign-on
+DNS
+
+* Samba Basics
+** Samba Concepts and Architecture (weight: 2)
+Description: Candidates should understand the essential concepts of Samba. As well, the major differences between Samba3 and Samba4 should be known.
+*** Key Knowledge Areas:
+Understand the roles of the Samba daemons and components
+Understand key issues regarding heterogeneous networks
+Identify key TCP/UDP ports used with SMB/CIFS
+Knowledge of Samba3 and Samba4 differences
+*** terms and utilities:
+/etc/services
+Samba daemons: smbd, nmbd, samba, winbindd
+
+** Configure Samba (weight: 4)
+Description: Candidates should be able to configure the Samba daemons for a wide variety of purposes
+*** Key Knowledge Areas:
+Knowledge of Samba server configuration file structure
+Knowledge of Samba variables and configuration parameters
+Troubleshoot and debug configuration problems with Samba
+*** terms and utilities:
+smb.conf
+smb.conf parameters
+smb.conf variables
+testparm
+secrets.tdb
+
+** Regular Samba Maintenance (weight: 2)
+Description: Candidates should know about the various tools and utilities that are part of a Samba installation.
+*** Key Knowledge Areas:
+Monitor and interact with running Samba daemons
+Perform regular backups of Samba configuration and state data
+*** terms and utilities:
+smbcontrol
+smbstatus
+tdbbackup
+
+** Troubleshooting Samba (weight: 2)
+Description: Candidates should understand the structure of trivial database files and know how troubleshoot problems
+*** Key Knowledge Areas:
+Configure Samba logging
+Backup TDB files
+Restore TDB files
+Identify TDB file corruption
+Edit / list TDB file content
+*** terms and utilities:
+/var/log/samba/*
+log level
+debuglevel
+smbpasswd
+pdbedit
+secrets.tdb
+tdbbackup
+tdbdump
+tdbrestore
+tdbtool
+
+** Internationalization (weight: 1)
+Description: Candidates should be able to work with internationalization character codes and code pages
+*** Key Knowledge Areas:
+Understand internationalization character codes and code pages
+Understand the difference in the name space between Windows and Linux/Unix with respect to share, file and directory names in a non-English environment
+Understand the difference in the name space between Windows and Linux/Unix with respect to user and group naming in a non-English environment
+Understand the difference in the name space between Windows and Linux/Unix with respect to computer naming in a non-English environment
+*** terms and utilities:
+internationalization
+character codes
+code pages
+smb.conf
+dos charset, display charset and unix charset
+
+
+* Samba Share Configuration
+** File Services (weight: 4)
+Description: Candidates should be able to create and configure file shares in a mixed environment
+*** Key Knowledge Areas:
+Create and configure file sharing
+Plan file service migration
+Limit access to IPC$
+Create scripts for user and group handling of file shares
+Samba share access configuration parameters
+*** terms and utilities:
+smb.conf
+[homes]
+smbcquotas
+smbsh
+browseable, writeable, valid users, write list, read list, read only and guest ok
+IPC$
+mount, smbmount
+
+** Linux File System and Share/Service Permissions (weight: 3)
+Description: Candidates should understand file permissions on a Linux file system in a mixed environment
+*** Key Knowledge Areas:
+Knowledge of file / directory permission control
+Understand how Samba interacts with Linux file system permissions and ACLs
+Use Samba VFS to store Windows ACLs
+*** terms and utilities:
+smb.conf
+chmod, chown
+create mask, directory mask, force create mode, force directory mode
+smbcalcs
+getfacl, setfacl
+vfs_acl_xattr, vfs_acl_tdb and vfs objects
+
+** Print Services (weight: 2)
+Description: Candidates should be able to create and manage print shares in a mixed environment
+*** Key Knowledge Areas:
+Create and configure printer sharing
+Configure integration between Samba and CUPS
+Manage Windows print drivers and configure downloading of print drivers
+Configure [print$]
+Understand security concerns with printer sharing
+Uploading printer drivers for Point'n'Print driver installation using 'Add Print Driver Wizard' in Windows
+*** terms and utilities:
+smb.conf
+[print$]
+CUPS
+cupsd.conf
+/var/spool/samba
+smbspool
+rpcclient
+net
+
+
+* Samba User and Group Management
+** Managing User Accounts and Groups (weight: 4)
+Description: Candidates should be able to manage user and group accounts in a mixed environment
+*** Key Knowledge Areas:
+Manager user and group accounts
+Understand user and group mapping
+Knowledge of user account management tools
+Use of the smbpasswd program
+Force ownership of file and directory objects
+*** terms and utilities:
+pdbedit
+smb.conf
+samba-tool user (with subcommands)
+samba-tool group (with subcommands)
+smbpasswd
+/etc/passwd
+/etc/group
+force user, force group
+idmap
+
+** Authentication, Authorization and Winbind (weight: 5)
+Description: Candidates should understand the various authentication mechanisms and configure access control. Candidates should be able to install and configure the Winbind service.
+*** Key Knowledge Areas:
+Setup a local password database
+Perform password synchronization
+Knowledge of different passdb backends
+Convert between Samba passdb backends
+Integrate Samba with LDAP
+Configure Winbind service
+Configure PAM and NSS
+*** terms and utilities:
+smb.conf
+smbpasswd, tdbsam, ldapsam
+passdb backend
+libnss_winbind
+libpam_winbind
+libpam_smbpass
+wbinfo
+getent
+SID and foreign SID
+/etc/passwd
+/etc/group
+
+
+* Samba Domain Integration
+** Samba as a PDC and BDC (weight: 3)
+Weight 3
+Description: Candidates should be able to setup and maintain primary and backup domain controllers. Candidates should be able to manage Windows/Linux client access to the NT-Style domains.
+*** Key Knowledge Areas:
+Understand and configure domain membership and trust relationships
+Create and maintain a primary domain controller with Samba3 and Samba4
+Create and maintain a backup domain controller with Samba3 and Samba4
+Add computers to an existing domain
+Configure logon scripts
+Configure roaming profiles
+Configure system policies
+*** terms and utilities:
+smb.conf
+security mode
+server role
+domain logons
+domain master
+logon script
+logon path
+NTConfig.pol
+net
+profiles
+add machine script
+profile acls
+
+** Samba4 as an AD compatible Domain Controller (weight: 3)
+Description: Candidates should be able to configure Samba 4 as an AD Domain Controller
+*** Key Knowledge Areas:
+Configure and test Samba 4 as an AD DC
+Using smbclient to confirm AD operation
+Understand how Samba integrates with AD services; DNS, Kerberos, NTP, LDAP
+*** terms and utilities:
+smb.conf
+server role
+samba-tool domain (with subcommands)
+samba
+
+** Configure Samba as a Domain Member Server (weight: 3)
+Description: Candidates should be able to integrate Linux servers into an environment where Active Directory is present
+*** Key Knowledge Areas:
+Joining Samba to an existing NT4 domain
+Joining Samba to an existing AD domain
+Ability to obtain a TGT from a KDC
+*** terms and utilities:
+smb.conf
+server role
+server security
+net command
+kinit, TGT and REALM
+
+
+* Samba Name Services
+** NetBIOS and WINS (weight: 3)
+Description: Candidates should be familiar with NetBIOS/WINS concepts and understand network browsing
+*** Key Knowledge Areas:
+Understand WINS concepts
+Understand NetBIOS concepts
+Understand the role of a local master browser
+Understand the role of a domain master browser
+Understand the role of Samba as a WINS server
+Understand name resolution
+Configure Samba as a WINS server
+Configure WINS replication
+Understand NetBIOS browsing and browser elections
+Understand NETBIOS name types
+*** terms and utilities:
+smb.conf
+nmblookup
+smbclient
+name resolve order
+lmhosts
+wins support, wins server, wins proxy, dns proxy
+domain master, os level, preferred master
+
+** Active Directory Name Resolution (weight: 2)
+Description: Candidates should be familiar with the internal DNS server with Samba4.
+*** Key Knowledge Areas:
+Understand and manage DNS for Samba4 as an AD Domain Controller
+DNS forwarding with the internal DNS sever of Samba4
+*** terms and utilities:
+samba-tool dns (with subcommands)
+smb.conf
+dns forwarder
+/etc/resolv.conf
+dig, host
+
+
+* Working with Linux and Windows Clients
+** CIFS Integration (weight: 3)
+Description: Candidates should be comfortable working with CIFS in a mixed environment
+*** Key Knowledge Areas:
+Understand SMB/CIFS concepts
+Access and mount remote CIFS shares from a Linux client
+Securely storing CIFS credentials
+Understand features and benefits of CIFS
+Understand permissions and file ownership of remote CIFS shares
+*** terms and utilities:
+SMB/CIFS
+mount, mount.cifs
+smbclient
+smbget
+smbtar
+smbtree
+findsmb
+smb.conf
+smbcquotas
+/etc/fstab
+
+** Working with Windows Clients (weight: 2)
+Description: Clients should be able to interact with remote Windows clients, and configure Windows workstations to access file and print services from Linux servers
+*** Key Knowledge Areas:
+Knowledge of Windows clients
+Explore browse lists and SMB clients from Windows
+Share file / print resources from Windows
+Use of the smbclient program
+Use of the Windows net utility
+*** terms and utilities:
+Windows net command
+smbclient
+control panel
+rdesktop
+workgroup

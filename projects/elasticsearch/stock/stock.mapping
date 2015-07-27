@@ -1,0 +1,31 @@
+{
+
+  "symbol": {
+    "type": "string",
+    "analyzer": "standard"
+  },
+  "date" : {
+    "type": "date"
+  },
+  "open" : {
+    "type" : "float"
+  },
+  "close": {
+    "type": "float"
+  },
+  "high" : {
+    "type" : "float"
+  },
+  "low": {
+    "type": "float"
+  },
+  "volume": {
+    "type": "integer"
+  },
+  "adj_close" : {
+    "type" : "float"
+  },
+  "desc": {
+    "type": "string"
+  }
+}
