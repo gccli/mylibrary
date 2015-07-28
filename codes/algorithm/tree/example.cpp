@@ -126,11 +126,27 @@ void test_delete(int n)
 ////////////////////////////////////////////////////////////////
 //////// Test traversing binary tree
 
+
+void test_rbtree()
+{
+    const int n = 8;
+    int i;
+    int a[8] = {8, 9, 4, 0, 10, 2, 1, 7};
+    RBTree T;
+
+    for(i=0; i<n; ++i) {
+        BiNode_t *n = new BiNode_t(a[i]);
+        T.Insert(n);
+    }
+}
+
 int main(int argc, char* argv[])
 {
   int n = 1000;
   if (argc == 2) n = atoi(argv[1]);
   test_delete(n);
+
+  test_rbtree();
 
   return 0;
 }

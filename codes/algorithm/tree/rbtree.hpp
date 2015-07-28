@@ -11,6 +11,7 @@ public:
   }
 
   virtual BiNode_t *Insert(BiNode_t *);
+    void InsertFixup(BiNode_t *);
 
 private:
   BiNode_t *nil;
