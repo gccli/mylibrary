@@ -25,12 +25,12 @@ BiNode_t *BST::Insert(BiNode_t* node)
 
 void BST::transplant(BiNode_t *u, BiNode_t *v)
 {
-    if (PARENT(u) == NULL)
+    if (parent_of(u) == NULL)
         this->root = v;
-    else if (PARENT(u)->left == u)
-        PARENT(u)->left = v;
-    else if (PARENT(u)->right == u)
-        PARENT(u)->right = v;
+    else if (parent_of(u)->left == u)
+        parent_of(u)->left = v;
+    else if (parent_of(u)->right == u)
+        parent_of(u)->right = v;
     if (v != NULL)
         v->parent = u->parent;
 }
@@ -50,7 +50,8 @@ void BST::Delete(int key)
   }
   else {
     /**
-     * Delete p: replace p with the minimum of p's right subtree or the maximum of p's left subtree
+     * Delete p: replace p with the minimum of p's right subtree
+     *   or the maximum of p's left subtree
      * The following method find the maximum of p's left subtree
      */
     q = p;
@@ -61,7 +62,7 @@ void BST::Delete(int key)
       transplant(q->right, s->left);//q->right = s->left;
     else
       transplant(q->left, s->left); //q->left = s->left;
-    assert(s != NULL && s->key != INVALID_KEY);
+
     delete s;
   }
 }

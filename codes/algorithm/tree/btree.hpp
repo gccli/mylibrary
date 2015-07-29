@@ -4,22 +4,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define INVALID_KEY 99999
 typedef enum {
     RED = 0,
     BLACK = 1
 } color_t;
 
 typedef struct _BTNode {
+    _BTNode()
+        :parent(0),left(0),right(0),color(BLACK),key(0)
+    {}
     _BTNode(int k)
         :parent(0),left(0),right(0),color(BLACK),key(k)
     { }
     ~_BTNode() {
-        parent=NULL;
-        left=NULL;
-        right=NULL;
-        color=BLACK;
-        key = INVALID_KEY;
     }
 
     struct _BTNode *parent;
@@ -27,16 +24,10 @@ typedef struct _BTNode {
     struct _BTNode *right;
     color_t color;
     int key;
-
-private:
-  _BTNode(){}
 } BiNode_t;
 
-#define LEFT(n) n->left
-#define RIGHT(n) n->right
-#define PARENT(n) (n)->parent
-#define ISLEFT(n) (PARENT(n) && LEFT(PARENT(n)) == n)
-#define ISRIGHT(n) (PARENT(n) && RIGHT(PARENT(n)) == n)
+
+#define parent_of(n) (n)->parent
 
 typedef int (*VisitFunc_t)(BiNode_t *);
 

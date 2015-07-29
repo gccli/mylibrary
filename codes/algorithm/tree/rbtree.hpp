@@ -3,11 +3,10 @@
 
 #include "bstree.hpp"
 
-extern BiNode_t sentry;
 class RBTree : public BST {
 public:
     RBTree() {
-        nil = &sentry;
+        nil = new BiNode_t;
         this->root = nil;
     }
 
