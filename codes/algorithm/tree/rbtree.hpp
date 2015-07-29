@@ -3,11 +3,11 @@
 
 #include "bstree.hpp"
 
+extern BiNode_t sentry;
 class RBTree : public BST {
 public:
     RBTree() {
-        nil = new BiNode_t(INVALID_KEY);
-        nil->color = BLACK;
+        nil = &sentry;
         this->root = nil;
     }
 
@@ -21,8 +21,7 @@ public:
     void LeftRotate(BiNode_t *);
 
 private:
-  BiNode_t *nil;
-
+    BiNode_t *nil;
 };
 
 #endif

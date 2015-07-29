@@ -1,5 +1,7 @@
 #include "rbtree.hpp"
 
+BiNode_t sentry(INVALID_KEY);
+
 void RBTree::LeftRotate(BiNode_t *x)
 {
     BiNode_t *y = x->right;
@@ -70,7 +72,7 @@ BiNode_t *RBTree::Insert(BiNode_t *z)
  void RBTree::InsertFixup(BiNode_t *z)
  {
      BiNode_t *y;
-     BiNode_t *p, *pp; // parent of z and parent of parent of z
+     BiNode_t *p, *pp; //parent of z and parent of parent of z
 
      while(PARENT(z)->color == RED) {
          p = PARENT(z);
@@ -89,7 +91,7 @@ BiNode_t *RBTree::Insert(BiNode_t *z)
              p->color = BLACK;
              pp->color = RED;
              RightRotate(pp);
-         } else {
+         } else if (p == pp->right) {
              y = pp->left;
              if (y->color == RED) {
                  p->color = BLACK;
@@ -103,6 +105,8 @@ BiNode_t *RBTree::Insert(BiNode_t *z)
              p->color = BLACK;
              pp->color = RED;
              LeftRotate(pp);
+         } else {
+             break;
          }
      }
      this->root->color = BLACK;

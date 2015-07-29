@@ -12,13 +12,13 @@ typedef enum {
 
 typedef struct _BTNode {
     _BTNode(int k)
-        :parent(0),left(0),right(0),color(0),key(k)
+        :parent(0),left(0),right(0),color(BLACK),key(k)
     { }
     ~_BTNode() {
         parent=NULL;
         left=NULL;
         right=NULL;
-        color=0;
+        color=BLACK;
         key = INVALID_KEY;
     }
 
