@@ -6,8 +6,9 @@
 
 inline int visit(BiNode_t *p) {
     printf("%d ", p->key);
+    return 0;
 }
-inline int visit_p(BiNode_t *p) {}
+inline int visit_p(BiNode_t *p) {return 0;}
 static int *array_create(int n, int desc)
 {
   srandom((unsigned int )time(NULL));
@@ -105,18 +106,12 @@ void test_delete(int n)
   delete T;
 
   int *aa = array_create(k, 0);
-
-  double s = timing_begin();
   T = create_bstree(aa, k);
-  printf("Insert timecost %lf\n", timing_end(s));
-  s = timing_begin();
   T->inorder(visit_p);
-  printf("Inorder timecost %lf\n", timing_end(s));
-  s = timing_begin();
   for(int i=0; i<k; ++i) {
     T->Delete(aa[i]);
   }
-  printf("Delete timecost %lf\n", timing_end(s));
+
   T->inorder(visit);
   free(aa);
 
@@ -129,15 +124,20 @@ void test_delete(int n)
 
 void test_rbtree()
 {
-    const int n = 8;
+
     int i;
-    int a[8] = {8, 9, 4, 0, 10, 2, 1, 7};
+    int a[] = {39,3,7,12,10,14,15,16,17,19,20,21,23,26,41,30,47,28,38,35};
+    const int n = sizeof(a)/sizeof(int);
     RBTree T;
 
     for(i=0; i<n; ++i) {
         BiNode_t *n = new BiNode_t(a[i]);
         T.Insert(n);
     }
+    BiNode_t *p = T.First();
+    for(; p; p = T.Next(p))
+        printf("%d(%s) ", p->key, p->color == RED ? "R": "B");
+    printf("\n");
 }
 
 int main(int argc, char* argv[])
@@ -145,6 +145,7 @@ int main(int argc, char* argv[])
   int n = 1000;
   if (argc == 2) n = atoi(argv[1]);
   test_delete(n);
+
 
   test_rbtree();
 

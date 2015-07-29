@@ -4,27 +4,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define INVALID_KEY 0x7fffffff
-#define RED 1
-#define BLACK 2
+#define INVALID_KEY 99999
+typedef enum {
+    RED = 0,
+    BLACK = 1
+} color_t;
 
 typedef struct _BTNode {
-  _BTNode(int k)
-  :parent(0),left(0),right(0),key(k),color(0)
-  { }
-  ~_BTNode() {
-    left=NULL;
-    right=NULL;
-    parent=NULL;
-    color=0;    
-    key = INVALID_KEY;
-  }
+    _BTNode(int k)
+        :parent(0),left(0),right(0),color(0),key(k)
+    { }
+    ~_BTNode() {
+        parent=NULL;
+        left=NULL;
+        right=NULL;
+        color=0;
+        key = INVALID_KEY;
+    }
 
-  int key;
-  struct _BTNode *parent;
-  struct _BTNode *left;
-  struct _BTNode *right;
-  unsigned int color;
+    struct _BTNode *parent;
+    struct _BTNode *left;
+    struct _BTNode *right;
+    color_t color;
+    int key;
 
 private:
   _BTNode(){}
@@ -32,7 +34,7 @@ private:
 
 #define LEFT(n) n->left
 #define RIGHT(n) n->right
-#define PARENT(n) n->parent
+#define PARENT(n) (n)->parent
 #define ISLEFT(n) (PARENT(n) && LEFT(PARENT(n)) == n)
 #define ISRIGHT(n) (PARENT(n) && RIGHT(PARENT(n)) == n)
 

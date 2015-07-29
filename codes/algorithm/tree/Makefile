@@ -4,7 +4,7 @@ CXXFLAGS=
 ifeq ($(opt),1)
 CXXFLAGS=-O2
 else
-CXXFLAGS=-g -O0
+CXXFLAGS=-g -O0 -Wall
 endif
 
 all:$(TARGET)

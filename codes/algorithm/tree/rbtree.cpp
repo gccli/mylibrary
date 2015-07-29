@@ -1,32 +1,70 @@
 #include "rbtree.hpp"
 
-BiNode_t *RBTree::Insert(BiNode_t *n)
+void RBTree::LeftRotate(BiNode_t *x)
 {
-     BiNode_t *nil = this->nil;
+    BiNode_t *y = x->right;
+    x->right = y->left;
+    if (y->left != this->nil)
+        y->left->parent = x;
 
+    y->parent = x->parent;
+    if (PARENT(x) == this->nil)
+        this->root = y;
+    else if (x == PARENT(x)->left)
+        PARENT(x)->left = y;
+    else
+        PARENT(x)->right = y;
+
+    y->left = x;
+    x->parent = y;
+}
+
+void RBTree::RightRotate(BiNode_t *y)
+{
+    BiNode_t *x = y->left;
+    y->left = x->right;
+    if (x->right != this->nil)
+        x->right->parent = y;
+
+    x->parent = y->parent;
+    if (PARENT(y) == this->nil)
+        this->root = x;
+    else if (y == PARENT(y)->left)
+        PARENT(y)->left = x;
+    else
+        PARENT(y)->right = x;
+
+    x->right = y;
+    y->parent = x;
+}
+
+BiNode_t *RBTree::Insert(BiNode_t *z)
+{
      BiNode_t *x = this->root;
-     BiNode_t *y = x;
-     while(x != nil) {
+     BiNode_t *y = this->nil;
+
+     while(x != this->nil) {
          y = x;
-         if (x->key < n->key)
+         if (x->key < z->key)
              x = x->right;
-         else if (x->key > n->key)
+         else if (x->key > z->key)
              x = x->left;
      }
 
-     n->parent = y;
-     if (y == nil) {
-         this->root = n;
-     } else if (y->key > n->key) {
-         y->left = n;
+     z->parent = y;
+     if (y == this->nil) {
+         this->root = z;
+     } else if (y->key > z->key) {
+         y->left = z;
      } else {
-         y->right = n;
+         y->right = z;
      }
 
-     n->left = nil;
-     n->right = nil;
-     n->color = RED;
-     InsertFixup(n);
+     z->left = this->nil;
+     z->right = this->nil;
+     z->color = RED;
+     InsertFixup(z);
+     return z;
  }
 
  void RBTree::InsertFixup(BiNode_t *z)
@@ -34,9 +72,9 @@ BiNode_t *RBTree::Insert(BiNode_t *n)
      BiNode_t *y;
      BiNode_t *p, *pp; // parent of z and parent of parent of z
 
-     while(z->parent->color == RED) {
-         p = z->parent;
-         pp = p->parent;
+     while(PARENT(z)->color == RED) {
+         p = PARENT(z);
+         pp = PARENT(p);
          if (p == pp->left) {
              y = pp->right;
              if (y->color == RED) {
@@ -46,11 +84,11 @@ BiNode_t *RBTree::Insert(BiNode_t *n)
                  z = pp;
              } else if (z == p->right) {
                  z = p;
-                 left_rotate(z);
+                 LeftRotate(z);
              }
              p->color = BLACK;
              pp->color = RED;
-             right_rotate(pp);
+             RightRotate(pp);
          } else {
              y = pp->left;
              if (y->color == RED) {
@@ -60,12 +98,43 @@ BiNode_t *RBTree::Insert(BiNode_t *n)
                  z = pp;
              } else if (z == p->left) {
                  z = p;
-                 right_rotate(z);
+                 RightRotate(z);
              }
              p->color = BLACK;
              pp->color = RED;
-             left_rotate(pp);
+             LeftRotate(pp);
          }
      }
      this->root->color = BLACK;
+}
+
+
+BiNode_t *RBTree::First()
+{
+    BiNode_t *n = this->root;
+    if (n == this->nil)
+        return NULL;
+
+    while(n->left != this->nil)
+        n = n->left;
+
+    return n;
+}
+
+BiNode_t *RBTree::Next(BiNode_t *node)
+{
+    BiNode_t *p = NULL;
+    if (node->right != this->nil) {
+        node = node->right;
+        while (node->left != this->nil)
+            node = node->left;
+        return node;
+    }
+
+    while((p = PARENT(node)) != this->nil && p->right == node)
+        node = p;
+    if (p == this->nil)
+        p = NULL;
+
+    return p;
 }

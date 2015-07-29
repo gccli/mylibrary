@@ -5,16 +5,24 @@
 
 class RBTree : public BST {
 public:
-  RBTree() {
-    nil = new BiNode_t(INVALID_KEY);
-    nil->color = BLACK;
-  }
+    RBTree() {
+        nil = new BiNode_t(INVALID_KEY);
+        nil->color = BLACK;
+        this->root = nil;
+    }
 
-  virtual BiNode_t *Insert(BiNode_t *);
+    BiNode_t *First();
+    BiNode_t *Next(BiNode_t *node);
+
+    BiNode_t *Insert(BiNode_t *);
     void InsertFixup(BiNode_t *);
+
+    void RightRotate(BiNode_t *);
+    void LeftRotate(BiNode_t *);
 
 private:
   BiNode_t *nil;
+
 };
 
 #endif

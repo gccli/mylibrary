@@ -12,9 +12,6 @@ public:
   virtual void Delete(int key);
   virtual BiNode_t *Search(int key);
 
-  virtual void left_rotate(BiNode_t *);
-  virtual void right_rotate(BiNode_t *);
-
 protected:
   void transplant(BiNode_t *u, BiNode_t *v);
 };
