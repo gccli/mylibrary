@@ -1,10 +1,10 @@
-#include "bstree.hpp"
+#include "bstree.h"
 #include <assert.h>
 
-BiNode_t *BST::Insert(BiNode_t* node)
+rb_node_t *BST::Insert(rb_node_t* node)
 {
-  BiNode_t *x = this->root;
-  BiNode_t *p = NULL;
+  rb_node_t *x = this->root;
+  rb_node_t *p = NULL;
   while(x) {
     p = x;
     if (node->key < x->key)
@@ -23,7 +23,7 @@ BiNode_t *BST::Insert(BiNode_t* node)
   return node;
 }
 
-void BST::TransPlant(BiNode_t *u, BiNode_t *v)
+void BST::TransPlant(rb_node_t *u, rb_node_t *v)
 {
     if (p_of(u) == NULL)
         this->root = v;
@@ -36,23 +36,23 @@ void BST::TransPlant(BiNode_t *u, BiNode_t *v)
 }
 
 
-BiNode_t *BST::Minimum(BiNode_t *z)
+rb_node_t *BST::Minimum(rb_node_t *z)
 {
     while (z->left)
         z = z->left;
     return z;
 }
 
-BiNode_t *BST::Maximum(BiNode_t *z)
+rb_node_t *BST::Maximum(rb_node_t *z)
 {
     while (z->right)
         z = z->right;
     return z;
 }
 
-BiNode_t *BST::Successor(BiNode_t *z)
+rb_node_t *BST::Successor(rb_node_t *z)
 {
-    BiNode_t *p;
+    rb_node_t *p;
     if (z->right) {
         return Minimum(z->right);
     }
@@ -65,9 +65,9 @@ BiNode_t *BST::Successor(BiNode_t *z)
     return p;
 }
 
-BiNode_t *BST::Predecessor(BiNode_t *z)
+rb_node_t *BST::Predecessor(rb_node_t *z)
 {
-    BiNode_t *p;
+    rb_node_t *p;
     if (z->left) {
         return Maximum(z->left);
     }
@@ -81,8 +81,8 @@ BiNode_t *BST::Predecessor(BiNode_t *z)
 
 void BST::Delete(int key)
 {
-  BiNode_t *p = Search(key);
-  BiNode_t *q, *s;
+  rb_node_t *p = Search(key);
+  rb_node_t *q, *s;
   if (!p) return ;
   if (!p->left) {
     TransPlant(p, p->right);
@@ -111,9 +111,9 @@ void BST::Delete(int key)
   }
 }
 
-BiNode_t *BST::Search(int key)
+rb_node_t *BST::Search(int key)
 {
-  BiNode_t *p = this->root;
+  rb_node_t *p = this->root;
   while(p) {
     if (key == p->key)
       return p;

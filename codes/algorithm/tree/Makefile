@@ -15,6 +15,8 @@ btree-obj = $(subst .cpp,.o,$(btree-src))
 btree:$(btree-obj)
 	$(CXX) -g $^ -o $@
 
+%.o:%.c %.h
+
 clean:
 	@find . -name "a.out" | xargs rm -f
 	@find . -name "*.o" | xargs rm -f

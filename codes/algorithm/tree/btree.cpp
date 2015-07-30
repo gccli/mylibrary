@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include <stack>
-#include "btree.hpp"
+#include "btree.h"
 
 static bool debug_on = false;
 static inline void debug(const char *flag, int key) {
@@ -21,14 +21,14 @@ void BTree::Destroy()
 {
 }
 
-BiNode_t *BTree::Insert(BiNode_t *node)
+rb_node_t *BTree::Insert(rb_node_t *node)
 {
   printf("Not yet implement!\n");
   abort();
   return NULL;
 }
 
-void BTree::preorder_recursive_impl(BiNode_t *root, VisitFunc_t visit)
+void BTree::preorder_recursive_impl(rb_node_t *root, VisitFunc_t visit)
 {
   if (root == NULL) return ;
   visit(root);
@@ -36,7 +36,7 @@ void BTree::preorder_recursive_impl(BiNode_t *root, VisitFunc_t visit)
   preorder_recursive_impl(root->right, visit);
 }
 
-void BTree::inorder_recursive_impl(BiNode_t *root, VisitFunc_t visit)
+void BTree::inorder_recursive_impl(rb_node_t *root, VisitFunc_t visit)
 {
   if (root == NULL) return ;
   inorder_recursive_impl(root->left, visit);
@@ -44,7 +44,7 @@ void BTree::inorder_recursive_impl(BiNode_t *root, VisitFunc_t visit)
   inorder_recursive_impl(root->right, visit);
 }
 
-void BTree::postorder_recursive_impl(BiNode_t *root, VisitFunc_t visit)
+void BTree::postorder_recursive_impl(rb_node_t *root, VisitFunc_t visit)
 {
   if (root == NULL) return ;
   postorder_recursive_impl(root->left, visit);
@@ -57,8 +57,8 @@ void BTree::preorder(VisitFunc_t visit)
   if (root == NULL) return ;
 
   debug_on = false;
-  std::stack<BiNode_t *> s;
-  BiNode_t *top;
+  std::stack<rb_node_t *> s;
+  rb_node_t *top;
   s.push(this->root);
   while(!s.empty()) {
     top = s.top(); s.pop(); debug("POP", top->key);
@@ -73,8 +73,8 @@ void BTree::inorder(VisitFunc_t visit)
   if (root == NULL) return ;
 
   debug_on = false;
-  std::stack<BiNode_t *> s;
-  BiNode_t *p = this->root;
+  std::stack<rb_node_t *> s;
+  rb_node_t *p = this->root;
   while(p != NULL || !s.empty()) {
     while(p != NULL) {
       debug("PUSH", p->key);
@@ -94,8 +94,8 @@ void BTree::postorder(VisitFunc_t visit)
   if (root == NULL) return ;
 
   debug_on = false;
-  std::stack<BiNode_t *> s;
-  BiNode_t *p = this->root;
+  std::stack<rb_node_t *> s;
+  rb_node_t *p = this->root;
   while(p || !s.empty()) {
     if (!p) {
       while(!s.empty() && p == s.top()->right) {

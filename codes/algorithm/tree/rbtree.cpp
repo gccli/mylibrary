@@ -1,13 +1,13 @@
-#include "rbtree.hpp"
+#include "rbtree.h"
 #include <string.h>
 
-BiNode_t *RBTree::Minimum(BiNode_t *x)
+rb_node_t *RBTree::Minimum(rb_node_t *x)
 {
     while (x->left != this->nil)
         x = x->left;
     return x;
 }
-BiNode_t *RBTree::Maximum(BiNode_t *x)
+rb_node_t *RBTree::Maximum(rb_node_t *x)
 {
     while (x->right != this->nil)
         x = x->right;
@@ -15,7 +15,7 @@ BiNode_t *RBTree::Maximum(BiNode_t *x)
 }
 
 
-void RBTree::TransPlant(BiNode_t *u, BiNode_t *v)
+void RBTree::TransPlant(rb_node_t *u, rb_node_t *v)
 {
     if (p_of(u) == this->nil)
         this->root = v;
@@ -27,11 +27,11 @@ void RBTree::TransPlant(BiNode_t *u, BiNode_t *v)
     p_of(v) = p_of(u);
 }
 
-BiNode_t *RBTree::Delete(BiNode_t *z)
+rb_node_t *RBTree::Delete(rb_node_t *z)
 {
     int key = z->key;
 
-    BiNode_t *x, *y = z;
+    rb_node_t *x, *y = z;
     rb_color_t orig_color = z->color;
 
     if (z->left == this->nil) {
@@ -65,9 +65,9 @@ BiNode_t *RBTree::Delete(BiNode_t *z)
     return y;
 }
 
-void RBTree::LeftRotate(BiNode_t *x)
+void RBTree::LeftRotate(rb_node_t *x)
 {
-    BiNode_t *y = x->right;
+    rb_node_t *y = x->right;
     x->right = y->left;
     if (y->left != this->nil)
         y->left->p = x;
@@ -84,9 +84,9 @@ void RBTree::LeftRotate(BiNode_t *x)
     x->p = y;
 }
 
-void RBTree::RightRotate(BiNode_t *y)
+void RBTree::RightRotate(rb_node_t *y)
 {
-    BiNode_t *x = y->left;
+    rb_node_t *x = y->left;
     y->left = x->right;
     if (x->right != this->nil)
         x->right->p = y;
@@ -106,9 +106,9 @@ void RBTree::RightRotate(BiNode_t *y)
 static char buff[1024];
 static long offs;
 
-static void print_tree(BiNode_t *root, BiNode_t *nil, int indent)
+static void print_tree(rb_node_t *root, rb_node_t *nil, int indent)
 {
-    BiNode_t *p = root;
+    rb_node_t *p = root;
 
     if(p != nil) {
         offs += sprintf(buff+offs, "%d(%s)[", p->key, p->color==RED?"R":"B");
@@ -168,10 +168,10 @@ void RBTree::Print()
     }
 }
 
-BiNode_t *RBTree::Insert(BiNode_t *z)
+rb_node_t *RBTree::Insert(rb_node_t *z)
 {
-     BiNode_t *x = this->root;
-     BiNode_t *y = this->nil;
+     rb_node_t *x = this->root;
+     rb_node_t *y = this->nil;
 
      while(x != this->nil) {
          y = x;
@@ -197,9 +197,9 @@ BiNode_t *RBTree::Insert(BiNode_t *z)
      return z;
 }
 
-void RBTree::InsertFixup(BiNode_t *z)
+void RBTree::InsertFixup(rb_node_t *z)
 {
-    BiNode_t *y;
+    rb_node_t *y;
 
     while(p_of(z)->color == RED) {
         if (p_of(z) == pp_of(z)->left) {
@@ -245,9 +245,9 @@ void RBTree::InsertFixup(BiNode_t *z)
     this->root->color = BLACK;
 }
 
-void RBTree::DeleteFixup(BiNode_t *x)
+void RBTree::DeleteFixup(rb_node_t *x)
 {
-    BiNode_t *y;
+    rb_node_t *y;
 
     while(x != this->root && x->color == BLACK) {
         if (x == p_of(x)->left) {
@@ -307,9 +307,9 @@ void RBTree::DeleteFixup(BiNode_t *x)
     x->color = BLACK;
 }
 
-BiNode_t *RBTree::Search(int key)
+rb_node_t *RBTree::Search(int key)
 {
-  BiNode_t *p = this->root;
+  rb_node_t *p = this->root;
   while(p != this->nil) {
     if (key == p->key)
       return p;
@@ -322,9 +322,9 @@ BiNode_t *RBTree::Search(int key)
   return NULL;
 }
 
-BiNode_t *RBTree::First()
+rb_node_t *RBTree::First()
 {
-    BiNode_t *n = this->root;
+    rb_node_t *n = this->root;
     if (n == this->nil)
         return NULL;
 
@@ -334,9 +334,9 @@ BiNode_t *RBTree::First()
     return n;
 }
 
-BiNode_t *RBTree::Next(BiNode_t *node)
+rb_node_t *RBTree::Next(rb_node_t *node)
 {
-    BiNode_t *p = NULL;
+    rb_node_t *p = NULL;
     if (node->right != this->nil) {
         node = node->right;
         while (node->left != this->nil)
