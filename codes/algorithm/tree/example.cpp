@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <time.h>
@@ -134,6 +135,8 @@ void test_rbtree()
         BiNode_t *n = new BiNode_t(a[i]);
         T.Insert(n);
     }
+    printf("Number of node %d, height %d\n", n, (int)(2*log(n+1)));
+    T.Print();
     BiNode_t *p = T.First();
     for(; p; p = T.Next(p))
         printf("%d(%s) ", p->key, p->color == RED ? "R": "B");

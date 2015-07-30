@@ -1,4 +1,5 @@
 #include "rbtree.hpp"
+#include <string.h>
 
 void RBTree::LeftRotate(BiNode_t *x)
 {
@@ -41,7 +42,7 @@ void RBTree::RightRotate(BiNode_t *y)
 static char buff[1024];
 static long offs;
 
-void print_tree(BiNode_t *root, BiNode_t *nil, int indent)
+static void print_tree(BiNode_t *root, BiNode_t *nil, int indent)
 {
     BiNode_t *p = root;
 
@@ -60,6 +61,46 @@ void print_tree(BiNode_t *root, BiNode_t *nil, int indent)
             print_tree(p->right, nil, indent);
             offs += sprintf(buff+offs, "]");
         }
+    }
+}
+
+void RBTree::Print()
+{
+    int i,j;
+    int indent = 0;
+    offs = 0;
+
+    char node[32] = {0};
+    print_tree(this->root, this->nil, 0);
+    for(i=0,j=0; i<offs; ++i) {
+        char c = buff[i];
+        switch(c) {
+        case '[':
+            if (buff[i+1] == ',') {
+                node[j++] = c;
+                node[j++] = ',';
+            }
+            else if (buff[i+1] != ']') {
+                node[j++] = c;
+            }
+
+            printf("%*s%s\n", indent, "", node);
+            memset(node, 0, sizeof(node));
+            j=0;
+            indent += 4;
+            break;
+        case ']':
+            indent -= 4;
+            if (buff[i-1] != '[')
+                printf("%*s%c\n", indent, "", c);
+            break;
+        case ',':
+            break;
+        default:
+            node[j++] = c;
+            break;
+        }
+
     }
 }
 
@@ -88,16 +129,7 @@ BiNode_t *RBTree::Insert(BiNode_t *z)
      z->left = z->right = this->nil;
      z->color = RED;
 
-
-     offs = 0;
-     print_tree(this->root, this->nil, 0);
-     printf("%s\n", buff);
      InsertFixup(z);
-     offs = 0;
-     print_tree(this->root, this->nil, 0);
-     printf("%s\n", buff);
-     printf("--------------------------------\n");
-
      return z;
 }
 

@@ -20,6 +20,8 @@ public:
     void RightRotate(BiNode_t *);
     void LeftRotate(BiNode_t *);
 
+    void Print();
+
 private:
     BiNode_t *nil;
 };
