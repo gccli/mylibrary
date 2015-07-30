@@ -100,7 +100,7 @@ void (*augment_rotate)(struct rb_node *old, struct rb_node *new))
          * Case 1 - color flips
          *
          *       G            g
-         *      / \          / \ 
+         *      / \          / \
          *     p   u  -->   P   U
          *    /            /
          *   n            n
@@ -123,7 +123,7 @@ void (*augment_rotate)(struct rb_node *old, struct rb_node *new))
          * Case 2 - left rotate at parent
          *
          *      G             G
-         *     / \           / \ 
+         *     / \           / \
          *    p   U  -->    n   U
          *     \           /
          *      n         p
@@ -146,9 +146,9 @@ void (*augment_rotate)(struct rb_node *old, struct rb_node *new))
        * Case 3 - right rotate at gparent
        *
        *        G           P
-       *       / \         / \ 
+       *       / \         / \
        *      p   U  -->  n   g
-       *     /                 \ 
+       *     /                 \
        *    n                   U
        */
       gparent->rb_left = tmp;    /* == parent->rb_right */
@@ -223,9 +223,9 @@ void (*augment_rotate)(struct rb_node *old, struct rb_node *new))
          * Case 1 - left rotate at parent
          *
          *     P               S
-         *    / \             / \ 
+         *    / \             / \
          *   N   s    -->    p   Sr
-         *      / \         / \ 
+         *      / \         / \
          *     Sl  Sr      N   Sl
          */
         parent->rb_right = tmp1 = sibling->rb_left;
@@ -245,9 +245,9 @@ void (*augment_rotate)(struct rb_node *old, struct rb_node *new))
            * (p could be either color here)
            *
            *    (p)           (p)
-           *    / \           / \ 
+           *    / \           / \
            *   N   S    -->  N   s
-           *      / \           / \ 
+           *      / \           / \
            *     Sl  Sr        Sl  Sr
            *
            * This leaves us violating 5) which
@@ -272,11 +272,11 @@ void (*augment_rotate)(struct rb_node *old, struct rb_node *new))
          * (p could be either color here)
          *
          *   (p)           (p)
-         *   / \           / \ 
+         *   / \           / \
          *  N   S    -->  N   Sl
-         *     / \             \ 
+         *     / \             \
          *    sl  Sr            s
-         *                       \ 
+         *                       \
          *                        Sr
          */
         sibling->rb_left = tmp1 = tmp2->rb_right;
@@ -296,9 +296,9 @@ void (*augment_rotate)(struct rb_node *old, struct rb_node *new))
        *  p's color, and sl keeps its color)
        *
        *      (p)             (s)
-       *      / \             / \ 
+       *      / \             / \
        *     N   S     -->   P   Sr
-       *        / \         / \ 
+       *        / \         / \
        *      (sl) sr      N  (sl)
        */
       parent->rb_right = tmp2 = sibling->rb_left;
