@@ -12,7 +12,7 @@ BiNode_t *BST::Insert(BiNode_t* node)
     else
       x = x->right;
   }
-  node->parent = p;
+  node->p = p;
   if (!p) {
     this->root = node;
   } else if (p->key > node->key) {
@@ -25,14 +25,14 @@ BiNode_t *BST::Insert(BiNode_t* node)
 
 void BST::transplant(BiNode_t *u, BiNode_t *v)
 {
-    if (parent_of(u) == NULL)
+    if (p_of(u) == NULL)
         this->root = v;
-    else if (parent_of(u)->left == u)
-        parent_of(u)->left = v;
-    else if (parent_of(u)->right == u)
-        parent_of(u)->right = v;
+    else if (p_of(u)->left == u)
+        p_of(u)->left = v;
+    else if (p_of(u)->right == u)
+        p_of(u)->right = v;
     if (v != NULL)
-        v->parent = u->parent;
+        v->p = u->p;
 }
 
 void BST::Delete(int key)
@@ -40,11 +40,11 @@ void BST::Delete(int key)
   BiNode_t *p = Search(key);
   BiNode_t *q, *s;
   if (!p) return ;
-  if (!LEFT(p)) {
+  if (!p->left) {
     transplant(p, p->right);
     delete p;
   }
-  else if(!RIGHT(p)) {
+  else if(!p->right) {
     transplant(p, p->left);
     delete p;
   }

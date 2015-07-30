@@ -11,15 +11,15 @@ typedef enum {
 
 typedef struct _BTNode {
     _BTNode()
-        :parent(0),left(0),right(0),color(BLACK),key(0)
+        :p(0),left(0),right(0),color(BLACK),key(0)
     {}
     _BTNode(int k)
-        :parent(0),left(0),right(0),color(BLACK),key(k)
+        :p(0),left(0),right(0),color(BLACK),key(k)
     { }
     ~_BTNode() {
     }
 
-    struct _BTNode *parent;
+    struct _BTNode *p; // parent
     struct _BTNode *left;
     struct _BTNode *right;
     color_t color;
@@ -27,7 +27,8 @@ typedef struct _BTNode {
 } BiNode_t;
 
 
-#define parent_of(n) (n)->parent
+#define p_of(n)  (n)->p
+#define pp_of(n) p_of((n))->p
 
 typedef int (*VisitFunc_t)(BiNode_t *);
 

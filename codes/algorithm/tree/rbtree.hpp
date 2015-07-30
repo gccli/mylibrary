@@ -7,6 +7,7 @@ class RBTree : public BST {
 public:
     RBTree() {
         nil = new BiNode_t;
+        nil->p = nil;
         this->root = nil;
     }
 
