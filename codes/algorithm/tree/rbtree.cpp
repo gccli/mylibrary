@@ -1,6 +1,70 @@
 #include "rbtree.hpp"
 #include <string.h>
 
+BiNode_t *RBTree::Minimum(BiNode_t *x)
+{
+    while (x->left != this->nil)
+        x = x->left;
+    return x;
+}
+BiNode_t *RBTree::Maximum(BiNode_t *x)
+{
+    while (x->right != this->nil)
+        x = x->right;
+    return x;
+}
+
+
+void RBTree::TransPlant(BiNode_t *u, BiNode_t *v)
+{
+    if (p_of(u) == this->nil)
+        this->root = v;
+    else if (p_of(u)->left == u) {
+        p_of(u)->left = v;
+    } else {
+        p_of(u)->right = v;
+    }
+    p_of(v) = p_of(u);
+}
+
+BiNode_t *RBTree::Delete(BiNode_t *z)
+{
+    int key = z->key;
+
+    BiNode_t *x, *y = z;
+    rb_color_t orig_color = z->color;
+
+    if (z->left == this->nil) {
+        x = z->right;
+        TransPlant(z, z->right);
+    } else if (z->right == this->nil) {
+        x = z->left;
+        TransPlant(z, z->left);
+    } else {
+        y = Minimum(z->right);
+        orig_color = y->color;
+        x = y->right;
+        if (p_of(y) == z) {
+            p_of(x) = z;
+        } else {
+            TransPlant(y, y->right);
+            y->right = z->right;
+            p_of(y->right) = y;
+        }
+        TransPlant(z, y);
+        y->left = z->left;
+        p_of(y->left) = z;
+        y->color = z->color;
+    }
+    if (orig_color == BLACK) {
+        DeleteFixup(x);
+    }
+    printf("----------Delete %d----------\n", key);
+    //Print();
+
+    return y;
+}
+
 void RBTree::LeftRotate(BiNode_t *x)
 {
     BiNode_t *y = x->right;
@@ -179,6 +243,83 @@ void RBTree::InsertFixup(BiNode_t *z)
         }
     }
     this->root->color = BLACK;
+}
+
+void RBTree::DeleteFixup(BiNode_t *x)
+{
+    BiNode_t *y;
+
+    while(x != this->root && x->color == BLACK) {
+        if (x == p_of(x)->left) {
+            y = p_of(x)->right;        // brothers
+            if (y->color == RED) {
+                // case 1:  is red
+                y->color = BLACK;
+                p_of(x)->color = RED;
+                LeftRotate(p_of(x));
+                y = p_of(x)->right;
+            }
+            if (y->left->color == BLACK and y->right->color == BLACK) {
+                y->color = RED;
+                x = p_of(x);
+            } else {
+                if (y->right->color == BLACK) {
+                    y->left->color = BLACK;
+                    y->color = RED;
+                    RightRotate(y);
+                    y = p_of(x)->right;
+                }
+                // case3: uncle is black and z is left child
+                y->color = p_of(x)->color;
+                p_of(x)->color = BLACK;
+                y->right->color = BLACK;
+                LeftRotate(p_of(x));
+                x = this->root;
+            }
+        } else if (x == p_of(x)->right) {
+            y = p_of(x)->left;        // brothers
+            if (y->color == RED) {
+                // case 1:  is red
+                y->color = BLACK;
+                p_of(x)->color = RED;
+                RightRotate(p_of(x));
+                y = p_of(x)->left;
+            }
+            if (y->right->color == BLACK and y->left->color == BLACK) {
+                y->color = RED;
+                x = p_of(x);
+            } else {
+                if (y->left->color == BLACK) {
+                    y->right->color = BLACK;
+                    y->color = RED;
+                    LeftRotate(y);
+                    y = p_of(x)->left;
+                }
+                // case3: uncle is black and z is left child
+                y->color = p_of(x)->color;
+                p_of(x)->color = BLACK;
+                y->left->color = BLACK;
+                RightRotate(p_of(x));
+                x = this->root;
+            }
+        }
+    }
+    x->color = BLACK;
+}
+
+BiNode_t *RBTree::Search(int key)
+{
+  BiNode_t *p = this->root;
+  while(p != this->nil) {
+    if (key == p->key)
+      return p;
+    else if (key < p->key)
+      p = p->left;
+    else
+      p = p->right;
+  }
+
+  return NULL;
 }
 
 BiNode_t *RBTree::First()

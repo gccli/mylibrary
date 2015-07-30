@@ -7,7 +7,7 @@
 typedef enum {
     RED = 0,
     BLACK = 1
-} color_t;
+} rb_color_t;
 
 typedef struct _BTNode {
     _BTNode()
@@ -22,7 +22,7 @@ typedef struct _BTNode {
     struct _BTNode *p; // parent
     struct _BTNode *left;
     struct _BTNode *right;
-    color_t color;
+    rb_color_t      color;
     int key;
 } BiNode_t;
 

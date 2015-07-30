@@ -125,22 +125,29 @@ void test_delete(int n)
 
 void test_rbtree()
 {
-
+    BiNode_t *n, *p;
     int i;
     int a[] = {39,3,7,12,10,14,15,16,17,19,20,21,23,26,41,30,47,28,38,35};
-    const int n = sizeof(a)/sizeof(int);
+    const int cnt = sizeof(a)/sizeof(int);
     RBTree T;
 
-    for(i=0; i<n; ++i) {
-        BiNode_t *n = new BiNode_t(a[i]);
+    for(i=0; i<cnt; ++i) {
+        n = new BiNode_t(a[i]);
         T.Insert(n);
     }
-    printf("Number of node %d, height %d\n", n, (int)(2*log(n+1)));
+    printf("Number of node %d, height %d\n", cnt, (int)(2*log(cnt+1)));
     T.Print();
-    BiNode_t *p = T.First();
+    p = T.First();
     for(; p; p = T.Next(p))
         printf("%d(%s) ", p->key, p->color == RED ? "R": "B");
-    printf("\n");
+    printf("\n\n");
+
+    p = T.Search(17);
+    do {
+        n = T.Next(p);
+        T.Delete(p);
+        p = n;
+    } while(n);
 }
 
 int main(int argc, char* argv[])

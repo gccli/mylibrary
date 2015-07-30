@@ -5,15 +5,20 @@
 
 class BST : public BTree {
 public:
-  BST(){}
-  virtual ~BST(){}
+    BST(){}
+    virtual ~BST(){}
 
-  virtual BiNode_t *Insert(BiNode_t *);
-  virtual void Delete(int key);
-  virtual BiNode_t *Search(int key);
+    virtual BiNode_t *Insert(BiNode_t *);
+    virtual void Delete(int key);
+    virtual BiNode_t *Search(int key);
+
+    virtual BiNode_t *Minimum(BiNode_t *);
+    virtual BiNode_t *Maximum(BiNode_t *);
+    virtual BiNode_t *Successor(BiNode_t *);
+    virtual BiNode_t *Predecessor(BiNode_t *);
 
 protected:
-  void transplant(BiNode_t *u, BiNode_t *v);
+    virtual void TransPlant(BiNode_t *u, BiNode_t *v);
 };
 
 

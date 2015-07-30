@@ -23,7 +23,7 @@ BiNode_t *BST::Insert(BiNode_t* node)
   return node;
 }
 
-void BST::transplant(BiNode_t *u, BiNode_t *v)
+void BST::TransPlant(BiNode_t *u, BiNode_t *v)
 {
     if (p_of(u) == NULL)
         this->root = v;
@@ -35,17 +35,61 @@ void BST::transplant(BiNode_t *u, BiNode_t *v)
         v->p = u->p;
 }
 
+
+BiNode_t *BST::Minimum(BiNode_t *z)
+{
+    while (z->left)
+        z = z->left;
+    return z;
+}
+
+BiNode_t *BST::Maximum(BiNode_t *z)
+{
+    while (z->right)
+        z = z->right;
+    return z;
+}
+
+BiNode_t *BST::Successor(BiNode_t *z)
+{
+    BiNode_t *p;
+    if (z->right) {
+        return Minimum(z->right);
+    }
+
+    p = p_of(z);
+    while(p && z == p->right) {
+        z = p;
+        p = p_of(p);
+    }
+    return p;
+}
+
+BiNode_t *BST::Predecessor(BiNode_t *z)
+{
+    BiNode_t *p;
+    if (z->left) {
+        return Maximum(z->left);
+    }
+    p = p_of(z);
+    while (p && z == p->left) {
+        z = p;
+        p = p_of(p);
+    }
+    return p;
+}
+
 void BST::Delete(int key)
 {
   BiNode_t *p = Search(key);
   BiNode_t *q, *s;
   if (!p) return ;
   if (!p->left) {
-    transplant(p, p->right);
+    TransPlant(p, p->right);
     delete p;
   }
   else if(!p->right) {
-    transplant(p, p->left);
+    TransPlant(p, p->left);
     delete p;
   }
   else {
@@ -59,9 +103,9 @@ void BST::Delete(int key)
     while(s->right) {q = s; s = s->right;}
     p->key = s->key;
     if (p != q)
-      transplant(q->right, s->left);//q->right = s->left;
+      TransPlant(q->right, s->left);//q->right = s->left;
     else
-      transplant(q->left, s->left); //q->left = s->left;
+      TransPlant(q->left, s->left); //q->left = s->left;
 
     delete s;
   }
