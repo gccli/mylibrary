@@ -31,6 +31,8 @@ rb_node_t *RBTree::Delete(rb_node_t *z)
 {
     int key = z->key;
 
+    printf("----------Delete %d----------\n", key);
+
     rb_node_t *x, *y = z;
     rb_color_t orig_color = z->color;
 
@@ -45,7 +47,7 @@ rb_node_t *RBTree::Delete(rb_node_t *z)
         orig_color = y->color;
         x = y->right;
         if (p_of(y) == z) {
-            p_of(x) = z;
+            p_of(x) = y;
         } else {
             TransPlant(y, y->right);
             y->right = z->right;
@@ -53,14 +55,14 @@ rb_node_t *RBTree::Delete(rb_node_t *z)
         }
         TransPlant(z, y);
         y->left = z->left;
-        p_of(y->left) = z;
+        y->left->p = y;
         y->color = z->color;
     }
     if (orig_color == BLACK) {
         DeleteFixup(x);
     }
-    printf("----------Delete %d----------\n", key);
-    //Print();
+
+    Print();
 
     return y;
 }
@@ -105,7 +107,6 @@ void RBTree::RightRotate(rb_node_t *y)
 
 static char buff[1024];
 static long offs;
-
 static void print_tree(rb_node_t *root, rb_node_t *nil, int indent)
 {
     rb_node_t *p = root;

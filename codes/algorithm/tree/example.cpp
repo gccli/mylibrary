@@ -126,7 +126,7 @@ void test_delete(int n)
 void test_rbtree()
 {
     rb_node_t *n, *p;
-    int i;
+    int i,j,tmp;
     int a[] = {39,3,7,12,10,14,15,16,17,19,20,21,23,26,41,30,47,28,38,35};
     const int cnt = sizeof(a)/sizeof(int);
     RBTree T;
@@ -142,12 +142,18 @@ void test_rbtree()
         printf("%d(%s) ", p->key, p->color == RED ? "R": "B");
     printf("\n\n");
 
-    p = T.Search(17);
-    do {
-        n = T.Next(p);
+
+    for(i=0; i<cnt; ++i) {
+        j = random()%(cnt-1);
+        tmp = a[j];
+        a[j] = a[i%2];
+        a[i%2] = tmp;
+    }
+
+    for(i=0; i<cnt; ++i) {
+        p = T.Search(a[i]);
         T.Delete(p);
-        p = n;
-    } while(n);
+    }
 }
 
 int main(int argc, char* argv[])
