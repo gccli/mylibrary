@@ -1,15 +1,16 @@
 #include "rbtree.h"
-#include <string.h>
+
+rb_node_t sentry;
 
 rb_node_t *RBTree::Minimum(rb_node_t *x)
 {
-    while (x->left != this->nil)
+    while (x->left != &sentry)
         x = x->left;
     return x;
 }
 rb_node_t *RBTree::Maximum(rb_node_t *x)
 {
-    while (x->right != this->nil)
+    while (x->right != &sentry)
         x = x->right;
     return x;
 }
@@ -17,7 +18,7 @@ rb_node_t *RBTree::Maximum(rb_node_t *x)
 
 void RBTree::TransPlant(rb_node_t *u, rb_node_t *v)
 {
-    if (p_of(u) == this->nil)
+    if (p_of(u) == &sentry)
         this->root = v;
     else if (p_of(u)->left == u) {
         p_of(u)->left = v;
@@ -29,17 +30,13 @@ void RBTree::TransPlant(rb_node_t *u, rb_node_t *v)
 
 rb_node_t *RBTree::Delete(rb_node_t *z)
 {
-    int key = z->key;
-
-    printf("----------Delete %d----------\n", key);
-
     rb_node_t *x, *y = z;
     rb_color_t orig_color = z->color;
 
-    if (z->left == this->nil) {
+    if (z->left == &sentry) {
         x = z->right;
         TransPlant(z, z->right);
-    } else if (z->right == this->nil) {
+    } else if (z->right == &sentry) {
         x = z->left;
         TransPlant(z, z->left);
     } else {
@@ -62,8 +59,6 @@ rb_node_t *RBTree::Delete(rb_node_t *z)
         DeleteFixup(x);
     }
 
-    Print();
-
     return y;
 }
 
@@ -71,11 +66,11 @@ void RBTree::LeftRotate(rb_node_t *x)
 {
     rb_node_t *y = x->right;
     x->right = y->left;
-    if (y->left != this->nil)
+    if (y->left != &sentry)
         y->left->p = x;
 
     y->p = x->p;
-    if (p_of(x) == this->nil)
+    if (p_of(x) == &sentry)
         this->root = y;
     else if (x == p_of(x)->left)
         p_of(x)->left = y;
@@ -90,11 +85,11 @@ void RBTree::RightRotate(rb_node_t *y)
 {
     rb_node_t *x = y->left;
     y->left = x->right;
-    if (x->right != this->nil)
+    if (x->right != &sentry)
         x->right->p = y;
 
     x->p = y->p;
-    if (p_of(y) == this->nil)
+    if (p_of(y) == &sentry)
         this->root = x;
     else if (y == p_of(y)->left)
         p_of(y)->left = x;
@@ -105,76 +100,12 @@ void RBTree::RightRotate(rb_node_t *y)
     y->p = x;
 }
 
-static char buff[1024];
-static long offs;
-static void print_tree(rb_node_t *root, rb_node_t *nil, int indent)
-{
-    rb_node_t *p = root;
-
-    if(p != nil) {
-        offs += sprintf(buff+offs, "%d(%s)[", p->key, p->color==RED?"R":"B");
-        if (p->left == nil && p->right == nil) {
-            offs += sprintf(buff+offs, "]");
-            return;
-        }
-        if (p->left) {
-            print_tree(p->left, nil, indent);
-            offs += sprintf(buff+offs, ",");
-        }
-
-        if (p->right){
-            print_tree(p->right, nil, indent);
-            offs += sprintf(buff+offs, "]");
-        }
-    }
-}
-
-void RBTree::Print()
-{
-    int i,j;
-    int indent = 0;
-    offs = 0;
-
-    char node[32] = {0};
-    print_tree(this->root, this->nil, 0);
-    for(i=0,j=0; i<offs; ++i) {
-        char c = buff[i];
-        switch(c) {
-        case '[':
-            if (buff[i+1] == ',') {
-                node[j++] = c;
-                node[j++] = ',';
-            }
-            else if (buff[i+1] != ']') {
-                node[j++] = c;
-            }
-
-            printf("%*s%s\n", indent, "", node);
-            memset(node, 0, sizeof(node));
-            j=0;
-            indent += 4;
-            break;
-        case ']':
-            indent -= 4;
-            if (buff[i-1] != '[')
-                printf("%*s%c\n", indent, "", c);
-            break;
-        case ',':
-            break;
-        default:
-            node[j++] = c;
-            break;
-        }
-
-    }
-}
-
 rb_node_t *RBTree::Insert(rb_node_t *z)
 {
      rb_node_t *x = this->root;
-     rb_node_t *y = this->nil;
+     rb_node_t *y = &sentry;
 
-     while(x != this->nil) {
+     while(x != &sentry) {
          y = x;
          if (x->key < z->key)
              x = x->right;
@@ -183,7 +114,7 @@ rb_node_t *RBTree::Insert(rb_node_t *z)
      }
 
      z->p = y;
-     if (y == this->nil) {
+     if (y == &sentry) {
          this->root = z;
      } else if (y->key > z->key) {
          y->left = z;
@@ -191,7 +122,7 @@ rb_node_t *RBTree::Insert(rb_node_t *z)
          y->right = z;
      }
 
-     z->left = z->right = this->nil;
+     z->left = z->right = &sentry;
      z->color = RED;
 
      InsertFixup(z);
@@ -311,7 +242,7 @@ void RBTree::DeleteFixup(rb_node_t *x)
 rb_node_t *RBTree::Search(int key)
 {
   rb_node_t *p = this->root;
-  while(p != this->nil) {
+  while(p != &sentry) {
     if (key == p->key)
       return p;
     else if (key < p->key)
@@ -326,10 +257,10 @@ rb_node_t *RBTree::Search(int key)
 rb_node_t *RBTree::First()
 {
     rb_node_t *n = this->root;
-    if (n == this->nil)
+    if (n == &sentry)
         return NULL;
 
-    while(n->left != this->nil)
+    while(n->left != &sentry)
         n = n->left;
 
     return n;
@@ -338,16 +269,16 @@ rb_node_t *RBTree::First()
 rb_node_t *RBTree::Next(rb_node_t *node)
 {
     rb_node_t *p = NULL;
-    if (node->right != this->nil) {
+    if (node->right != &sentry) {
         node = node->right;
-        while (node->left != this->nil)
+        while (node->left != &sentry)
             node = node->left;
         return node;
     }
 
-    while((p = p_of(node)) != this->nil && p->right == node)
+    while((p = p_of(node)) != &sentry && p->right == node)
         node = p;
-    if (p == this->nil)
+    if (p == &sentry)
         p = NULL;
 
     return p;

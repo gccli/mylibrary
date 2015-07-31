@@ -122,26 +122,33 @@ void test_delete(int n)
 ////////////////////////////////////////////////////////////////
 //////// Test traversing binary tree
 
-
-void test_rbtree()
+extern void print_complete_bt(const rb_node_t *root, int height);
+extern void print_rb_tree(rb_node_t *root);
+void test_rbtree(int length)
 {
     rb_node_t *n, *p;
-    int i,j,tmp;
-    int a[] = {39,3,7,12,10,14,15,16,17,19,20,21,23,26,41,30,47,28,38,35};
-    const int cnt = sizeof(a)/sizeof(int);
+    int i,j,h,tmp;
+    //int a[] = {39,3,7,12,10,14,15,16,17,19,20,21,23,26,41,30,47,28,38,35};
+    //const int cnt = sizeof(a)/sizeof(int);
+    int a[100];
+    const int cnt = 7;
+    for(i=0; i<cnt;++i)
+        if (i%2 == 0)
+            a[i] = 50-i;
+        else
+            a[i] = 50+i;
+
     RBTree T;
 
     for(i=0; i<cnt; ++i) {
         n = new rb_node_t(a[i]);
         T.Insert(n);
     }
-    printf("Number of node %d, height %d\n", cnt, (int)(2*log(cnt+1)));
-    T.Print();
-    p = T.First();
-    for(; p; p = T.Next(p))
-        printf("%d(%s) ", p->key, p->color == RED ? "R": "B");
-    printf("\n\n");
+    h = rb_height(T.Root());
+    printf("Number of node %d, height %d\n", cnt, h);
+    print_rb_tree(T.Root());
 
+    print_complete_bt(T.Root(), h);
 
     for(i=0; i<cnt; ++i) {
         j = random()%(cnt-1);
@@ -160,10 +167,8 @@ int main(int argc, char* argv[])
 {
   int n = 1000;
   if (argc == 2) n = atoi(argv[1]);
-  test_delete(n);
-
-
-  test_rbtree();
+  //test_delete(n);
+  test_rbtree(n);
 
   return 0;
 }

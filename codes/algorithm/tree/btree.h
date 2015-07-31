@@ -13,10 +13,10 @@ typedef enum
 typedef struct _rb_node
 {
     _rb_node()
-        :p(0),left(0),right(0),color(BLACK),key(0)
+        :p(this),left(0),right(0),color(BLACK),key(0)
     {}
     _rb_node(int k)
-        :p(0),left(0),right(0),color(BLACK),key(k)
+        :p(this),left(0),right(0),color(BLACK),key(k)
     {}
     ~_rb_node() {
     }
@@ -28,6 +28,18 @@ typedef struct _rb_node
     int key;
 } rb_node_t;
 
+
+extern rb_node_t sentry;
+static inline int rb_height(rb_node_t *n)
+{
+    if (n == &sentry)
+        return 0;
+
+    int h_left = rb_height(n->left);
+    int h_right = rb_height(n->right);
+    return h_left > h_right ? h_left+1 : h_right + 1;
+}
+
 #define p_of(n)  (n)->p
 #define pp_of(n) p_of((n))->p
 
@@ -38,6 +50,8 @@ class BTree
 public:
     BTree() { root = NULL; }
     virtual ~BTree() {}
+
+    rb_node_t *Root(){ return root; }
 
     virtual void Destroy();
     virtual void Delete(int key){}
