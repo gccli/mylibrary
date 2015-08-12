@@ -29,7 +29,7 @@
 
 ; For org-mode
 (require 'org-install)
-(require 'org-publish)
+;(require 'org-publish)
 (add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))
 (add-to-list 'auto-mode-alist '("\\.txt\\'" . org-mode))
 (add-hook 'org-mode-hook 'turn-on-font-lock)
