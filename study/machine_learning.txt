@@ -1,0 +1,11 @@
+* Introduction
+
+Supervised learning
+  regression: continuous
+  classification: discrete
+Unsupervised learning
+  clustering
+  associative
+
+** Univariate linear regression
+h_\theta(x) = \theta_0 + \theta_1 x

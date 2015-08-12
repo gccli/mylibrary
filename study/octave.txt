@@ -1,0 +1,12 @@
+* Register graphic toolkit
+
+https://www.gnu.org/software/octave/doc/interpreter/Graphics-Toolkits.html
+available_graphics_toolkits()
+loaded_graphics_toolkits
+tkits=available_graphics_toolkits()
+register_graphics_toolkit(tkits(1));
+
+graphics_toolkit ('gnuplot')
+graphics_toolkit
+plot(1:100)
+t = 0:0.01*pi:21*pi; x = sin (t).*(exp (cos (t)) - 2*cos (4*t) + sin (t/12).^5); y = cos (t).*(exp (cos (t)) - 2*cos (4*t) + sin (t/12).^5); plot(x, y)
