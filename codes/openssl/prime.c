@@ -33,7 +33,6 @@ static bool is_prime(uint64_t n, BIGNUM *x)
     BN_CTX *ctx = NULL;
     ctx = BN_CTX_new();
 
-
     if (BN_is_prime_ex(x, BN_prime_checks, ctx, NULL))
         return true;
 
@@ -81,14 +80,21 @@ int main(int argc, char *argv[])
 {
     BIGNUM *x;
     uint64_t val;
-    char *endptr=NULL;
+    char *str, *endptr = NULL;
 
     SSL_load_error_strings();
     seeding(128);
     if (argc > 1) {
+        str = argv[1];
+        if (strncmp(str, "0x", 2) == 0 || strncmp(str, "0X", 2) == 0)
+            str += 2;
+
         x = NULL;
-        BN_dec2bn(&x, argv[1]);
-        val = strtoll(argv[1], &endptr, 10);
+        BN_hex2bn(&x, str);
+        val = (uint64_t)strtoq(argv[1], &endptr, 0);
+
+        if (errno != 0)
+            perror("strtoll");
 
         if ((errno == ERANGE && val == UINT64_MAX)||(errno != 0 && val == 0)) {
             printf("can not covert to long, %s\n", strerror(errno));
