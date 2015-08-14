@@ -5,7 +5,6 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 
@@ -18,7 +17,7 @@
 
 static void seeding(int size)
 {
-/* Read size bytes from /dev/random and seed the PRNG with it */
+    /* Read size bytes from /dev/random and seed the PRNG with it */
     RAND_load_file("/dev/random", size);
     /* Write a seed file */
     RAND_write_file("prngseed.dat");
@@ -26,6 +25,7 @@ static void seeding(int size)
     int nb = RAND_load_file("prngseed.dat", -1);
     printf("Seeded the PRNG with %d byte(s) of data from prngseed.dat.\n", nb);
 }
+
 
 static BIGNUM *fibonacci(unsigned long n)
 {
@@ -67,10 +67,11 @@ static void prime_status(int code, int arg, void *cb_arg)
     else if (code == 1 && arg && !(arg % 10)) {
         printf(".");
     }
-    else  {
+    else {
         printf("Got one!\n");
     }
 }
+
 
 // safe prime: a prime p so that (p-1)/2 is also prime
 BIGNUM *prime_generate(int bits, int safe)
@@ -82,14 +83,14 @@ BIGNUM *prime_generate(int bits, int safe)
     if (!prime)
         return NULL;
     str = BN_bn2dec(prime);
-    if (str)
-    {
+    if (str) {
         printf("\nFound prime: %s\n", str);
         OPENSSL_free(str);
     }
 
     return prime;
 }
+
 
 static void *threadfunc(void *param)
 {
@@ -136,6 +137,7 @@ static void *threadfunc(void *param)
     return NULL;
 }
 
+
 int main(int argc, char *argv[])
 {
     int i, len;
@@ -152,7 +154,7 @@ int main(int argc, char *argv[])
         BN_dec2bn(&x, argv[1]);
         ll = strtoll(argv[1], &endptr, 10);
         printf("Original number is %s, covert to 8 bytes integer: %llx\n",
-               argv[1], ll);
+            argv[1], ll);
 
         printf("bytes  : %d, bits: %d\n", BN_num_bytes(x), BN_num_bits(x));
         printf("HEX    : %s\n", BN_bn2hex(x));
@@ -181,7 +183,6 @@ int main(int argc, char *argv[])
     pthread_attr_setdetachstate(&thattr, PTHREAD_CREATE_DETACHED);
     pthread_create(&th, NULL, threadfunc, NULL);
     pthread_join(th, NULL);
-
 
     // x^y && x^y % m
     BN_CTX *ctx = BN_CTX_new();

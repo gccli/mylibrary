@@ -19,7 +19,7 @@
 
 static void seeding(int size)
 {
-/* Read size bytes from /dev/random and seed the PRNG with it */
+    /* Read size bytes from /dev/random and seed the PRNG with it */
     RAND_load_file("/dev/random", size);
     /* Write a seed file */
     RAND_write_file("prngseed.dat");
@@ -28,17 +28,18 @@ static void seeding(int size)
     printf("Seeded the PRNG with %d byte(s) of data from prngseed.dat.\n", nb);
 }
 
+
 static bool is_prime(uint64_t n, BIGNUM *x)
 {
     BN_CTX *ctx = NULL;
     ctx = BN_CTX_new();
-
 
     if (BN_is_prime_ex(x, BN_prime_checks, ctx, NULL))
         return true;
 
     return false;
 }
+
 
 int prime_gen_status(int code, int j, BN_GENCB *cb)
 {
@@ -47,11 +48,13 @@ int prime_gen_status(int code, int j, BN_GENCB *cb)
     if (code == 0) {
         str = BN_bn2hex(cb->arg);
         printf("Found potential prime #%d %s (%s)\n", j, str,
-               is_prime(0, (BIGNUM *)cb->arg)?"Yes":"No");
+            is_prime(0, (BIGNUM *)cb->arg)?"Yes":"No");
         if (str) OPENSSL_free(str);
-    } else if (code == 1) {
+    }
+    else if (code == 1) {
         printf(".");
-    } else {
+    }
+    else {
         printf("Got one!\n");
     }
 
@@ -74,8 +77,7 @@ BIGNUM *prime_generate_ex(int bits)
         return NULL;
     }
     str = BN_bn2hex(prime);
-    if (str)
-    {
+    if (str) {
         printf("\nFound prime: %s\n", str);
         OPENSSL_free(str);
     }
@@ -84,25 +86,33 @@ BIGNUM *prime_generate_ex(int bits)
 }
 
 
-
 int main(int argc, char *argv[])
 {
     BIGNUM *x;
     uint64_t val;
-    char *endptr=NULL;
+    char *str, *endptr = NULL;
 
     uint64_t xx = 0x1ffffffffffffff;
     uint64_t yy = 0xffffffffffffffff;
 
     printf("%lu   -   %lu\n", xx, yy);
 
-
     SSL_load_error_strings();
     seeding(128);
     if (argc > 1) {
+        str = argv[1];
+        if (strncmp(str, "0x", 2) == 0 || strncmp(str, "0X", 2) == 0)
+            str += 2;
+
         x = NULL;
         BN_hex2bn(&x, argv[1]);
         val = strtoll(argv[1], &endptr, 10);
+
+        BN_hex2bn(&x, str);
+        val = (uint64_t)strtoq(argv[1], &endptr, 0);
+
+        if (errno != 0)
+            perror("strtoll");
 
         if ((errno == ERANGE && val == UINT64_MAX)||(errno != 0 && val == 0)) {
             printf("can not covert to long, %s\n", strerror(errno));
@@ -114,7 +124,7 @@ int main(int argc, char *argv[])
         }
         if (val != 0) {
             printf("Original number is %s, covert to 8 bytes integer: %p\n",
-                   argv[1], (void *)val);
+                argv[1], (void *)val);
         }
 
         printf("bytes    : %d, bits: %d\n", BN_num_bytes(x), BN_num_bits(x));
