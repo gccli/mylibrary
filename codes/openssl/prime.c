@@ -40,34 +40,40 @@ static bool is_prime(uint64_t n, BIGNUM *x)
     return false;
 }
 
-
-static const char *kill_line = "\033[0G\033[0K";
-static char line[128];
-static void prime_status(int code, int arg, void *cb_arg)
-{
-    if (code == 0) {
-        sprintf(line, "Found potential prime #%d ", arg+1);
-        write(fileno(stderr), kill_line, strlen(kill_line));
-        write(fileno(stderr), line, strlen(line));
-    }
-    else if (code == 1 && arg && !(arg % 10)) {
-        printf(".");
-    }
-    else  {
-        printf("Got one!\n");
-    }
-}
-
-// safe prime: a prime p so that (p-1)/2 is also prime
-BIGNUM *prime_generate(int bits, int safe)
+int prime_gen_status(int code, int j, BN_GENCB *cb)
 {
     char *str;
-    BIGNUM *prime;
-    printf("\nSearching for a %sprime %d bits in size ...", (safe ? "safe " : ""), bits);
-    prime = BN_generate_prime(NULL, bits, safe, NULL, NULL, prime_status, NULL);
-    if (!prime)
+
+    if (code == 0) {
+        str = BN_bn2hex(cb->arg);
+        printf("Found potential prime #%d %s (%s)\n", j, str,
+               is_prime(0, (BIGNUM *)cb->arg)?"Yes":"No");
+        if (str) OPENSSL_free(str);
+    } else if (code == 1) {
+        printf(".");
+    } else {
+        printf("Got one!\n");
+    }
+
+    return 1;
+}
+
+
+BIGNUM *prime_generate_ex(int bits)
+{
+    int ret;
+    char *str;
+    BIGNUM *prime = BN_new();
+
+    BN_GENCB gencb;
+    BN_GENCB_set(&gencb, prime_gen_status, prime);
+
+    ret = BN_generate_prime_ex(prime, bits, false, NULL, NULL, &gencb);
+    if (!ret) {
+        printf("failed to generate prime\n");
         return NULL;
-    str = BN_bn2dec(prime);
+    }
+    str = BN_bn2hex(prime);
     if (str)
     {
         printf("\nFound prime: %s\n", str);
@@ -77,17 +83,25 @@ BIGNUM *prime_generate(int bits, int safe)
     return prime;
 }
 
+
+
 int main(int argc, char *argv[])
 {
     BIGNUM *x;
     uint64_t val;
     char *endptr=NULL;
 
+    uint64_t xx = 0x1ffffffffffffff;
+    uint64_t yy = 0xffffffffffffffff;
+
+    printf("%lu   -   %lu\n", xx, yy);
+
+
     SSL_load_error_strings();
     seeding(128);
     if (argc > 1) {
         x = NULL;
-        BN_dec2bn(&x, argv[1]);
+        BN_hex2bn(&x, argv[1]);
         val = strtoll(argv[1], &endptr, 10);
 
         if ((errno == ERANGE && val == UINT64_MAX)||(errno != 0 && val == 0)) {
@@ -109,7 +123,7 @@ int main(int argc, char *argv[])
 
     }
 
-    prime_generate(1024, 0);
+    prime_generate_ex(64);
 
     return 0;
 }
