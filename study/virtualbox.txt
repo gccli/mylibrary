@@ -1,0 +1,4 @@
+# VirtualBox start stop export on windows
+"C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" startvm Ubuntu --type headless
+"C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" controlvm Ubuntu poweroff
+"C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" export Ubuntu --output E:\Machine\ubuntu.ova --ovf10
