@@ -30,7 +30,6 @@ fi
 
 [ -z "$DISTRIB_ID" ] && die "Cannot get distribution ID"
 
-
 MYLOG=/tmp/customize.log
 > $MYLOG
 

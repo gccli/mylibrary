@@ -3,14 +3,13 @@
 ;;
 (define-key global-map "\C-r" 'goto-line)
 (define-key global-map "\C-h" 'replace-string)
-(global-hl-line-mode 1)
+;(global-hl-line-mode 1)
 
 ;; deal with white spaces
 (require 'whitespace)
 (global-whitespace-mode)
 (setq whitespace-style
-      '(face trailing tabs lines lines-tail empty
-     space-after-tab space-before-tab))
+      '(face trailing lines lines-tail empty space-after-tab space-before-tab))
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 
 ;; set backup
