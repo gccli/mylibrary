@@ -24,7 +24,12 @@ function die() {
     exit 1
 }
 
+if [ -z "" -o -f /etc/redhat-release ]; then
+    DISTRIB_ID="CentOS"
+fi
+
 [ -z "$DISTRIB_ID" ] && die "Cannot get distribution ID"
+
 
 MYLOG=/tmp/customize.log
 > $MYLOG

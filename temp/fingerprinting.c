@@ -32,6 +32,8 @@ int file_fp(RabinPoly *rp, FILE *fp, uint64_t prime)
 
     assert(feof(fp));
 
+    printf("--------------------------------\n\n");
+
     return 0;
 }
 
@@ -118,9 +120,8 @@ int main(int argc, char **argv)
                 max_block_size, 4*max_block_size);
     src = (char *)calloc(st.st_size+1, 1);
     rewind(fp);
-    //fseek(fp, 0L, SEEK_SET);
     len = fread(src, 1, st.st_size, fp);
-    buffer_fp(rp, src, len, prime);
+    //buffer_fp(rp, src, len, prime);
     rp_free(rp);
 
     return 0;

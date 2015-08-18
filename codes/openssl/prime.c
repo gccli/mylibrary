@@ -28,13 +28,15 @@ static void seeding(int size)
     printf("Seeded the PRNG with %d byte(s) of data from prngseed.dat.\n", nb);
 }
 
+static BN_CTX *bn_ctx = NULL;
 
 static bool is_prime(uint64_t n, BIGNUM *x)
 {
-    BN_CTX *ctx = NULL;
-    ctx = BN_CTX_new();
+    if (!bn_ctx)
+        bn_ctx = BN_CTX_new();
 
-    if (BN_is_prime_ex(x, BN_prime_checks, ctx, NULL))
+
+    if (BN_is_prime_ex(x, BN_prime_checks, bn_ctx, NULL))
         return true;
 
     return false;
@@ -61,7 +63,6 @@ int prime_gen_status(int code, int j, BN_GENCB *cb)
     return 1;
 }
 
-
 BIGNUM *prime_generate_ex(int bits)
 {
     int ret;
@@ -86,16 +87,38 @@ BIGNUM *prime_generate_ex(int bits)
 }
 
 
+void get_all_primes(uint64_t from, uint64_t to)
+{
+    uint64_t i, range,count=0;
+
+    if (from >= to)  {
+        printf("Bad range\n");
+        return ;
+    }
+
+    BIGNUM *prime = BN_new();
+    if (from % 2 == 0) from += 1;
+    range = (to - from)/2;
+    printf("Test all prime from %lu   -   %lu\n", from, to);
+
+    for(i=from; i<to-2; i+=2) {
+        BN_set_word(prime, i);
+        count++;
+        if (is_prime(0, prime)) {
+            printf("prime: %lu 0x%lX %.2f%%\n", i, i, 100.*count/range);
+        }
+    }
+
+}
+
+
 int main(int argc, char *argv[])
 {
     BIGNUM *x;
     uint64_t val;
     char *str, *endptr = NULL;
-
-    uint64_t xx = 0x1ffffffffffffff;
-    uint64_t yy = 0xffffffffffffffff;
-
-    printf("%lu   -   %lu\n", xx, yy);
+    get_all_primes(0xbfe6b8a5bf378d83, 0xbfe6b8a5bf378d83+10000);
+    //get_all_primes(0x3, 0xff);
 
     SSL_load_error_strings();
     seeding(128);
