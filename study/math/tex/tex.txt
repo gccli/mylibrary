@@ -1,0 +1,5 @@
+* Download AUCTex [[http://www.gnu.org/software/auctex/download-for-unix.html][here]]
+
+http://emacser.com/auctex.htm
+https://en.wikibooks.org/wiki/LaTeX/Mathematics
+http://latex.silmaril.ie/formattinginformation/introduction.html
