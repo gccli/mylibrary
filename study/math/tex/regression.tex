@@ -1,0 +1,104 @@
+\documentclass[a4paper]{article}
+\usepackage{geometry}
+\usepackage{mathtools}
+\usepackage[sc,osf,slantedGreek]{mathpazo}
+\begin{document}
+
+\section{Bayesian Linear Regression}
+
+\subsection{Parameter distribution}
+
+conjugate prior over the model parameters $ \mathbf{w} $
+
+\[
+p(\mathbf{w}) = \mathcal{N}(\mathbf{w} | \mathbf{m}_0, \mathbf{S}_0)
+\]
+having mean $ \mathbf{m}_0 $ and convariance $ \mathbf{S}_0 $
+posterior distribution
+
+\begin{align}
+p(\mathbf{w}|\mathbf{t}) = \mathcal{N}(\mathbf{w} | \mathbf{m}_N, \mathbf{S}_N)
+\\
+\mathbf{m}_N = \mathbf{S}_N(\mathbf{S}_0^{-1} \mathbf{m}_0 + \beta \Phi^T \mathbf{t}))
+\\
+\mathbf{S}_N^{-1} = \mathbf{S}_0^{-1} + \beta \Phi^T \Phi
+\end{align}
+
+Specifically, we consider a zero-mean
+isotropic Gaussian governed by a single precision parameter α so that
+
+\begin{align}
+p(\mathbf{w}|\alpha) = \mathcal{N}(\mathbf{w} | \mathbf{0},
+  \alpha^{-1} \mathit{\mathbf{I}})
+\\
+\mathbf{m}_N = \beta \mathbf{S}_N \Phi^T \mathbf{t}
+\\
+\mathbf{S}_N^{-1} =  \alpha \mathit{\mathbf{I}} + \beta \Phi^T \Phi
+\end{align}
+
+
+\subsection{Predictive distribution}
+
+\textit{predictive distribution}
+\[
+p(t | \mathbf{t}, \alpha, \beta) = \int p(t | \mathbf{w},
+\beta)p(\mathbf(w)|\mathbf{t}, \alpha, \beta) d\mathbf{w}
+\]
+$ \mathbf{t} $ is the vector of target values from the training set,
+
+\[
+p(t | \mathbf{x}, \mathbf{t}, \alpha, \beta) = \mathcal{N}(t |
+\mathbf{m}_N^T\Phi(\mathbf{x}),\sigma_N^2(\mathbf{x}))
+\]
+
+the variance $ \sigma_N^2(\mathbf{x}) $ of the predictive distribution is given by
+\[
+\sigma_N^2(\mathbf{x}) = \frac{1}{\beta} + \Phi(\mathbf{x})^T\mathbf{M}_N\Phi(\mathbf{x})
+\]
+
+\subsection{Equivalent kernel}
+predictive mean
+\begin{align}
+y(\mathbf{x},\mathbf{m}_N) = \mathbf{m}_N^T \Phi(\mathbf{x}) =
+\displaystyle\sum_{n=1}^{N} \beta \Phi(\mathbf{x})^T \mathcal{S}_N \Phi(\mathbf{x_n}) t_n
+\end{align}
+the mean of the predictive distribution at a point
+$ \mathbf{x} $ is given by a linear combination of the training set target
+variables $ t_n $
+
+
+
+\begin{align}
+y(\mathbf{x},\mathbf{m}_N) =
+\displaystyle\sum_{n=1}^{N} k(\mathbf{x},\mathbf{x}_n) t_n
+\\
+ k(\mathbf{x},\mathbf{x}') = \beta \phi(\mathbf{x})^T \mathbf{S}_N \phi(\mathbf{x'})
+\end{align}
+is known as the \textit{smoother matrix} or the \textit{equivalent
+  kernel}. Regression functions, such
+as this, which make predictions by taking linear combinations of the training set
+target values are known as \textit{linear smoothers}. Intuitively, it seems reasonable
+that we should weight local evidence more strongly than distant evidence.
+
+Instead of introducing a set of basis
+functions, which implicitly determines an equivalent kernel, we can instead define
+a localized kernel directly and use this to make predictions for new input vectors x,
+given the observed training set. This leads to a practical framework for regression
+(and classification) called \textit{Gaussian processes}.
+We have seen that the effective kernel defines the weights by which the training
+set target values are combined in order to make a prediction at a new value of x, and
+it can be shown that these weights sum to one, in other words
+\begin{align}
+\displaystyle\sum_{n=1}^{N} k(\mathbf{x},\mathbf{x}_n) = 1
+\end{align}
+Finally, we note that the equivalent kernel (3.62) satisfies an
+important property shared by kernel functions in general, namely that
+it can be expressed in the form an inner product with respect to a
+vector $ \psi(\mathbf{x} $ of nonlinear functions, so that
+\begin{align}
+k(\mathbf{x},\mathbf{z}) = \psi(\mathbf{x})^T\psi(\mathbf{x})
+\\
+\psi(\mathbf{x}) = \beta^{1/2} \mathbf{S}_N^{1/2} \phi(\mathbf{x})
+\end{align}
+
+\end{document}
