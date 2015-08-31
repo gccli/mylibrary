@@ -1,0 +1,64 @@
+\documentclass[a4paper]{article}
+\usepackage{geometry}
+\usepackage{mathtools}
+\usepackage[sc,osf,slantedGreek]{mathpazo}
+\begin{document}
+\title{Linear Models for Classification}
+\author{}
+\maketitle
+
+The goal in classification is to take an input vector \textbf{x}
+ and to assign it to one of \textbf{K} discrete classes $
+ \mathcal{C}_k $ where $ \mathnormal{k} = 1,...,\mathnormal{K} $.
+ The input space is thereby divided into \textit{decision regions} whose
+ boundaries are called \textit{decision boundaries} or
+ \textit{decision surfaces}.
+1-of-K coding scheme in which $t$ is a vector of length
+ K such that if the class is $C_j$ , then all elements $t_k$ of $t$
+ are zero except element $t_j$ , which takes the value 1.
+
+\begin{align}
+\mathbf{t} = (0,0,0,1,0)^T
+\end{align}
+
+\begin{align}
+p(C_k|\mathbf{x}) = \frac { p(\mathbf{x}|C_k) p(C_k) }{p(\mathbf{x})}
+\end{align}
+
+\begin{align}
+y(\mathbf{x}) = f(\mathbf{w^T}\mathbf{x} + w_o)
+\end{align}
+
+
+\section{Discriminant Functions}
+A discriminant is a function that takes an input vector $\mathbf{x}$
+ and assigns it to one of $\mathbf{K}$ classes, denoted $C_k$.
+
+\subsection{Two classes}
+
+\begin{align}
+y(\mathbf{x}) = \mathbf{w^T}\mathbf{x} + w_o
+\end{align}
+where $\mathbf{v}$ is called a weight vector, and $w_0$ is a bias
+
+\begin{align}
+\frac{\mathbf{w^T}\mathbf{x}}{\|\mathbf{w}\|} = -\frac{w_o}{\|\mathbf{w}\|}
+\end{align}
+
+an arbitrary point $x$ and let $x_{\bot}$ be its orthogonal
+ projection onto the decision surface
+\begin{align}
+\mathbf{x} = x_{\bot} + r \frac{\mathbf{w}}{\|\mathbf{w}\|}
+\end{align}
+
+\begin{align}
+r = \frac{y(\mathbf{x})}{\|\mathbf{w}\|}
+\end{align}
+
+\begin{align}
+y(\mathbf{x}) = \widetilde{{\mathbf{w}}}^T \widetilde{{\mathbf{x}}}
+\end{align}
+
+\subsection{Multiple classes}
+
+\end{document}
