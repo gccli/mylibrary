@@ -1,0 +1,152 @@
+\documentclass[a4paper]{article}
+\usepackage{geometry}
+\usepackage{mathtools}
+\usepackage[sc,osf,slantedGreek]{mathpazo}
+\begin{document}
+\title{Linear Models for Classification}
+\author{}
+\maketitle
+
+The goal in classification is to take an input vector \textbf{x}
+ and to assign it to one of \textbf{K} discrete classes $
+ \mathcal{C}_k $ where $ \mathnormal{k} = 1,...,\mathnormal{K} $.
+ The input space is thereby divided into \textit{decision regions} whose
+ boundaries are called \textit{decision boundaries} or
+ \textit{decision surfaces}.
+1-of-K coding scheme in which $t$ is a vector of length
+ K such that if the class is $C_j$ , then all elements $t_k$ of $t$
+ are zero except element $t_j$ , which takes the value 1.
+
+\begin{align}
+\mathbf{t} = (0,0,0,1,0)^T
+\end{align}
+
+There are two different approaches to determining the conditional probabilities
+ $p(C_k|\mathbf{x})$. representing them as parametric models and then
+ optimizing the parameters using a training set
+\begin{align}
+p(C_k|\mathbf{x}) = \frac { p(\mathbf{x}|C_k) p(C_k) }{p(\mathbf{x})}
+\end{align}
+
+\begin{align}
+y(\mathbf{x}) = f(\mathbf{w^T}\mathbf{x} + w_o)
+\end{align}
+
+
+\section{Discriminant Functions}
+A discriminant is a function that takes an input vector $\mathbf{x}$
+ and assigns it to one of $\mathbf{K}$ classes, denoted $C_k$.
+
+\subsection{Two classes}
+
+\begin{align}
+y(\mathbf{x}) = \mathbf{w^T}\mathbf{x} + w_o
+\end{align}
+where $\mathbf{v}$ is called a weight vector, and $w_0$ is a bias
+
+\begin{align}
+\frac{\mathbf{w^T}\mathbf{x}}{\|\mathbf{w}\|} = -\frac{w_o}{\|\mathbf{w}\|}
+\end{align}
+
+an arbitrary point $x$ and let $x_{\bot}$ be its orthogonal
+ projection onto the decision surface
+\begin{align}
+\mathbf{x} = x_{\bot} + r \frac{\mathbf{w}}{\|\mathbf{w}\|}
+\end{align}
+
+\begin{align}
+r = \frac{y(\mathbf{x})}{\|\mathbf{w}\|}
+\end{align}
+
+\begin{align}
+y(\mathbf{x}) = \widetilde{{\mathbf{w}}}^T \widetilde{{\mathbf{x}}}
+\end{align}
+
+\subsection{Multiple classes}
+considering a single \textit{K}-class discriminant comprising
+ \textit{K} linear functions of the form
+\begin{align}
+y_k(\mathbf{x}) = \mathbf{w}_k^T \mathbf{x} + \mathbf{w}_{k0}
+\end{align}
+and then assigning a point $\mathbf{x}$ to class $C_k$ if $y_k(x) >
+y_j(x)$ for all $j \neq k$.The decision boundary between class $C_k$ and
+ class $C_j$ is therefore given by $y_k(x) = y_j(x)$ and hence
+ corresponds to a ($\mathit{D} - 1$)-dimensional hyperplane defined by
+\begin{align}
+(\mathbf{w}_k - \mathbf{w}_j)^T\mathbf{x} + (\mathbf{w}_{k0} -
+  \mathbf{w}_{j0}) = 0
+\end{align}
+The decision regions of such a discriminant are always singly
+ connected and convex. consider two points $x_A$ and $x_B$ both of
+ which lie inside decision region $R_k$, any point $\widehat{x}$
+ that lies on the line connecting $x_A$ and $x_B$ can be expressed in the form
+\begin{align}
+\widehat{x} = \lambda x_A + (1 - \lambda)x_B
+\end{align}
+\begin{align}
+y_k(\widehat{x}) = \lambda y_k(x_A) + (1-\lambda)y_k(x_B)
+\end{align}
+
+\subsection{Least squares for classification}
+
+\subsection{Fisher’s linear discriminant}
+
+\begin{align}
+y = \mathbf{w}^T \mathbf{x}
+\end{align}
+
+The Fisher criterion is defined to be the ratio of the between-class variance to
+ the within-class variance and is given by
+
+\begin{align}
+\text{choose w so as to maximum } m_2 - m_1\\
+m_k = \mathbf{w}^T \mathbf{m_k}\\
+s_k^2 = \displaystyle\sum_{n \in C_k}(y_n - m_k)^2\\
+\mathbf{J}(\mathbf{w}) = \frac{(m_2 - m_1)^2}{s_1^2+s_2^2}\\
+\mathbf{J}(\mathbf{w}) = \frac{\mathbf{w}^T \mathbf{S_B} \mathbf{w}}
+  {\mathbf{w}^T \mathbf{S_W} \mathbf{w}}
+\\
+\end{align}
+$S_B$ is the between-class covariance matrix,
+ $S_W$ is the total within-class covariance matrix
+\begin{align}
+\mathbf{S_B} = (\mathbf{m_2} - \mathbf{m_1})(\mathbf{m_2} - \mathbf{m_1})^T\\
+\mathbf{S_W} = \displaystyle\sum_{n \in C_k}(x_n - m_1) (x_n - m_1)^T +
+\displaystyle\sum_{n \in C_k}(x_n - m_2) (x_n - m_2)^T
+\end{align}
+\begin{align}
+\mathbf{w} \propto  \mathbf{S_W} (\mathbf{m_2} - \mathbf{m_1})
+\end{align}
+
+\subsection{Fisher’s discriminant for multiple classes}
+\begin{align}
+\mathbf{y} = \mathbf{W}^T \mathbf{x}
+\end{align}
+
+\subsection{The perceptron algorithm}
+feature vector $\phi(x)$
+\begin{align}
+y(\mathbf{x}) = f(w^T\phi(x))\\
+f(a) =
+  \begin{cases}
+   +1, & a \geq 0 \\
+   -1, & a < 0
+  \end{cases}
+\end{align}
+
+\textit{perceptron criterion}
+seeking a weight vector $\mathbf{w}$ such that patterns $x_n$ in class $C_1$
+ will have $w^T \phi(x_n) > 0$.whereas patterns $x_n$ in class $C_2$
+ have $w^T \phi(x_n) < 0$. for target scheme $t \in {-1, +1}$, we would like all
+ patterns to satisfied $w^T \phi(x_n)t_n > 0$. whereas for a misclassified
+ pattern $x_n$ it tries to minimize the quantity $ - w^T \phi(x_n)t_n$
+\begin{align}
+E_p(w) = - \sum_{n \in \mathcal{W}}w^T \phi_n t_n  \text{   ($\mathcal{M}$
+  denotes misclassified patterns)}
+\\
+w^{(\tau+1)} = w^{(\tau)} - \eta \nabla E_p(w) = w^{(\tau)} + \eta
+  \phi_n t_n
+\end{align}
+
+
+\end{document}
