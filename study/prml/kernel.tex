@@ -1,0 +1,69 @@
+\documentclass[a4paper]{article}
+\usepackage{geometry}
+\usepackage{mathtools}
+\usepackage[sc,osf,slantedGreek]{mathpazo}
+\begin{document}
+\title{Kernel Method}
+\author{}
+\maketitle
+
+Many linear parametric models can be re-cast into an equivalent
+ 'dual representation' in which the predictions are also based on linear
+ combinations of a kernel function evaluated at the training data points.
+As we shall see, for models which are based on a fixed nonlinear feature
+ space mapping $\phi(x)$, the kernel function is given
+\begin{align}
+\mathbf{k}(\mathbf{x}, \mathbf{x'}) = \phi(x)^T\phi(x')
+\end{align}
+
+\section{Dual Representations}
+Many linear models for regression and classification can be reformulated in terms of
+ a dual representation in which the kernel function arises naturally.
+Here we consider a linear regression model whose parameters are determined by
+minimizing a regularized sum-of-squares error function given by
+\begin{align}
+J(w) = \frac{1}{2} \sum_{n=1}^{N} \{ w^T\phi(x_n) -t_n \}^2 + \frac{\lambda}{2}w^tw
+\end{align}
+If we set the gradient of $J(w)$ with respect to $\mathbf{w}$ equal to zero,
+ we see that the solution for $\mathbf{w}$ takes the form of a linear
+ combination of the vectors $\phi(x_n)$
+\begin{align}
+w = -\frac{1}{\lambda} \sum_{n=1}^{N} \{ w^T\phi(x_n) -t_n \}\phi(x_n)
+  = \sum_{n=1}^Na_n\phi(x_n) = \mathbf{\Phi}(x_n)\mathbf{a_n}
+\end{align}
+The nth row of $\mathbf{\Phi}$ is given by $\phi(x_n)^T$, $\mathbf{a}
+= (a_1,...,a_n)$
+\begin{align}
+a_n = -\frac{1}{\lambda} \sum_{n=1}^{N} \{ w^T\phi(x_n) -t_n \}
+\end{align}
+Instead of working with the parameter vector $\mathbf{w}$, we can now
+ reformulate the leastsquares algorithm in terms of the parameter vector
+ $\mathbf{a}$, giving rise to a \textit{dual representation}.
+
+\begin{align}
+J(\mathbf{a}) = \frac{1}{2} \mathbf{a}^T \mathbf{\Phi} \mathbf{\Phi}^T
+  \mathbf{\Phi} \mathbf{\Phi}^T \mathbf{a} - \mathbf{a}^T
+  \mathbf{\Phi} \mathbf{\Phi}^T \mathbf{t} + \frac{1}{2} \mathbf{t}^T
+  \mathbf{t} + \frac{\lambda}{2} \mathbf{a}^T \mathbf{\Phi}
+  \mathbf{\Phi}^T \mathbf{a}
+\end{align}
+where $t = (t_1,...,t_N)^T$, We now define the \textit{Gram matrix}
+$\mathbf{K} = \mathbf{\Phi} \mathbf{\Phi}^T$, which is an N × N symmetric matrix with elements
+\begin{align}
+\mathit{K}_{nm} = \phi(x_n)^T\phi(x_m) = k(x_n, x_m)
+\end{align}
+
+\begin{align}
+J(\mathbf{a}) = \frac{1}{2} \mathbf{a}^T \mathbf{K} \mathbf{K} \mathbf{a} - \mathbf{a}^T
+  \mathbf{K} \mathbf{t} + \frac{1}{2} \mathbf{t}^T
+  \mathbf{t} + \frac{\lambda}{2} \mathbf{a}^T \mathbf{K} \mathbf{a}
+\\
+\mathbf{a} = (\mathbf{K} + \lambda \mathit{\mathbf{I}_N})^{-1} \mathbf{t}
+\\
+y(x) = w^T\phi(x) = a^T\Phi\phi(x) = \mathbf{k}(x)^T (\mathbf{K} +
+  \lambda \mathit{\mathbf{I}_N})^{-1} \mathbf{t}
+\end{align}
+
+
+
+\end{document}

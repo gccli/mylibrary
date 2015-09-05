@@ -148,5 +148,84 @@ w^{(\tau+1)} = w^{(\tau)} - \eta \nabla E_p(w) = w^{(\tau)} + \eta
   \phi_n t_n
 \end{align}
 
+\section{Probabilistic Discriminative Models}
+
+\subsection{Logistic regression}
+\begin{align}
+p(C|\phi) = y(\phi) = \sigma(\mathbf{w}^T \phi)
+\end{align}
+with $p(C_2|\phi) = 1 - p(C_1|\phi)$, Here $\phi(.)$ is the logistic sigmoid,
+ this model is known as \textit{logistic regression}
+We now use maximum likelihood to determine the parameters of the
+ logistic regression model. make use of the derivative of the logistic sigmoid:
+\begin{align}
+\tfrac{\partial \sigma}{\partial a} = \sigma (1-\sigma)
+\end{align}
+For a data set ${\phi_n, t_n}$, where $t_n \in {0, 1}$ and $\phi_n = \phi(x_n),
+with n = 1,...,N$, the likelihood function can be written
+\begin{align}
+p(\mathbf{t}|\mathbf{w}) = \displaystyle\prod_{n-1}^{N} y_n^{t_n}(1-y_n)^{1-t_n}
+\end{align}
+$\mathbf{t} = \{t_1,...,t_N\}, y_n = p(C_1|\phi_n)$,
+taking the negative logarithm of the likelihood, which gives the
+ \textit{cross-entropy} error function in the form
+\begin{align}
+E(w) = -ln \mathit{p} (\mathbf{t}|w) = - \displaystyle \sum_{n=1}^N \{
+  \mathit{t_n}ln\mathit{y_n} + (1-\mathit{t_n})ln(1-\mathit{y_n}) \}
+\end{align}
+where $y_n = \sigma(a_n) \text{ and } a_n = w^T \phi_n$. Taking the gradient of
+ the error function with respect to w
+\begin{align}
+\nabla E(w) = \displaystyle \sum_{n=1}^N (\mathit{y_n} -\mathit{t_n}) \phi_n
+\end{align}
+
+\subsection{Iterative reweighted least squares}
+error function can be minimized by an efficient iterative technique based on the
+ \textit{Newton-Raphson} iterative optimization schemescheme, which uses a
+ local quadratic approximation to the log likelihood function
+The Newton-Raphson update, for minimizing a function $\mathit(E_w)$
+\begin{align}
+\mathbf{w} \gets \mathbf{w} - \mathbf{H}^{-1} \nabla \mathit{E}(\mathbf{w})
+\end{align}
+where $\mathbf{H}$ is the \textbf{Hessian} matrix whose elements comprise the second derivatives of $\mathit{E}(\mathbf{w})$ with respect to the components of $\mathbf{w}$
+\begin{align}
+\nabla \mathit{E}(\mathbf{w}) = \displaystyle \sum_{n=1}^N
+  (\mathbf{w}^T \phi_n - t_n ) \phi_n = \mathbf{\Phi}^T \mathbf{\Phi}
+  \mathbf{w} - \mathbf{\Phi}^T \mathbf{t}
+\\
+\mathbf{H} = \nabla \nabla E(\mathbf{w}) = \mathbf{\Phi}^T \mathbf{\Phi}
+\\
+\mathbf{w} \gets (\mathbf{\Phi}^T \mathbf{\Phi})^{-1}\mathbf{\Phi}^T \mathbf{t}
+\end{align}
+apply the Newton-Raphson update to the cross-entropy error function
+ for the logistic regression model
+\begin{align}
+\nabla \mathit{E}(\mathbf{w}) = \displaystyle \sum_{n=1}^N
+  (y_n - t_n ) \phi_n = \mathbf{\Phi}^T (\mathbf{y} - \mathbf{t})
+\\
+\mathbf{H} = \nabla \nabla E(\mathbf{w}) = \displaystyle
+  \sum_{n=1}^N y_n(1-y_n)\phi_n\phi_n^T = \mathbf{\Phi}^T
+  \mathbf{R} \mathbf{\Phi}
+\\
+R_{nn} = y_n(1-y_n) \text{ diagonal matrix }
+\end{align}
+
+The Newton-Raphson update formula for the logistic regression model then becomes
+\begin{align*}
+\mathbf{w} &= \mathbf{w} - (\mathbf{\Phi}^T \mathbf{R}
+             \mathbf{\Phi})^{-1}\mathbf{\Phi}^T (\mathbf{y} -
+             \mathbf{t})
+\\
+&= (\mathbf{\Phi}^T \mathbf{R} \mathbf{\Phi})^{-1} \{\mathbf{\Phi}^T
+  \mathbf{R} \mathbf{\Phi} \mathbf{w} -
+  \mathbf{\Phi}^T (\mathbf{y} - \mathbf{t}) \}
+\\
+&=(\mathbf{\Phi}^T \mathbf{R} \mathbf{\Phi})^{-1} \mathbf{\Phi}^T \mathbf{z}
+\end{align}
+
+\begin{align}
+\mathbf{z} = \mathbf{\Phi} \mathbf{w} - \mathbf{R}^{-1}(\mathbf{y} - \mathbf{t})
+\end{align}
+
 
 \end{document}
