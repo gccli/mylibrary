@@ -1,4 +1,4 @@
-\documentclass[a4paper]{article}
+\documentclass[a4paper]{article}
 \usepackage{geometry}
 \usepackage{mathtools}
 \usepackage[sc,osf,slantedGreek]{mathpazo}
@@ -63,7 +63,85 @@ J(\mathbf{a}) = \frac{1}{2} \mathbf{a}^T \mathbf{K} \mathbf{K} \mathbf{a} - \mat
 y(x) = w^T\phi(x) = a^T\Phi\phi(x) = \mathbf{k}(x)^T (\mathbf{K} +
   \lambda \mathit{\mathbf{I}_N})^{-1} \mathbf{t}
 \end{align}
+where we have defined the vector $\mathbf{k}(x)$ with elements $k_n(x) = k(x_n, x)$.
 
+\section{Constructing Kernels}
+Another commonly used kernel takes the form
+\begin{align}
+k(x, x') = exp(-\frac{\|x-x'\|^2}{2\sigma^2})\\
+\|x-x'\|^2 = x^Tx+(x')^Tx' -2x^Tx'
+\end{align}
 
+One way to combine them is to use a generative model to define a kernel, and then use this kernel in a discriminative approach.
+Given a generative model $p(x)$ we can define a kernel by
+\begin{align}
+k(x, x') = p(x)p(x')\\
+k(x, x') = \sum_{i}p(x|i)p(x'|i)p(i)\\
+k(x, x') = \int p(x|z)p(x'|z)p(z)dz
+\end{align}
+Now suppose that our data consists of ordered sequences of length $L$
+so that an observation is given by $\mathbf{X} = {x_1,...,x_L}$. A
+popular generative model for sequences is the hidden Markov
+model. which expresses the distribution $p(\mathbf{X})$ as a
+marginalization over a corresponding sequence of hidden states
+$\mathbf{Z} = {z_1,...,z_L}$. We can use this approach to define a
+kernel function measuring the similarity of two sequences $X$ and $X'$
+by extending the mixture representation
+\begin{align}
+k(X, X') = \sum_{Z}p(X|Z)p(X'|Z)p(Z)
+\end{align}
 
+An alternative technique for using generative models to define kernel
+functions is known as the \textit{Fisher kernel}. Consider a
+parametric generative model $p(x|\theta)$ where $\theta$ denotes the
+vector of parameters. The goal is to find a kernel that measures the
+similarity of two input vectors $x$ and $x'$ induced by the generative model.
+\textit{Fisher score}
+\begin{align}
+g(\theta, \mathbf{x}) = \nabla_\theta ln p(\mathbf{x}|\theta)\\
+k(x, x') = g(\theta, \mathbf{x})^T F^{-1} g(\theta, \mathbf{x'})\\
+F = \mathbb{E}_x [g(\theta, \mathbf{x}) g(\theta, \mathbf{x})^T]
+\textit{ (Fisher information matrix)}
+\end{align}
+the expectation is with respect to $x$ under the distribution $p(x|\theta)$.
+In practice, it is often infeasible to evaluate the Fisher information
+matrix. One approach is simply to replace the expectation in the
+definition of the Fisher information with the sample average
+
+A final example of a kernel function is the sigmoidal kernel given by
+\begin{align}
+k(x,x') = tanh(a \mathbf{x}^T \mathbf{x}' + b)
+\end{align}
+
+\section{Radial Basis Function Networks}
+One choice that has been widely used is that of radial basis
+functions, which have the property that each basis function depends
+only on the radial distance (typically Euclidean) from a centre
+$\mu_j$ , so that $\phi_j(x) = h(\| − \mu_j\|) $.
+
+\subsection{Nadaraya-Watson model}
+
+\section{Gaussian Processes}
+
+\subsection{Linear regression revisited}
+Consider a model deﬁned in terms of a linear combination of $M$ ﬁxed
+basis functions given by the elements of the vector $\phi(x)$ so that
+\begin{align}
+y(x) = \mathbf{w}^T\phi(\mathbf{x})\\
+p(\mathbf{w}) = \mathcal{N} (\mathbf{w}|0, \alpha^{-1}\mathit{I})
+\end{align}
+we denote by the vector $\mathbf{y}$ with elements $y_n = y(x_n)$ for $n = 1,...,N$
+\begin{align}
+\mathbf{y} = \Phi \mathbf{w} \text{ $(\Phi_{nk} = \phi_k(x_n)) $ }\\
+\mathbb{E}[y] = 0\\
+cov[y] = \mathbb{E}[yy^T] = \Phi \mathbb{E}[ww^T] \Phi^T=
+  \frac{1}{\alpha}\Phi\Phi^T = \mathbf{K}
+\end{align}
+where $K$ is the Gram matrix with elements
+\begin{align}
+\mathit{K}_{nm} = k(x_n, x_m) = \frac{1}{\alpha} \phi(x_n)^T\phi(x_m)
+\end{align}
+
+We can also deﬁne the kernel function directly, rather than indirectly
+through a choice of basis function. Figure 6.4 shows samples of functions drawn from Gaussian processes for two different choices of kernel function. The ﬁrst of these is a
 \end{document}
