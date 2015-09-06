@@ -143,5 +143,170 @@ where $K$ is the Gram matrix with elements
 \end{align}
 
 We can also deﬁne the kernel function directly, rather than indirectly
-through a choice of basis function. Figure 6.4 shows samples of functions drawn from Gaussian processes for two different choices of kernel function. The ﬁrst of these is a
+through a choice of basis function. Figure 6.4 shows samples of functions drawn from Gaussian processes for two different choices of kernel function.
+
+\subsection{Gaussian processes for regression}
+Apply Gaussian process models to regression, we need to take account of the noise on the observed target values, which are given by
+\begin{align}
+t_n = y_n + \epsilon_n
+\end{align}
+where $yn = y(x_n)$, and $\epsilon_n$ is a random noise variable whose
+value is chosen independently for each observation $n$. Here we shall
+consider noise processes that have a Gaussian distribution, so that
+\begin{align}
+p(t_n|y_n) =  \mathcal{N}(t_n|y_n, \beta^{-1})\\
+p(\mathbf{t}|\mathbf{y}) =  \mathcal{N}(\mathbf{t}|\mathbf{y}, \beta^{-1}\mathit{I}_N)
+\end{align}
+From the deﬁnition of a Gaussian process, the marginal distribution
+$p(\mathbf{y})$ is given by a Gaussian whose mean is zero and whose covariance is deﬁned by a Gram matrix $\mathbf{K}$ so that
+\begin{align}
+p(\mathbf{y}) = \mathcal{N}(\mathbf{y}|0, \mathbf{K})
+\end{align}
+The kernel function that determines $K$ is typically chosen to express the property
+that, for points $x_n$ and $x_m$ that are similar, the corresponding
+values $y(x_n)$ and $y(x_m)$ will be more strongly correlated than for
+dissimilar points. Here the notion of similarity will depend on the application.
+the marginal distribution of $\mathbf{t}$ is given by
+\begin{align}
+p(\mathbf{t}) = \int p(t|y)p(y)dy = \mathcal{N}(\mathbf{t}|0, \mathbf{C})\\
+C(x_n, x_m) = k(x_n, x_m) + \beta^{-1} \delta_{nm}
+\end{align}
+One widely used kernel function for Gaussian process regression is
+given by the exponential of a quadratic form, with the addition of
+constant and linear terms to give
+\begin{align}
+k(x_n, x_m) = \theta_0 exp\{ -\frac{\theta_1}{2}\|x_n-x_m\|^2\} +
+  \theta_2 + \theta_3x_n^Tx_m
+\end{align}
+
+\begin{align}
+p(\mathbf{t}_{N+1}) = N(t_{N=1}|0, C_{N+1})\\
+C_{N+1} =
+ \begin{pmatrix}
+  C_{N} & \mathbf{k}\\
+  \mathbf{k}^T & c
+ \end{pmatrix}
+\end{align}
+
+
+\begin{align}
+m(x_{N+1}) = \mathbf{k}^TC_N^{-1}\mathbf{t}\\
+\sigma^2(x_{N+1}) = c-\mathbf{k}^TC_N^{-1}\mathbf{k}
+\end{align}
+The central computational operation in using Gaussian processes will
+involve the inversion of a matrix of size $N \times N$ , for which
+standard methods require $O(N^3)$ computations.
+
+\subsection{Learning the hyperparameters}
+The predictions of a Gaussian process model will depend, in part, on
+the choice of covariance function. In practice, rather than ﬁxing the covariance function, we
+may prefer to use a parametric family of functions and then infer the
+parameter values from the data. These parameters govern such things as
+the length scale of the correlations and the precision of the noise
+and correspond to the hyperparameters in a standard parametric model.
+Techniques for learning the hyperparameters are based on the
+evaluation of the likelihood function $p(t|\theta)$ where $\theta$
+denotes the hyperparameters of the Gaussian process model.
+The log likelihood function for a Gaussian process regression model
+
+\begin{align}
+ln p(t|\theta) = - \frac{1}{2} ln |C_N| - \frac{1}{2} t^TC_N^{-1}t - \frac{N}{2} ln(2\pi)\\
+\frac{\partial}{\partial \theta_i} ln p(t|\theta) = - \frac{1}{2}
+  Tr(C_N^{-1}\frac{\partial C_N}{\partial \theta_i}) + \frac{1}{2}
+  t^TC_N^{-1} \frac{\partial C_N}{\partial \theta_i} C_N^{-1}t
+\end{align}
+
+\subsection{Automatic relevance determination}
+Consider a Gaussian process with a two-dimensional input space $x =
+(x_1, x_2)$, having a kernel function of the form
+\begin{align}
+k(\mathbf{x}, \mathbf{x}') = \theta_0 exp \{-\frac{1}{2}
+  \sum_{i=1}^{2} \mu^i(x_i - x_i')^2 \}
+\end{align}
+
+\subsection{Gaussian processes for classiﬁcation}
+Consider ﬁrst the two-class problem with a target variable $t \in {0,
+  1}$. If we deﬁne a Gaussian process over a function $a(x)$ and then
+transform the function using a logistic sigmoid $y = \sigma(a)$, then
+we will obtain a non-Gaussian stochastic process over functions $y(x)$ where $y \in (0, 1)$.
+target variable $t$ is then given by the Bernoulli distribution
+\begin{align}
+p(t|a) = \sigma(a)^t(1-\sigma(a)^{1-t}\\
+p(a_{N+1} = \mathcal{N}(a_{N+1}|0, C_{N+1})\\
+C(x_n, x_m) = k(x_n, x_m) + \nu \delta_{nm}
+\end{align}
+predictive distribution is given by
+\begin{align}
+p(t_{N+1} = 1|t_N) = \int (t_N+1 = 1|a_{N+1})p(a_{N+1}|t_N )da_{N +1}
+\end{align}
+where $p(t_{N+1} = 1|a_{N +1}) = \sigma(a_{N +1})$.
+This integral is analytically intractable, and so may be approximated
+using sampling methods. Alternatively, we can consider techniques
+based on an analytical approximation.
+
+\subsection{Laplace approximation}
+In order to evaluate the predictive distribution, we seek a Gaussian
+approximation to the posterior distribution over $a_{N+1}$ , which using Bayes' theorem, is given by
+\begin{align*}
+p(a_{N+1}|\mathbf{t}_N) &= \int p(a_{N+1},\mathbf{a}_N|\mathbf{t}_N)d\mathbf{a}_N\\
+&= \frac{1}{p(\mathbf{t}_N)} \int
+  p(a_{N+1}|\mathbf{a}) p(\mathbf{t}_N|a_{N+1},\mathbf{a}_N) d \mathbf{a}_N\\
+&= \frac{1}{p(\mathbf{t}_N)} \int
+  p(a_{N+1}|\mathbf{a})p(\mathbf{a}_N)  p(\mathbf{t}_N|\mathbf{a}_N)d\mathbf{a}_N\\
+&= \int p(a_{N+1}|\mathbf{a})  p(\mathbf{a}_N|\mathbf{t}_N)d\mathbf{a}_N
+\end{align*}
+where $p(\mathbf{t}_N|a_{N+1},\mathbf{a}_N) = p(\mathbf{t}_N|\mathbf{a}_N) $
+\begin{align}
+p(a_{N+1}|\mathbf{a}_N) = \mathcal{N} (a_{N+1}|\mathbf{k}^T
+  C_{N}^{-1}\mathbf{a}_N, c-\mathbf{k}^T C_{N}^{-1}\mathbf{k})
+\end{align}
+
+\begin{align*}
+p(\mathbf{t}_{N}|\mathbf{a}_N) &= \prod_{n=1}^N \sigma(a_n)^{t_n}(1-\sigma(a_n))^{1-t_n}\\
+&= \prod_{n=1}^N e^{a_nt_n} \sigma(-a_n)
+\end{align*}
+We then obtain the Laplace approximation by Taylor expanding the
+logarithm of $p(a_N|t_N)$
+
+\begin{align*}
+\Psi(\mathbf{a}_N) &= \mathsf{ln} p(\mathbf{a}_N) + \mathsf{ln} p(\mathbf{t}_{N}|\mathbf{a}_N)\\
+&=-\frac{1}{2}\mathbf{a}_N^TC_N^{-1}\mathbf{a}_N
+  -\frac{N}{2}\mathsf{ln}(2\pi) -\frac{1}{2}\mathsf{ln}|C_N| +
+  \mathbf{t}_N^T\mathbf{a}_N - \sum_{n=1}^N \mathsf{ln} (1+e^{a_n}) + const
+\end{align*}
+find the mode of the posterior distribution, and this requires that we
+evaluate the gradient of $\Psi(a_N)$:
+\begin{align}
+\nabla \Psi(\mathbf{a}_N) = \mathbf{t}_N - \sigma_N - C_N^{-1}\mathbf{a}_N
+\end{align}
+$\sigma_N$ is a vector with elements $\sigma(a_n)$, we cannot simply find the mode by
+setting this gradient to zero, because $\sigma_N$ depends nonlinearly on $a_N$, and so we
+resort to an iterative scheme based on the Newton-Raphson method,
+iterative reweighted least squares (IRLS) algorithm, This requires the second
+derivatives of $\Psi(a_N)$
+\begin{align}
+  \nabla\nabla \Psi(a_N) = -\mathbf{W}_N - \mathbf{C}_N^{-1}
+\end{align}
+where$W_N$ is a diagonal matrix with elements $\sigma(a_n)(1−\sigma(a_n))$.
+Using the Newton-Raphson formula, the iterative update equation for $a_N$
+\begin{align}
+a_N^{new} = C_N(I+W_NC_N)^{-1} {T_N -\sigma_N + W_Na_N}
+\end{align}
+These equations are iterated until they converge to the mode which we
+denote by $a_N^*$. At the mode, the gradient $\nabla \Psi(a_N)$ will
+vanish, and hence $a_N^*$ will satisfy
+\begin{align}
+a_N^* = C_N(t_N - \sigma_N)
+\end{align}
+
+\begin{align}
+\mathbf{H} = - \nabla\nabla\Psi(a_N) = \mathbf{W_N + C_N^{-1}}
+\end{align}
+
+\begin{align}
+q(a_n) = \mathcal{N}(a_n|a_N^*, H^{-1})\\
+\mathbb{E}[a_{N+1}|\mathbf{t}_N] = k^T(t_N - \sigma_N)\\
+var[a_{N+1}|\mathbf{t}_N] = c - k^T(W_N^{-1} + C_N)^{-1} \mathbf{k}
+\end{align}
+
 \end{document}
