@@ -1,0 +1,81 @@
+\documentclass[a4paper]{article}
+\usepackage{geometry}
+\usepackage{mathtools}
+\usepackage[sc,osf,slantedGreek]{mathpazo}
+\begin{document}
+\title{Matrices}
+\author{}
+\maketitle
+
+\paragraph{Basic Matrix Identities}
+\begin{align}
+(\mathbf{A}\mathbf{B})^T = (\mathbf{A}\mathbf{B})^T\\
+\mathbf{A}\mathbf{A}^{-1} = \mathbf{A}^{-1}\mathbf{A} = \mathbf{I}\\
+(\mathbf{A}\mathbf{B})^{-1} = \mathbf{B}^{-1} \mathbf{A}^{-1}\\
+(\mathbf{A}^T)^{-1} = (\mathbf{A}^{-1})^T\\
+\end{align}
+
+\begin{align}
+(\mathbf{P}^{-1} +
+  \mathbf{B}^T\mathbf{R}^{-1}\mathbf{B})^{-1}\mathbf{B}^T\mathbf{R}^{-1}
+  =\mathbf{P}\mathbf{B}^T(\mathbf{B}\mathbf{P}\mathbf{B}^T+\mathbf{R})^{-1}
+\end{align}
+
+\begin{align}
+(\mathbf{P}^{-1} +
+  \mathbf{B}^T\mathbf{R}^{-1}\mathbf{B})^{-1}\mathbf{B}^T\mathbf{R}^{-1}
+  =\mathbf{P}\mathbf{B}^T(\mathbf{B}\mathbf{P}\mathbf{B}^T+\mathbf{R})^{-1}
+\end{align}
+Suppose that $P$ has dimensionality $N \times N$ while $R$ has
+dimensionality $M \times M$, so that $B$ is $M \times N$. If $M \ll
+N$, it will be much cheaper to evaluate the right-hand side than the
+left-hand side, A special case that sometimes arises is :
+\begin{align}
+(\mathbf{I} + \mathbf{AB})^{-1}\mathbf{A} = \mathbf{A}(\mathbf{I}+\mathbf{B}\mathbf{A})^{-1}
+\end{align}
+
+\paragraph{Traces and Determinants}
+Trace and determinant apply to square matrices. The trace $Tr(A)$ of a
+matrix A is defined as the sum of the elements on the leading diagonal.
+\begin{align}
+Tr(AB) = Tr(BA)\\
+Tr(ABC) = Tr(CAB) = Tr(BCA)\\
+\end{align}
+The determinant |A| of an $N \times N$ matrix A is defined by
+\begin{align}
+|A| = \sum (\pm 1)A_{1i}A_{2i} \cdots A_{ni}\\
+|AB| = |A||B|\\
+|A^{-1}| = 1/|A|
+\end{align}
+If $A$ and $B$ are matrices of size $N \times M$, then
+\begin{align}
+|I_N+AB^T| = |I_M+A^TB|\\
+|I_N+\mathbf{a}\mathbf{b}^T| = 1+\mathbf{a}\mathbf{b}^T
+\end{align}
+
+\paragraph{Matrix Derivatives}
+The derivative of a vector $\mathbf{a}$ with respect to a scalar $x$ is itself a
+vector whose components are given by
+\begin{align}
+(\frac{\partial\mathbf{a}}{\partial x})_i = \frac{\partial
+  a_i}{\partial x}\\
+\end{align}
+
+\paragraph{Eigenvector Equation}
+For a square matrix $A$ of size $M \times M$, the eigenvector equation is defined by
+\begin{align}
+\mathbf{A}\mathbf{u}_i = \lambda_i\mathbf{u}_i
+\end{align}
+for $i = 1 \dotsc M$, where $u_i$ is an eigenvector and $\lambda_i$ is
+the corresponding eigenvalue.This can be viewed as a set of $M$
+simultaneous homogeneous linear equations, and the condition for a solution is that
+\begin{align}
+|\mathbf{A} - \lambda_i\mathbf{I} = 0|
+\end{align}
+which is known as the characteristic equation.Because this is a
+polynomial of order $M$ in $\lambda$, it must have $M$ solutions.The rank
+of A is equal to the number of nonzero eigenvalues.
+
+In general, the eigenvalues of a matrix are complex numbers, but for
+symmetric matrices the eigenvalues $\lambda_i$ are real.
+\end{document}

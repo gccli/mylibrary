@@ -308,5 +308,18 @@ q(a_n) = \mathcal{N}(a_n|a_N^*, H^{-1})\\
 \mathbb{E}[a_{N+1}|\mathbf{t}_N] = k^T(t_N - \sigma_N)\\
 var[a_{N+1}|\mathbf{t}_N] = c - k^T(W_N^{-1} + C_N)^{-1} \mathbf{k}
 \end{align}
+We also need to determine the parameters $\theta$ of the covariance function.
+
+\begin{align}
+p(\mathbf{t}_N |\theta) = \int p(\mathbf{t}_N|\mathbf{a}_N) p(\mathbf{a}_N |\theta)  d\mathbf{a}_N
+\end{align}
+\begin{align}
+\mathsf{ln}p(\mathbf{t}_N |\theta) = \Psi(\mathbf{a}_N^*) -
+  \frac{1}{2}\mathsf{ln}|\mathbf{W}_N+C_N^{-1}| + \frac{N}{2} \mathsf{ln}(2\pi)
+\end{align}
+where $\Psi(\mathbf{a}_N^*) = \mathsf{ln} p(\mathbf{a}_N^* |\theta) + p(\mathbf{t}_N |\mathbf{a}_N^*)$
+
+
+
 
 \end{document}

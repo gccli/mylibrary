@@ -1,24 +1,78 @@
 * Emacs basic
-  1. M-< moves to the beginning of the whole text
-  2. M-> moves to the end of the whole text
-  3. C-@ Mark set C-w
++ C-x C-o
+  Delete all but one of many consecutive blank lines (delete-blank-lines).
+
+** [[http://www.gnu.org/software/emacs/manual/html_node/emacs/Moving-Point.html][Move]]
++ M-<
+  Move to the top of the buffer (beginning-of-buffer)
++ M->
+  Move to the end of the buffer (end-of-buffer).
++ M-g M-g (M-g g)
+  Read a number n and move point to the beginning of line number n (goto-line).
++ M-g TAB
+  Read a number n and move to column n in the current line.
+
+M-d
+Kill forward to the end of the next word (kill-word).
+
+M-DEL
+Kill back to the beginning of the previous word (backward-kill-word).
+
+** [[http://www.gnu.org/software/emacs/manual/html_node/emacs/Search.html#Search][Search]]
++ C-M-s
+  Begin incremental regexp search (isearch-forward-regexp).
++ C-M-r
+  Begin reverse incremental regexp search (isearch-backward-regexp).
+*** [[http://www.gnu.org/software/emacs/manual/html_node/emacs/Query-Replace.html][Query Replace]]
++ M-% string RET newstring RET
+  Replace some occurrences of string With newstring.
++ C-M-% regexp RET newstring RET
+  Replace some matches for regexp with newstring
+
+  - SPC or y
+    to replace the occurrence With newstring.
+  - DEL or n
+    to skip to the next occurrence without replacing this one.
+  - RET or q
+    to exit without doing any more replacements.
+  - ,
+    to replace but not move point immediately,
+  - !
+    to replace all remaining occurrences without asking again.
+** The Mark and the Region
+_region_ The text between point and the mark is called the region
+
+   + C-@ C-SPC
+     set the mark at point, and activate it (set-mark-command)
+   + C-x C-x
+     move point where the mark used to be (exchange-point-and-mark)
+   + M-@
+     Set mark after end of next word (mark-word). This does not move point.
+   + M-h
+     Move point to the beginning of the current paragraph, and set mark at the end (mark-paragraph)
+
+** Text Registers
+   + C-x r SPC r
+     point-to-register
+   + C-x r j r
+     Jump to the position and buffer saved in register r (jump-to-register)
 
 
-** Emacs org mode
+* Emacs org mode
 
-*** Table
+** Table
  + C-c |         (org-table-create-or-convert-from-region)
  + C-c C-c       (org-table-align)
  + C-c RET        Re-align the table and move down to next row. Creates a new row if necessary.
  + M-<left>      (org-table-move-column-left)
  + M-<right>     (org-table-move-column-right)
-   Move the current column left/right. 
+   Move the current column left/right.
 
-| name    | sex |       phone | birthday | address |
-|---------+-----+-------------+----------+---------|
-| Jing Li |     | 01010010    |          |         |
-|---------+-----+-------------+----------+---------|
-|         |     |             |          |         |
+| name    | sex |    phone | birthday | address |
+|---------+-----+----------+----------+---------|
+| Jing Li |     | 01010010 |          |         |
+|---------+-----+----------+----------+---------|
+|         |     |          |          |         |
 
 
 * emacs autocomplete cscope
@@ -52,6 +106,3 @@ C-c s N Next file.
 C-c s p Previous symbol.
 C-c s P Previous file.
 C-c s u Pop mark.
-
-
-** autocomplete
