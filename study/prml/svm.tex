@@ -1,0 +1,160 @@
+\documentclass[a4paper]{article}
+\usepackage{geometry}
+\usepackage{mathtools}
+\usepackage[sc,osf,slantedGreek]{mathpazo}
+\begin{document}
+\title{Sparse Kernel Machines}
+\author{}
+\maketitle
+
+The SVM is a decision machine and so does not provide posterior probabilities.
+\section{Maximum Margin Classiﬁers}
+two-class classification problem using linear models of the form
+\begin{align}
+y(x) = \mathbf{w}^T\phi(x) + b
+\end{align}
+$\phi(x)$: fixed feature-space transformation
+bias parameter: $b$
+training data set: $N$ input vectors $x_1, \dotsc ,x_N$
+corresponding target values: $t_1, \dotsc ,t_N$,  $t_n \in \{−1, 1\}$
+point $\mathbf{x}$ from a hyperplane deﬁned by $y(\mathbf{x}) = 0$ is
+given by $|y(\mathbf{x})| / \|\mathbf{w}\|$. Thus the distance of a
+point $\mathbf{x}_n$ to the decision surface is given by
+\begin{align}
+\frac{t_n y(\mathbf{x}_n)}{\|\mathbf{w}\|} =
+  \frac{t_n(\mathbf{w}^T\phi(\mathbf{x}_n) + b)}{\|\mathbf{w}\|}
+\end{align}
+margin is given by the perpendicular distance to the closest point $\mathbf{x}_n$
+from the data set, optimize the parameters $w$ and $b$ in order to
+maximize this distance
+\begin{align}
+\textit{arg max}_{w,b} \{ \frac{1}{\|\mathbf{w}\|} min[t_n(w^T\phi(x_n)+b)] \}\\
+\textit{arg min}_{w,b} \frac{1}{2}\|\mathbf{w}\|^2
+\end{align}
+
+Lagrang function
+\begin{align}
+L(w,b,a) = \frac{1}{2}\|\mathbf{w}\|^2 - \sum_{n=1}^{N}
+  a_n{t_n(w^T\phi(x_n)+b) -1}\\
+\mathbf{w} = \sum_{n=1}^{N}  a_nt_n\phi(x_n)\\
+\sum_{n=1}^{N}  a_nt_n = 0
+\end{align}
+Eliminating $w$ and $b$ from $L(w, b, a)$ using these conditions then
+gives the dual representation of the maximum margin problem in which we maximize
+\begin{align}
+\widehat{L}(\mathbf{a}) = \sum_{n=1}^{N}  a_n - \frac{1}{2}
+  \sum_{n=1}^N\sum_{m=1}^N a_na_mt_nt_m k(\mathbf{x}_n,\mathbf{x}_m)\\
+y(\mathbf{x}) = \sum_{m=1}^N a_nt_nk(k(\mathbf{x},\mathbf{x}_n)+b
+\end{align}
+constrained optimization of this form satisfies the \textit{Karush-Kuhn-Tucker} (KKT) conditions:
+\begin{align}
+a_n &\geq 0\\
+t_ny(\mathbf{x_n})-1 &\geq 0 \\
+a_n(t_ny(\mathbf{x}_n)-1) & = 0
+\end{align}
+Any data point for which $a_n = 0$ will not appear in the sum in
+$y(\mathbf{x}) = \sum_{m=1}^N a_nt_nk(k(\mathbf{x},\mathbf{x}_n)+b$
+and hence plays no role in making predictions for new data points.The
+remaining data points are called \textit{support vectors}, and because
+they satisfy $t_n y(x_n) = 1$ they correspond to points that lie on
+the maximum margin hyperplanes in feature space.
+
+determine the value of the threshold parameter $b$ by noting that any
+support vector $\mathbf{x}_n$ satisﬁes tn $y(\mathbf{x}_n) = 1$
+\begin{align}
+t_n (\sum_{m \in S} a_mt_mk(\mathbf{x}_n,\mathbf{x}_m) + b) = 1\\
+b = \frac{1}{N_S}\sum_{m \in S} (t_n - \sum_{m \in S} a_mt_mk(\mathbf{x}_n,\mathbf{x}_m))
+\end{align}
+$S$: the set of indices of the support vectors
+$N_S$: the total number of support vectors.
+
+comparison with alternative models, we can express the maximummargin
+classiﬁer in terms of the minimization of an error function, with a
+simple quadratic regularizer, in the form
+\begin{align}
+\sum_{n=1}^N E_{\infty} (y(x_n)t_n - 1) + \lambda\|\mathbf{w}\|^2
+\end{align}
+
+\subsection{Overlapping class distributions}
+Modify the support vector machine: allow some of the training points to be misclassiﬁed.
+data points are allowed to be on the 'wrong side' of the margin
+boundary, but with a penalty that increases with the distance from that boundary
+introduce \textit{slack variables} $\xi_n \geq 0, n=1,\dots,N$ with
+one slack variable for each training data point.
+\[
+\xi_n =
+\begin{cases}
+ 0 & \text{ data points on or inside the correct margin boundary}\\
+ 1 & y(\mathbf{x}_n) = 0 \text{ (decision boundary)}\\
+ |t_n-y(\mathbf{x}_n)| & \text{ others}
+\end{cases}
+\]
+
+exact classification constraints
+\begin{align}
+t_ny(\mathbf{x}_n) \geq 1 - \xi_n, \text{    $n=1,\dots,N$}
+\end{align}
+maximize the margin while softly penalizing points that lie on the
+wrong side of the margin boundary. minimize
+\begin{align}
+C\sum_{n=1}^N \xi_n + \frac{1}{2}\|\mathbf{w}\|^2
+\end{align}
+$C > 0$ controls the trade-off between the slack variable penalty and the margin.
+We now wish to minimize $C\sum_{n=1}^N \xi_n+\frac{1}{2}\|\mathbf{w}\|^2$, the corresponding Lagrangian is given by
+\begin{align}
+L(\mathbf{w},b,\xi,\mathbf{a},\mu) = \frac{1}{2}\|\mathbf{w}\|^2 +
+  C\sum_{n=1}^N \xi_n - \sum_{n=1}^Na_n\{t_ny(\mathbf{x}_n)-1+\xi_n\} -\sum_{n=1}^Na_n\mu_n\xi_n\\
+a_n \geq 0\\
+t_ny(x_n)-1+\xi_n \geq 0\\
+a_n(t_ny(x_n)-1+\xi_n) = 0\\
+\mu_n \geq 0\\
+\xi_n \geq 0\\
+\mu_n \xi_n = 0\\
+\end{align}
+where $a_n, \mu_n$ are Lagrange multipliers, $N=1,...,N$.
+We now optimize out $w, b, \xi_n$
+\begin{align}
+\frac{\partial L}{\partial \mathbf{w}} = 0 &\Rightarrow \mathbf{w} =
+  \sum_{n=1}^N a_nt_n\phi(x_n)\\
+\frac{\partial L}{\partial b} = 0 &\Rightarrow \sum_{n=1}^N a_nt_n = 0\\
+\frac{\partial L}{\partial \xi} = 0 &\Rightarrow a_n = C - \mu_n
+\end{align}
+eliminate $w, b, \xi_n$ from the Lagrangian, we obtain
+\begin{align}
+\widehat{L}(\mathbf{a}) = \sum_{n=1}^N a_n - \frac{1}{2}
+  \sum_{n=1}^N\sum_{m=1}^N a_na_mt_nt_mk(x_n,x_m)\\
+0 \leq a_n \leq C\\
+\sum_{n=1}^Na_nt_n = 0
+\end{align}
+support vectosr $\{\mathbf{x}_n\}$ given by
+\begin{align}
+t_ny(\mathbf{x}_n) = 1-\xi_n
+\end{align}
+\[
+\begin{cases}
+ a_n<C & \Rightarrow \mu_n>0 \Rightarrow \xi_n=0 \text{ points lie on the margin}\\
+ a_n=C & \text{ lie inside the margin}
+ \begin{cases}
+   \xi_n \leq 1 &\text{ correctly classified}\\
+   \xi_n > 1 & \text{ misclassiﬁed}
+ \end{cases}
+\end{cases}
+\]
+
+\begin{align}
+t_n(\sum_{m \in S} a_mt_mk(x_n,x_m)+b) = 1\\
+b = \frac{1}{N_{\mathcal{M}}} \sum_{n \in \mathcal{M}} (t_n - \sum_{m \in S} a_mt_mk(x_n,x_m))
+\end{align}
+$\mathcal{M}$: the set of indices of data points having $0 < a_n < C$.
+
+\subparagraph{v-SVM}
+An alternative, equivalent formulation of the support vector machine, known as the ν-SVM, this involves maximizing
+\begin{align}
+\widehat{L}(\mathbf{a}) = - \frac{1}{2} \sum_{n=1}^N\sum_{m=1}^N a_na_mt_nt_mk(x_n,x_m)\\
+0 \leq a_n \leq 1/N\\
+\sum_{n=1}^N a_nt_n = 0\\
+\sum_{n=1}^N a_n \geq \nu
+\end{align}
+
+
+\end{document}
