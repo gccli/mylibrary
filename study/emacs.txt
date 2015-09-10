@@ -76,33 +76,36 @@ _region_ The text between point and the mark is called the region
 
 
 * emacs autocomplete cscope
-
 ** cscope
 https://github.com/dkogan/xcscope.el
-apt-get install cscope -y
-apt-get install cscope-el -y
+http://emacswiki.org/emacs/CScopeAndEmacs
+apt-get -y install cscope cscope-el
+
++ create index
+  # cscope -bR
 
 add following line to ~/.emacs
 (add-hook 'c-mode-common-hook '(lambda () (require 'xcscope)))
 
-Each cscope search adds its results to the cscope buffer.
++ operation the cscope buffer.
   n/p navigates over individual results
   k kills individual results
   M-k kills file results
   M-K kills result sets
 
-C-c s s Find symbol.
-C-c s = Find assignments to this symbol
-C-c s d Find global definition.
-C-c s g Find global definition (alternate binding).
-C-c s G Find global definition without prompting.
-C-c s c Find functions calling a function.
-C-c s C Find called functions (list functions called from a function).
++ search commands
+  C-c s s Find symbol.
+  C-c s = Find assignments to this symbol
+  C-c s d Find global definition.
+  C-c s g Find global definition (alternate binding).
+  C-c s G Find global definition without prompting.
+  C-c s c Find functions calling a function.
+  C-c s C Find called functions (list functions called from a function).
 
-C-c s b Display cscope buffer.
-C-c s B Auto display cscope buffer toggle.
-C-c s n Next symbol.
-C-c s N Next file.
-C-c s p Previous symbol.
-C-c s P Previous file.
-C-c s u Pop mark.
+  C-c s b Display cscope buffer.
+  C-c s B Auto display cscope buffer toggle.
+  C-c s n Next symbol.
+  C-c s N Next file.
+  C-c s p Previous symbol.
+  C-c s P Previous file.
+  C-c s u Pop mark.
