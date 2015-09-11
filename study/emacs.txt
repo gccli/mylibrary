@@ -1,7 +1,9 @@
 * Emacs basic
 + C-x C-o
   Delete all but one of many consecutive blank lines (delete-blank-lines).
-
+** Emacs Key Binding
+http://www.emacswiki.org/emacs/KeyBindingDiscussion
+http://www.emacswiki.org/emacs/PrefixKey
 ** [[http://www.gnu.org/software/emacs/manual/html_node/emacs/Moving-Point.html][Move]]
 + M-<
   Move to the top of the buffer (beginning-of-buffer)
@@ -51,15 +53,21 @@ _region_ The text between point and the mark is called the region
    + M-h
      Move point to the beginning of the current paragraph, and set mark at the end (mark-paragraph)
 
-** Text Registers
-   + C-x r SPC r
-     point-to-register
-   + C-x r j r
-     Jump to the position and buffer saved in register r (jump-to-register)
-
-
+** [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Registers.html][Registers]]
+   http://emacswiki.org/emacs/Registers
++ Position register
+  C-x r SPC r  point-to-register
+  C-x r j r    Jump to the position and buffer saved in register r (jump-to-register)
++ Bookmarks
+  C-x r m RET            Set the bookmark for the visited file, at point.
+  C-x r m bookmark RET   Set the bookmark named bookmark at point (bookmark-set).
+  C-x r b bookmark RET   Jump to the bookmark named bookmark (bookmark-jump)
+  C-x r l                List all bookmarks (list-bookmarks)
+  M-x bookmark-save      Save all the current bookmark values in the default bookmark file
++ File Names in Registers
+  put a file name into register r:
+  (set-register r '(file . name))
 * Emacs org mode
-
 ** Table
  + C-c |         (org-table-create-or-convert-from-region)
  + C-c C-c       (org-table-align)
@@ -73,7 +81,6 @@ _region_ The text between point and the mark is called the region
 | Jing Li |     | 01010010 |          |         |
 |---------+-----+----------+----------+---------|
 |         |     |          |          |         |
-
 
 * emacs autocomplete cscope
 ** cscope
@@ -94,12 +101,14 @@ add following line to ~/.emacs
   M-K kills result sets
 
 + search commands
+  C-c s u *go back*
+  C-c s G *find global definition*
+  C-c s c *called by who*
+
   C-c s s Find symbol.
   C-c s = Find assignments to this symbol
   C-c s d Find global definition.
   C-c s g Find global definition (alternate binding).
-  C-c s G Find global definition without prompting.
-  C-c s c Find functions calling a function.
   C-c s C Find called functions (list functions called from a function).
 
   C-c s b Display cscope buffer.
@@ -108,4 +117,3 @@ add following line to ~/.emacs
   C-c s N Next file.
   C-c s p Previous symbol.
   C-c s P Previous file.
-  C-c s u Pop mark.
