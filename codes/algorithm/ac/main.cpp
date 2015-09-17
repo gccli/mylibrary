@@ -136,27 +136,34 @@ bool search(const char *s, int len)
 
 void show()
 {
-    scpair_t k;
-    kset_t ks;
-    goto_t::iterator it;
-    fail_t::iterator iif;
-    output_t::iterator io;
-    for(it = g_st.begin(); it != g_st.end(); ++it) {
-        k = it->first;
-        printf("g(%d,%c) = %d\n", k.first, k.second, g(k.first, k.second));
-    }
-    for(iif = f_st.begin(); iif != f_st.end(); ++iif) {
-        printf("f(%d) = %d\n", iif->first, f(iif->first));
-    }
+    int  tmpi;
+    char tmpstr[2][1024];
+    long offs[2] = {0};
 
-    for(io = o_st.begin(); io != o_st.end(); ++io) {
-        ks = io->second;
-        printf("%d = {", io->first);
-        kset_t::iterator i = ks.begin();
-        printf("%s", i->c_str());
-        ++i;
-        for(;i != ks.end(); ++i) printf(",%s", i->c_str());
-        printf("}\n");
+    foreach(g_st) {
+        scpair_t k = ia->first;
+        tmpi = sprintf(tmpstr[0]+offs[0], "(%d,%c)", k.first, k.second);
+        offs[0] += tmpi;
+        offs[1] += sprintf(tmpstr[1]+offs[1], "%*d", tmpi, ia->second);
+    }
+    printf("goto function:\n%s\n%s\n", tmpstr[0], tmpstr[1]);
+    offs[0] = offs[1] = 0;
+
+    foreach(f_st) {
+        offs[0] += sprintf(tmpstr[0]+offs[0], "%-2d  ", ia->first);
+        offs[1] += sprintf(tmpstr[1]+offs[1], "%-2d  ", ia->second);
+    }
+    printf("failure function:\n%s\n%s\n", tmpstr[0], tmpstr[1]);
+
+    printf("output function:\n");
+    for(output_t::iterator io = o_st.begin(); io != o_st.end(); ++io) {
+        kset_t ks = io->second;
+        offs[0] = 0;
+        foreach(ks) {
+            offs[0] += sprintf(tmpstr[0]+offs[0], "%s,", ia->c_str());
+        }
+        tmpstr[0][offs[0]-1] = 0;
+        printf("%-2d = {%s}\n", io->first, tmpstr[0]);
     }
 }
 
@@ -171,7 +178,7 @@ int main(int argc, char *argv[])
         "a temporary object is not introduced for that prvalue.";
     argv++;
     init(argv);
-    //show();
+    show();
 
     printf("----------------------------------------------------------------\n");
     printf("Search\n%s\n", test);
