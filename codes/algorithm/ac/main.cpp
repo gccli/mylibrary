@@ -39,6 +39,8 @@ int g(int s, char a)
 
 int f(int s)
 {
+    if (s == 0) return 0;
+
     fail_t::iterator it = f_st.find(s);
     if (it == f_st.end())
         abort();
@@ -47,8 +49,6 @@ int f(int s)
 
 void enter(const char *key, int len)
 {
-    printf("add %s...\n", key);
-
     int j, p;
     int state = 0;
     j = 0;
@@ -67,15 +67,17 @@ void enter(const char *key, int len)
 }
 
 
-
-
 void init(char *keys[])
 {
+    printf("Keywords: ");
     goto_t::iterator it;
     while(keys[0]) {
+        printf("\"%s\", ", keys[0]);
         enter(keys[0], strlen(keys[0]));
         keys++;
     }
+
+    printf("\n");
     foreach(all_a) {
         decltype(all_a)::value_type a = *ia;
         if (g(0, a) == FAIL) g_st[scpair_t(0, a)] = 0;
@@ -92,7 +94,6 @@ void init(char *keys[])
         }
     }
 
-    printf("done qsize: %zu\n", q.size());
     while(!q.empty()) {
         r = q.front(); q.pop();
         foreach(all_a) {
@@ -112,6 +113,25 @@ void init(char *keys[])
             }
         }
     }
+}
+
+bool search(const char *s, int len)
+{
+    bool found = false;
+    int i, state = 0;
+    output_t::iterator it;
+    for(i=0; i<len;) {
+        while(g(state, s[i++]) == FAIL)
+            state = f(state);
+        state = g(state, s[i-1]);
+        if ((it = o_st.find(state)) != o_st.end()) {
+            foreach(it->second) {
+                printf("%-6d %s\n", i, ia->c_str());
+            }
+            found = true;
+        }
+    }
+    return found;
 }
 
 void show()
@@ -146,8 +166,17 @@ void show()
  */
 int main(int argc, char *argv[])
 {
+    const char *test = "If expression is a function call which returns a prvalue of\n"
+        "class type or is a comma expression whose right operand is such a function call,\n"
+        "a temporary object is not introduced for that prvalue.";
     argv++;
     init(argv);
-    show();
+    //show();
+
+    printf("----------------------------------------------------------------\n");
+    printf("Search\n%s\n", test);
+    printf("----------------------------------------------------------------\n\nResult:\n");
+
+    printf("Match: %s\n", search(test, strlen(test))? "Yes": "No");
     return 0;
 }
