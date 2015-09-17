@@ -2,24 +2,32 @@
 % demo for chapter 03
 clear; close all;
 n = 100;
-beta = 1e-1;
+beta = 4e-2;
 
 % Return a matrix with random elements uniformly distributed on the interval (0, 1)
 % http://www.gnu.org/software/octave/doc/interpreter/Special-Utility-Matrices.html#index-rand
 % http://www.gnu.org/software/octave/doc/interpreter/Special-Utility-Matrices.html#XREFrandn
-X = rand(1,n);
-w = randn;
-b = randn;
-t = w'*X+b+beta*randn(1,n);
+
+# training set X,t
+%X = rand(1,n);
+%w = randn;
+%b = randn;
+%t = w'*X+b+beta*randn(1,n);
+
+X = [0.1:0.1:10];
+t = sin(X) + beta*randn(1,n);
+
 
 % Return a row vector with n linearly spaced elements between base and limit.
 x = linspace(min(X)-1,max(X)+1,n);   % test data
 %
-model = regress(X, t);
+
+model = regressEbFp(X, t);
+
 y = linInfer(x, model);
 figure;
 hold on;
-plot(X,t,'*');
+plot(X,t,'o');
 plot(x,y,'r-');
 hold off
 %{
