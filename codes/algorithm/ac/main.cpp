@@ -146,7 +146,7 @@ void show()
         offs[0] += tmpi;
         offs[1] += sprintf(tmpstr[1]+offs[1], "%*d", tmpi, ia->second);
     }
-    printf("goto function:\n%s\n%s\n", tmpstr[0], tmpstr[1]);
+    printf("\ngoto function:\n%s\n%s\n", tmpstr[0], tmpstr[1]);
     offs[0] = offs[1] = 0;
 
     foreach(f_st) {
@@ -180,9 +180,10 @@ int main(int argc, char *argv[])
     init(argv);
     show();
 
-    printf("----------------------------------------------------------------\n");
-    printf("Search\n%s\n", test);
-    printf("----------------------------------------------------------------\n\nResult:\n");
+    printf("\nSearch keywords in following string:\n");
+    printf("--------------------------------------------\n");
+    printf("%s\n", test);
+    printf("---------------------------------------------\n\n");
 
     printf("Match: %s\n", search(test, strlen(test))? "Yes": "No");
     return 0;
