@@ -1,31 +1,50 @@
-* Emacs basic
-+ C-x C-o
-  Delete all but one of many consecutive blank lines (delete-blank-lines).
-** Emacs Key Binding
-http://www.emacswiki.org/emacs/KeyBindingDiscussion
+Emacs Manual for myself
+=======================
+
+Markdown Mode
+-------------
+There are three important links for mastering markdown, emacs markdown mode [markdown-mode.el][1.1], marddown [syntax][1.2] and [github flavored markdown](http://daringfireball.net/projects/markdown/syntax)
+
+[1.1]: https://github.com/defunkt/markdown-mode
+[1.2]: https://guides.github.com/features/mastering-markdown
+
+##### Headings: `C-c C-t` To insert a heading of a specific level and type #####
+use `C-c C-t 1` through `C-c C-t 6` for atx (hash mark)
+and `C-c C-t !` or `C-c C-t @` for setext headings of level one or two
+
+##### Hyperlinks #####
+
+Emacs basic
+-----------
+    + C-x C-o
+      Delete all but one of many consecutive blank lines (delete-blank-lines).
+
+### Emacs Key Binding ###
+
+[http://www.emacswiki.org/emacs/KeyBindingDiscussion]()
 http://www.emacswiki.org/emacs/PrefixKey
-** [[http://www.gnu.org/software/emacs/manual/html_node/emacs/Moving-Point.html][Move]]
-+ M-<
-  Move to the top of the buffer (beginning-of-buffer)
-+ M->
-  Move to the end of the buffer (end-of-buffer).
-+ M-g M-g (M-g g)
-  Read a number n and move point to the beginning of line number n (goto-line).
-+ M-g TAB
-  Read a number n and move to column n in the current line.
 
-M-d
-Kill forward to the end of the next word (kill-word).
+### [Move](http://www.gnu.org/software/emacs/manual/html_node/emacs/Moving-Point.html) ###
+    + M-<
+      Move to the top of the buffer (beginning-of-buffer)
+    + M->
+      Move to the end of the buffer (end-of-buffer).
+    + M-g M-g (M-g g)
+      Read a number n and move point to the beginning of line number n (goto-line).
+    + M-g TAB
+      Read a number n and move to column n in the current line.
 
-M-DEL
-Kill back to the beginning of the previous word (backward-kill-word).
+    + M-d
+      Kill forward to the end of the next word (kill-word).
+    + M-DEL
+      Kill back to the beginning of the previous word (backward-kill-word).
 
-** [[http://www.gnu.org/software/emacs/manual/html_node/emacs/Search.html#Search][Search]]
+## [Search](http://www.gnu.org/software/emacs/manual/html_node/emacs/Search.html#Search)
 + C-M-s
   Begin incremental regexp search (isearch-forward-regexp).
 + C-M-r
   Begin reverse incremental regexp search (isearch-backward-regexp).
-*** [[http://www.gnu.org/software/emacs/manual/html_node/emacs/Query-Replace.html][Query Replace]]
+### [Query Replace](http://www.gnu.org/software/emacs/manual/html_node/emacs/Query-Replace.html)
 + M-% string RET newstring RET
   Replace some occurrences of string With newstring.
 + C-M-% regexp RET newstring RET
@@ -67,29 +86,14 @@ _region_ The text between point and the mark is called the region
 + File Names in Registers
   put a file name into register r:
   (set-register r '(file . name))
-* Emacs org mode
-** Table
- + C-c |         (org-table-create-or-convert-from-region)
- + C-c C-c       (org-table-align)
- + C-c RET        Re-align the table and move down to next row. Creates a new row if necessary.
- + M-<left>      (org-table-move-column-left)
- + M-<right>     (org-table-move-column-right)
-   Move the current column left/right.
 
-| name    | sex |    phone | birthday | address |
-|---------+-----+----------+----------+---------|
-| Jing Li |     | 01010010 |          |         |
-|---------+-----+----------+----------+---------|
-|         |     |          |          |         |
 
-* emacs autocomplete cscope
-** cscope
-https://github.com/dkogan/xcscope.el
-http://emacswiki.org/emacs/CScopeAndEmacs
-apt-get -y install cscope cscope-el
-
+# cscope
+[cscope.el](https://github.com/dkogan/xcscope.el)
+[CScopeAndEmacs](http://emacswiki.org/emacs/CScopeAndEmacs)
+apt-get -y install cscope
 + create index
-  # cscope -bR
+  cscope -bR
 
 add following line to ~/.emacs
 (add-hook 'c-mode-common-hook '(lambda () (require 'xcscope)))
@@ -121,7 +125,3 @@ add following line to ~/.emacs
   C-c s N Next file.
   C-c s p Previous symbol.
   C-c s P Previous file.
-* Markdown Mode
-https://guides.github.com/features/mastering-markdown/
-https://github.com/defunkt/markdown-mode
-http://daringfireball.net/projects/markdown/syntax#philosophy
