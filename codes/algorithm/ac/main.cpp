@@ -173,9 +173,8 @@ void show()
  */
 int main(int argc, char *argv[])
 {
-    const char *test = "If expression is a function call which returns a prvalue of\n"
-        "class type or is a comma expression whose right operand is such a function call,\n"
-        "a temporary object is not introduced for that prvalue.";
+    const char *test = "Inspects the declared type of an entity or queries the type and value category of an expression. If expression is a function call which returns a prvalue of class type or is a comma expression whose right operand is such a function call, a temporary object is not introduced for that prvalue.\n"
+        "不过，昨日招商银行则出乎意料地宣布，进入“网上转账汇款全免费”时代，自9月21日起，所有个人客户通过招商银行网上个人银行、手机银行APP办理境内任何转账业务(包括异地和跨行转账)，均享受0费率。业内人士分析，招行此举会加大其它银行的压力，是应对第三方支付等互联网金融的断腕之举，打响了银行业的价格战，价格战还会延续一段时间。";
     argv++;
     init(argv);
     show();
