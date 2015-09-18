@@ -15,6 +15,12 @@ There are three important links for mastering markdown, emacs markdown mode [mar
 - Horizontal Rules: C-c -
 - `C-c C-c c` will check for undefined references
 
+markdown-enable-math
+\[
+A^TA = I$
+\]
+
+
 ##### Headings: `C-c C-t` #####
 + use `C-c C-t 1` through `C-c C-t 6` for atx (hash mark)
 + and `C-c C-t !` or `C-c C-t @` for setext headings of level one or two
@@ -82,6 +88,8 @@ Emacs basic
         <br/> to replace but not move point immediately,
     * `!`
         <br/> to replace all remaining occurrences without asking again.
+
+
 
 ##### The Mark and the Region #####
 The text between point and the mark is called the *region*
