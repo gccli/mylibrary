@@ -68,48 +68,47 @@ Emacs basic
 
 ##### [Query Replace][2.5] #####
 + `M-%` string RET newstring RET
-  - Replace some occurrences of string With newstring.
+<br/> Replace some occurrences of string With newstring.
 + `C-M-%` regexp RET newstring RET
-  - Replace some matches for regexp with newstring
+<br/> Replace some matches for regexp with newstring
 
-        SPC or y
-              to replace the occurrence With newstring.
-          DEL or n
-              to skip to the next occurrence without replacing this one.
-          RET or q
-              to exit without doing any more replacements.
-          ,
-              to replace but not move point immediately,
-          !
-              to replace all remaining occurrences without asking again.
+    * `SPC or y`
+        <br/> to replace the occurrence With newstring.
+    * `DEL or n`
+        <br/> to skip to the next occurrence without replacing this one.
+    * `RET or q`
+        <br/> to exit without doing any more replacements.
+    * `,`
+        <br/> to replace but not move point immediately,
+    * `!`
+        <br/> to replace all remaining occurrences without asking again.
 
 ##### The Mark and the Region #####
 The text between point and the mark is called the *region*
 
 + `C-@ C-SPC`
-  - set the mark at point, and activate it (set-mark-command)
+<br/> set the mark at point, and activate it (set-mark-command)
 + `C-x C-x`
-  - move point where the mark used to be (exchange-point-and-mark)
+<br/> move point where the mark used to be (exchange-point-and-mark)
 + `M-@`
-  - Set mark after end of next word (mark-word). This does not move point.
+<br/> Set mark after end of next word (mark-word). This does not move point.
 + `M-h`
-  - Move point to the beginning of the current paragraph, and set mark at the end (mark-paragraph)
+<br/> Move point to the beginning of the current paragraph, and set mark at the end (mark-paragraph)
 
 ##### [Registers][2.6] #####
 <http://emacswiki.org/emacs/Registers>
 
 + Position register
-  `C-x r SPC r`  point-to-register
-  `C-x r j r`    Jump to the position and buffer saved in register r (jump-to-register)
+<br/>  `C-x r SPC r`  point-to-register
+<br/>  `C-x r j r`    Jump to the position and buffer saved in register r (jump-to-register)
 + Bookmarks
-  `C-x r m RET`            Set the bookmark for the visited file, at point.
-  `C-x r m bookmark RET`   Set the bookmark named bookmark at point (bookmark-set).
-  `C-x r b bookmark RET`   Jump to the bookmark named bookmark (bookmark-jump)
-  `C-x r l`                List all bookmarks (list-bookmarks)
-  `M-x bookmark-save`      Save all the current bookmark values in the default bookmark file
+<br/>  `C-x r m RET`            Set the bookmark for the visited file, at point.
+<br/>  `C-x r m bookmark RET`   Set the bookmark named bookmark at point (bookmark-set).
+<br/>  `C-x r b bookmark RET`   Jump to the bookmark named bookmark (bookmark-jump)
+<br/>  `C-x r l`                List all bookmarks (list-bookmarks)
+<br/>  `M-x bookmark-save`      Save all the current bookmark values in the default bookmark file
 + File Names in Registers
-  - put a file name into register r:
-    `(set-register r '(file . name))`
+<br/> put a file name into register r: `(set-register r '(file . name))`
 
 
 cscope
@@ -118,36 +117,35 @@ cscope
 [cscope.el](https://github.com/dkogan/xcscope.el)
 [CScopeAndEmacs](http://emacswiki.org/emacs/CScopeAndEmacs)
 
-``` shell
     apt-get -y install cscope
     cscope -bR
     (add-hook 'c-mode-common-hook '(lambda () (require 'xcscope)))
-```
+
 
 + operation the cscope buffer.
-  n/p navigates over individual results
-  k kills individual results
-  M-k kills file results
-  M-K kills result sets
+<br/>  `n/p` navigates over individual results
+<br/>  `k` kills individual results
+<br/>  `M-k` kills file results
+<br/>  `M-K` kills result sets
 
 + search commands
-  `C-c s u` *go back*
-  `C-c s G` *find global definition*
-  `C-c s c` *called by who*
-  `C-c s L` *create list of files to index*
-
-  `M-k` kills file results
-  `M-K` kills result sets
-
-  `C-c s s` Find symbol.
-  `C-c s =` Find assignments to this symbol
-  `C-c s d` Find global definition.
-  `C-c s g` Find global definition (alternate binding).
-  `C-c s C` Find called functions (list functions called from a function).
-
-  `C-c s b` Display cscope buffer.
-  `C-c s B` Auto display cscope buffer toggle.
-  `C-c s n` Next symbol.
-  `C-c s N` Next file.
-  `C-c s p` Previous symbol.
-  `C-c s P` Previous file.
+<br/>  `C-c s u` *go back*
+<br/>  `C-c s G` *find global definition*
+<br/>  `C-c s c` *called by who*
+<br/>  `C-c s L` *create list of files to index*
+<br/>
+<br/>  `M-k` kills file results
+<br/>  `M-K` kills result sets
+<br/>
+<br/>  `C-c s s` Find symbol.
+<br/>  `C-c s =` Find assignments to this symbol
+<br/>  `C-c s d` Find global definition.
+<br/>  `C-c s g` Find global definition (alternate binding).
+<br/>  `C-c s C` Find called functions (list functions called from a function).
+<br/>
+<br/>  `C-c s b` Display cscope buffer.
+<br/>  `C-c s B` Auto display cscope buffer toggle.
+<br/>  `C-c s n` Next symbol.
+<br/>  `C-c s N` Next file.
+<br/>  `C-c s p` Previous symbol.
+<br/>  `C-c s P` Previous file.
