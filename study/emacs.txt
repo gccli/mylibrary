@@ -104,6 +104,10 @@ add following line to ~/.emacs
   C-c s u *go back*
   C-c s G *find global definition*
   C-c s c *called by who*
+  C-c s L *create list of files to index*
+
+  M-k kills file results
+  M-K kills result sets
 
   C-c s s Find symbol.
   C-c s = Find assignments to this symbol

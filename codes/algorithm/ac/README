@@ -37,3 +37,10 @@ i     output(i)
      s' and next symbol of x becomes the current input symbol.
      if output(s') != empty, the operating now complete.
   2. if g(s,a) = /fail/, the machine call f, is said to make a /fail transition/. if f(s) = s', the macine report the cycle with s' as the current state and a as the current input symbol.
+
+* Time complexity
+  The actual time complexity of matching algorithm depends on how expensive it is:
+  1. to determine g(s,a) for each state s and input symbol a
+  2. to determine f(s) for each state s
+  3. to determine whether output(s) is empty and
+  4. to emit output(s)
