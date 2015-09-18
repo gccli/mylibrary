@@ -1,6 +1,7 @@
-* Pattern matching machine
-  the behaviour of the pattern matching machine is dictated by three functions: a goto function /g/, a failure function /f/, and an output function /output/
+## Pattern matching machine
+    the behaviour of the pattern matching machine is dictated by three functions: a goto function /g/, a failure function /f/, and an output function /output/
 
+```
  ^->
  | |  h      e      r      s
  --0----->1----->2----->8----->9
@@ -8,6 +9,7 @@
    |      ------>6----->7
    |  s      h      e
    ------>3----->4----->5
+```
 
 i:     1  2  3  4  5  6  7  8  9
 f(i):  0  0  0  1  2  0  3  0  3
@@ -18,25 +20,25 @@ i     output(i)
 7     {his}
 9     {hers}
 
-+ goto function /g/
-  maps <state,symbol> into a state or /fail/
+* goto function *g*
+  maps <state,symbol> into a state or *fail*
   e.g. the edge labeled h from 0 to 1 indicates that g(0,h) = 1
-  the absense of an arrow indicates /fail/
+  the absense of an arrow indicates *fail*
   g(0, a) != 0 for all input symbols 'a'
 
-+ failure function /f/
+* failure function /f/
   maps state into a state
-  failure functioin is called whenever the goto function report /fail/
+  failure functioin is called whenever the goto function report *fail*
   centain states are designated as output states which indicate that a set of keywords has been found.
   the output function formalizes this concept by associating a set of keywords with every state.
 
 + operating cycle
   s: current state of the machine
   a: current symbol of the input string x
-  1. if g(s,a) = s', the machine make a /goto transition/.
+  1. if g(s,a) = s', the machine make a _goto transition_.
      s' and next symbol of x becomes the current input symbol.
      if output(s') != empty, the operating now complete.
-  2. if g(s,a) = /fail/, the machine call f, is said to make a /fail transition/. if f(s) = s', the macine report the cycle with s' as the current state and a as the current input symbol.
+  2. if g(s,a) = *fail*, the machine call f, is said to make a _fail transition_. if f(s) = s', the macine report the cycle with s' as the current state and a as the current input symbol.
 
 * Time complexity
   The actual time complexity of matching algorithm depends on how expensive it is:
@@ -44,3 +46,7 @@ i     output(i)
   2. to determine f(s) for each state s
   3. to determine whether output(s) is empty and
   4. to emit output(s)
+
+## Reference
+
+> Efficient String matching: An Aid to Bibliographic Search

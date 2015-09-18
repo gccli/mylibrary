@@ -851,7 +851,7 @@ int acsmPrintSummaryInfo(void)
 #ifdef ACSMX_MAIN
 int MatchFound (void *id, void *tree, int index, void *data, void *neg_list)
 {
-    fprintf (stdout, "%-2d %s\n", index, (char *) id);
+    fprintf (stdout, "%-8d %s\n", index, (char *) id);
     return 0;
 }
 

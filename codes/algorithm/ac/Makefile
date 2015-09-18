@@ -8,4 +8,4 @@ acsmx:*.c
 
 
 clean:
-	$(RM) ac acsmx
+	$(RM) ac acsmx core

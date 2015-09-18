@@ -121,3 +121,7 @@ add following line to ~/.emacs
   C-c s N Next file.
   C-c s p Previous symbol.
   C-c s P Previous file.
+* Markdown Mode
+https://guides.github.com/features/mastering-markdown/
+https://github.com/defunkt/markdown-mode
+http://daringfireball.net/projects/markdown/syntax#philosophy
