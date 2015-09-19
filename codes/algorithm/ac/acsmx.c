@@ -678,7 +678,7 @@ static unsigned char Tc[64*1024];
 int
 acsmSearch (ACSM_STRUCT * acsm, unsigned char *Tx, int n,
             int (*Match)(void * id, void *tree, int index, void *data, void *neg_list),
-            void *data, int* current_state )
+            void *data, int* current_state)
 {
     int state = 0;
     ACSM_PATTERN * mlist;

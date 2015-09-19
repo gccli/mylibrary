@@ -1,11 +1,20 @@
-all:ac acsmx
+BIN=a.out acsmx
+all:$(BIN)
 
-ac:*.cpp
-	$(CXX) -g -Wall -std=c++0x $^ -o $@
+
+OBJS=test.o acsmx.o
+
+a.out:$(OBJS)
+	$(CXX) $^ -o $@ $(LDFLAGS)
+
+%.o:%.cpp
+	$(CXX) -I. -c -g -Wall -std=c++0x $^ -o $@
+
+%.o:%.c
+	$(CC) -I. -c -g -Wall $^ -o $@
 
 acsmx:*.c
 	gcc -g -Wall -DACSMX_MAIN  $^ -o $@
 
-
 clean:
-	$(RM) ac acsmx core
+	$(RM) $(BIN) $(OBJS) *.o core
