@@ -2,7 +2,7 @@ BIN=a.out acsmx
 all:$(BIN)
 
 
-OBJS=test.o acsmx.o
+OBJS=test.o acsmx.o mpse.o
 
 a.out:$(OBJS)
 	$(CXX) $^ -o $@ $(LDFLAGS)

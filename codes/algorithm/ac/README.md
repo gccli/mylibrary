@@ -48,6 +48,11 @@ the behaviour of the pattern matching machine is dictated by three functions: a 
   3. to determine whether output(s) is empty and
   4. to emit output(s)
 
+## Usage ##
+``` shell
+ENGTYPE=1 ./a.out keyword dir
+```
+
 ## Reference
 
 > Efficient String matching: An Aid to Bibliographic Search
