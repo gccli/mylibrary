@@ -2,24 +2,48 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#include <stdarg.h>
 
 #include <list>
 #include <string>
 #include "mpse.h"
 
+//#include <dynamic_preproc/str_search.h>
+
+
 extern "C"
 {
 #include "../../../utils/utiltime.h"
-#include "acsmx.h"
+#include <dynamic_preproc/str_search.h>
+//#include "acsmx.h"
+
+void FatalError(const char *format,...)
+{
+    va_list ap;
+    va_start(ap, format);
+    vfprintf(stderr, format, ap);
+    va_end(ap);
+}
+void LogMessage(const char *format,...)
+{
+    va_list ap;
+    va_start(ap, format);
+    vfprintf(stderr, format, ap);
+    va_end(ap);
+}
+typedef struct _TestConfig {
+    unsigned nocase;
+} TestConfig;
+
+static TestConfig sc;
+TestConfig *snort_conf = &sc;
 }
 
 #define MAX_KEYWORD    100
 typedef std::list<std::string> kset_t;
 static kset_t keywords;
-
 static void *engine;
-static int eng_type = 1;
-static int nocase = 0;
+static unsigned eng_method = 1;
 
 struct stats {
     long file_count;
@@ -75,6 +99,7 @@ static char *load_file(const char *filename, int *n)
         printf("failed to read file %s\n", filename);
         exit(1);
     }
+    fclose(fp);
 
     return buff;
 }
@@ -87,7 +112,7 @@ static int callback1 (int id, int index, void *data)
     return 0;
 }
 
-static int callback2 (void *id, void *tree,
+static int callback (void *id, void *tree,
                      int index, void *data, void *neg_list)
 {
 //    fprintf (stdout, "match %-8d keyword id %ld\n", index, (long)id);
@@ -100,12 +125,14 @@ static int EngineSearch(const char *text, int len)
 {
     double start = timing_start();
     int s = 0,c;
-    if (eng_type == 1) {
+    if (eng_method == 1) {
     c = mp_search((mp_struct_t *)engine, (unsigned char *)text, len,
                   callback1, &s);
     } else {
-    c = acsmSearch((ACSM_STRUCT *)engine, (unsigned char *)text, len,
-                   callback2, NULL, &s);
+//    c = acsmSearch((ACSM_STRUCT *)engine, (unsigned char *)text, len,
+//                   callback2, NULL, &s);
+
+        c = SearchInstanceFindString(engine, text, len, 0, callback);
     }
     st.t_match += timing_cost(start);
     return c;
@@ -113,20 +140,18 @@ static int EngineSearch(const char *text, int len)
 
 static void EngineCompile()
 {
-    long id = 0;
+    int id = 0;
     double start;
 
     foreach(keywords) {
 //        printf("add keyword [%s]\n", ii->c_str());
         start = timing_start();
 
-        if (eng_type == 1) {
-        mp_add_pattern((mp_struct_t *)engine, (unsigned char *)ii->c_str(),
-                       ii->length(), id);
+        if (eng_method == 1) {
+            mp_add_pattern((mp_struct_t *)engine, (unsigned char *)ii->c_str(),
+                           ii->length(), id);
         } else {
-        acsmAddPattern ((ACSM_STRUCT *)engine, (unsigned char *)ii->c_str(),
-                        ii->length(), nocase,
-                        0, 0, 0, (void *)id, id);
+            SearchInstanceAdd(engine, ii->c_str(), ii->length(), id);
         }
 
         st.t_compile += timing_cost(start);
@@ -134,10 +159,10 @@ static void EngineCompile()
     }
 
     start = timing_start();
-    if (eng_type == 1) {
-    mp_compile((mp_struct_t *)engine);
+    if (eng_method == 1) {
+        mp_compile((mp_struct_t *)engine);
     } else {
-    acsmCompile((ACSM_STRUCT *)engine, NULL, NULL);
+        SearchInstancePrepPatterns(engine);
     }
     st.t_compile += timing_cost(start);
     st.pattern_count = id;
@@ -145,15 +170,12 @@ static void EngineCompile()
 
 void *EngineCreate()
 {
-    switch(eng_type) {
+    switch(eng_method) {
     case 1:
         engine = calloc(sizeof(mp_struct_t), 1);
         break;
-    case 2:
-        engine = acsmNew(NULL, NULL, NULL);
-        break;
     default:
-        engine = NULL;
+        engine = SearchInstanceNewEx(eng_method);
         break;
     }
     return engine;
@@ -161,13 +183,11 @@ void *EngineCreate()
 
 void EngineFree()
 {
-    switch(eng_type) {
+    switch(eng_method) {
     case 1:
         break;
-    case 2:
-        acsmFree ((ACSM_STRUCT *)engine);
-        break;
     default:
+        SearchInstanceFree(engine);
         break;
     }
 }
@@ -187,7 +207,7 @@ int ScanDir(const char *dirp)
 	snprintf(path, sizeof(path), "%s/%s", dirp, namelist[n]->d_name);
 	if (namelist[n]->d_type == DT_DIR) {
             if (namelist[n]->d_name[0] == '.') continue;
-            printf("%s\n", path);
+            //printf("%s\n", path);
             ScanDir(path);
 	} else if (namelist[n]->d_type == DT_REG) {
             text = load_file(path, &len);
@@ -211,10 +231,9 @@ int main(int argc, char *argv[])
     memset(&st, 0, sizeof(st));
 
     if ((e = getenv("ENGTYPE"))) {
-        eng_type = atoi(e);
+        eng_method = atoi(e);
     }
-
-
+    sc.nocase = 1;
     if (argc < 3) {
         fprintf (stderr, "Usage: ./a.out keyword_file dir [options]\n");
         return 1;
@@ -227,7 +246,7 @@ int main(int argc, char *argv[])
 
 
     printf("\n--------------------------------\n");
-    printf("Engine Type   : %d\n", eng_type);
+    printf("Engine Type   : %d\n", eng_method);
     printf("pattern count : %ld\n", st.pattern_count);
     printf("file count    : %ld\n", st.file_count);
     printf("file bytes    : %ld\n", st.file_bytes);
