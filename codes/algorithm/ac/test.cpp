@@ -33,6 +33,7 @@ void LogMessage(const char *format,...)
 }
 typedef struct _TestConfig {
     unsigned nocase;
+    int verbose = 0;
 } TestConfig;
 
 static TestConfig sc;
@@ -129,9 +130,6 @@ static int EngineSearch(const char *text, int len)
     c = mp_search((mp_struct_t *)engine, (unsigned char *)text, len,
                   callback1, &s);
     } else {
-//    c = acsmSearch((ACSM_STRUCT *)engine, (unsigned char *)text, len,
-//                   callback2, NULL, &s);
-
         c = SearchInstanceFindString(engine, text, len, 0, callback);
     }
     st.t_match += timing_cost(start);
@@ -140,18 +138,16 @@ static int EngineSearch(const char *text, int len)
 
 static void EngineCompile()
 {
-    int id = 0;
+    long id = 0;
     double start;
 
     foreach(keywords) {
-//        printf("add keyword [%s]\n", ii->c_str());
         start = timing_start();
-
         if (eng_method == 1) {
             mp_add_pattern((mp_struct_t *)engine, (unsigned char *)ii->c_str(),
                            ii->length(), id);
         } else {
-            SearchInstanceAdd(engine, ii->c_str(), ii->length(), id);
+            SearchInstanceAddEx(engine, ii->c_str(), ii->length(), (void *)id, sc.nocase);
         }
 
         st.t_compile += timing_cost(start);
@@ -178,6 +174,11 @@ void *EngineCreate()
         engine = SearchInstanceNewEx(eng_method);
         break;
     }
+    if (engine == NULL) {
+        printf("can not create match engine, maybe method incorrectly\n");
+        exit(1);
+    }
+
     return engine;
 }
 
@@ -205,14 +206,10 @@ int ScanDir(const char *dirp)
 
     while (n--) {
 	snprintf(path, sizeof(path), "%s/%s", dirp, namelist[n]->d_name);
-	if (namelist[n]->d_type == DT_DIR) {
-            if (namelist[n]->d_name[0] == '.') continue;
-            //printf("%s\n", path);
-            ScanDir(path);
-	} else if (namelist[n]->d_type == DT_REG) {
+	if (namelist[n]->d_type == DT_REG) {
             text = load_file(path, &len);
             c = EngineSearch(text, len);
-            //printf("%3d match:  %s\n", c, path);
+
             st.file_count++;
             st.file_bytes += len;
             st.match_total += c;
@@ -224,38 +221,65 @@ int ScanDir(const char *dirp)
     return 0;
 }
 
+const char *methods[] = {
+    "",
+    "AC, implemented by me (default)",
+    "",
+    "",
+    "LOWMEM, Basic Keyword Search Trie - uses linked lists to build the finite automat",
+    "",
+    "ACF_FULL, Full matrix",
+    "ACF_SPARSE, Sparse matrix",
+    "ACF_BANDED, Banded matrix",
+    "ACF_SPARSEBANDS, Sparse-Banded matrix",
+    "AC_BNFA, ",
+    "AC_BNFA_Q",
+    NULL
+};
+
 int main(int argc, char *argv[])
 {
     int i = 0;
     char *e;
     memset(&st, 0, sizeof(st));
-
-    if ((e = getenv("ENGTYPE"))) {
-        eng_method = atoi(e);
-    }
     sc.nocase = 1;
+    sc.verbose= 1;
     if (argc < 3) {
-        fprintf (stderr, "Usage: ./a.out keyword_file dir [options]\n");
+        fprintf (stderr, "Usage: METHOD=method ./a.out keyword_file dir\n");
+        fprintf (stderr, "Valid match method as follow:\n");
+        fprintf (stderr, " 1:  %s\n", methods[1]);
+        fprintf (stderr, " 4:  %s\n", methods[4]);
+        fprintf (stderr, " 6:  %s\n", methods[6]);
+        fprintf (stderr, " 7:  %s\n", methods[7]);
+        fprintf (stderr, " 8:  %s\n", methods[8]);
+        fprintf (stderr, " 9:  %s\n", methods[9]);
+        fprintf (stderr, " 10: %s\n", methods[10]);
+        fprintf (stderr, " 11: %s\n", methods[11]);
+        fprintf (stderr, "\nExample:\n");
+        fprintf (stderr, "  METHOD=10 ./a.out keyword /usr/include\n");
         return 1;
     }
     load_keywords(argv[1]);
+
+    if ((e = getenv("METHOD"))) eng_method = atoi(e);
 
     engine = EngineCreate();
     EngineCompile();
     ScanDir(argv[2]);
 
-
     printf("\n--------------------------------\n");
-    printf("Engine Type   : %d\n", eng_method);
+    printf("Method        : %s\n", methods[eng_method]);
     printf("pattern count : %ld\n", st.pattern_count);
     printf("file count    : %ld\n", st.file_count);
     printf("file bytes    : %ld\n", st.file_bytes);
     printf("compile time  : %lf(s)\n", st.t_compile);
-    printf("match time    : %lf(s)\n", st.t_match);
+    printf("\x1b[1m\x1b[31mmatch time    : %lf(s)\x1b[0m\n", st.t_match);
     printf("match total   : %ld\n", st.match_total);
+    if (sc.verbose) {
     printf("match count for each keyword :\n");
     foreach(keywords) {
         printf("  %-20s    %-4ld\n", ii->c_str(), st.match_count[i++]);
+    }
     }
 
     EngineFree();

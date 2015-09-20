@@ -12,7 +12,7 @@ static mp_pattern_t *mp_pattern_dup(mp_pattern_t *pt)
     return p;
 }
 
-int mp_add_pattern(mp_struct_t *p, unsigned char *pat, int n, int id)
+int mp_add_pattern(mp_struct_t *p, unsigned char *pat, int n, long id)
 {
     mp_pattern_t *plist;
 

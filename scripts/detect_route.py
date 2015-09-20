@@ -71,7 +71,7 @@ def replace_gateway(oldgw,newgw):
         print o
         return False
 
-    
+
     command='sed -ibak /%s/d /etc/resolv.conf' % oldgw
     print command
     command=command.split(' ')
@@ -106,4 +106,3 @@ if __name__ == '__main__':
     else:
         if ping('www.baidu.com',5):
             print 'Gateway:%s Network is OK' % gw
-

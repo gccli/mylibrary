@@ -18,7 +18,7 @@ typedef struct _mp_pattern {
     struct _mp_pattern *next;
     unsigned char      *pattern;
     int                 n;
-    int                 id;
+    long                id;
 } mp_pattern_t;
 
 typedef struct _mp_statetable {
@@ -37,7 +37,7 @@ typedef struct _mp_struct {
 } mp_struct_t;
 
 
-int mp_add_pattern(mp_struct_t *p, unsigned char *pat, int n, int id);
+int mp_add_pattern(mp_struct_t *p, unsigned char *pat, int n, long id);
 int mp_compile(mp_struct_t *mp);
 int mp_search(mp_struct_t *mp, unsigned char *txt, int n,
               match_callback callback, int *state);
