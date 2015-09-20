@@ -256,7 +256,7 @@ int main(int argc, char *argv[])
         fprintf (stderr, " 10: %s\n", methods[10]);
         fprintf (stderr, " 11: %s\n", methods[11]);
         fprintf (stderr, "\nExample:\n");
-        fprintf (stderr, "  METHOD=10 ./a.out keyword /usr/include\n");
+        fprintf (stderr, "  METHOD=10 ./a.out /tmp/keyword /tmp/data\n");
         return 1;
     }
     load_keywords(argv[1]);

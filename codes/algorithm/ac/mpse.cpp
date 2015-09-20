@@ -42,14 +42,13 @@ static void mp_add_state(mp_struct_t *mp, mp_pattern_t *pt)
         j++;
     }
 
-    pat = pt->pattern;
-
     for(n=j; n<pt->n; ++n, ++pat) {
         mp->num_states++;
         mp->stable[state].next[ *pat ] = mp->num_states;
         state = mp->num_states;
     }
 
+    // associate state with match list
     newp = (mp_pattern_t *) calloc(sizeof(*newp), 1);
     memcpy(newp, pt, sizeof(*pt));
     newp->next = mp->stable[state].match_list;

@@ -17,6 +17,7 @@ exclude = [
     u'的'
 ];
 
+
 if __name__ == '__main__':
     i = 0
     f = codecs.open(sys.argv[2], encoding='utf-8', mode='a+')
