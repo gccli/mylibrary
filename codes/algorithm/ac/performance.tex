@@ -1,0 +1,78 @@
+\documentclass[a4paper]{article}
+\usepackage{geometry}
+\usepackage[table]{xcolor}
+\usepackage{multirow}
+\usepackage{alltt}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{dcolumn}
+\begin{document}
+\title{Multi-Pattern Search Algorithm comparison}
+\author{}
+\maketitle
+
+
+\section{Aho-Corasick State Machine}
+Aho-Corasick algorithm variants
+
+
+\begin{alltt}
+\textbf{AC}: standard
+\textbf{ACF_FULL}: acsmx2.c, Full matrix
+\textbf{ACF_SPARSE}: acsmx2.c, Sparse matrix
+\textbf{ACF_BANDED}: acsmx2.c, Banded matrix
+\textbf{ACF_SPARSEBANDS}: acsmx2.c, Sparse-Banded matrix
+\textbf{ACF_FULLQ}: acsmx2.c, matching states are queued
+\textbf{AC_BNFA}: bnfa_search.c, Basic NFA based AC, compacted sparse array storage
+\textbf{AC_BNFA_Q}: bnfa_search.c, Basic NFA based AC, compacted sparse array storage
+\end{alltt}
+
+\begin{table}
+\begin{tabular*}{0.75\textwidth}{ | c | c | c | r | }
+  \hline
+  label 1 & label 2 & label 3 & label 4 \\
+  \hline
+  item 1  & item 2  & item 3  & item 4  \\
+  \hline
+\end{tabular*}
+\end{table}
+
+\begin{tabular}{llr}
+\hline
+\multicolumn{2}{c}{Item} \\
+\cline{1-2}
+Animal    & Description & Price (\$) \\
+\hline
+Gnat      & per gram    & 13.65      \\
+          & each        & 0.01       \\
+Gnu       & stuffed     & 92.50      \\
+Emu       & stuffed     & 33.33      \\
+Armadillo & frozen      & 8.99       \\
+\hline
+\end{tabular}
+
+
+\section{Reference}
+
+\usepackage{booktabs}\\
+  \begin{tabular}{llr}
+    \toprule
+    \multicolumn{2}{c}{Item} \\
+    \cmidrule(r){1-2}
+    Animal    & Description & Price (\$) \\
+    \midrule
+    Gnat      & per gram    & 13.65      \\
+          &    each     & 0.01       \\
+    Gnu       & stuffed     & 92.50      \\
+    Emu       & stuffed     & 33.33      \\
+    Armadillo & frozen      & 8.99       \\
+    \bottomrule
+  \end{tabular}
+
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

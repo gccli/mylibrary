@@ -157,8 +157,9 @@ int mp_search(mp_struct_t *mp, unsigned char *txt, int n,
     tend = txt + n;
     for(; t < tend; ++t) {
         next = mp->stable[next].next[*t];
-        if (mp->stable[next].match_list) {
-            m = mp->stable[next].match_list;
+//        if (mp->stable[next].match_list) {
+//        m = mp->stable[next].match_list;
+        for (m = mp->stable[next].match_list; m; m = m->next) {
             index = t - m->n + 1 - txt;
             count++;
             if (callback(m->id, index, m) > 0) {

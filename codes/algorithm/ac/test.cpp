@@ -43,7 +43,7 @@ typedef std::list<std::string> kset_t;
 static kset_t keywords;
 static void *engine;
 static unsigned eng_method = 1;
-
+static unsigned keyword_max_len = 0;
 struct stats {
     long file_count;
     long file_bytes;
@@ -106,6 +106,10 @@ static void load_keywords(const char *filename)
         pend = line+sz-1;
         trim(line, pend);
         if (line >= pend) continue;
+
+        len = pend - line + 1;
+        if (keyword_max_len < len) keyword_max_len = len;
+
         keywords.push_back(line);
     }
     if (keywords.size() == 0) exit(0);
@@ -262,6 +266,7 @@ int ScanDir(const char *dirp)
     while (n--) {
 	snprintf(path, sizeof(path), "%s/%s", dirp, namelist[n]->d_name);
 	if (namelist[n]->d_type == DT_REG) {
+            if (sc.verbose > 1) printf("%s\n", path);
             text = load_file(path, &len);
             c = EngineSearch(text, len);
 
@@ -354,10 +359,14 @@ int main(int argc, char *argv[])
     printf("\x1b[1m\x1b[32m VmSize       : %ld kB\x1b[0m\n", st.vms[1]-st.vms[0]);
 
     if (sc.verbose) {
-    printf("Match count for each keyword :\n");
-    foreach(keywords) {
-        printf("  %-20s    %-4ld\n", ii->c_str(), st.match_count[i++]);
-    }
+        printf("Match count for each keyword :\n");
+        i=0;
+        foreach(keywords) {
+            printf("  %-*s\t%ld\t\t",
+                   keyword_max_len, ii->c_str(), st.match_count[i++]);
+            if (i%2 == 0) printf("\n");
+        }
+        printf("\n");
     }
 
     EngineFree();

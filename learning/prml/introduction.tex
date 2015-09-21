@@ -1,0 +1,190 @@
+\documentclass[a4paper]{article}
+\usepackage{geometry}
+\usepackage{mathtools}
+\usepackage[sc,osf,slantedGreek]{mathpazo}
+\begin{document}
+\title{Introduction}
+\author{}
+\maketitle
+
+The SVM is a decision machine and so does not provide posterior probabilities.
+\section{Polynomial Curve Fitting}
+
+\begin{align}
+y(x, \mathbf{w}) = w_0+w_1x+w_wx^2+...+w_Mx^M = \sum_{j=0}^M w_jx^j
+\end{align}
+error function
+\begin{align}
+E(\mathbf{w}) = \frac{1}{2} \sum_{n=1}^N (y(x_n,\mathbf{w})-t_n)^2
+\end{align}
+
+One technique that is often used to control the over-fitting
+phenomenon in such cases is that of \textit{regularization}, which involves adding a penalty term to the error function.
+\begin{align}
+\widehat{E}(\mathbf{w}) = \frac{1}{2} \sum_{n=1}^N
+  (y(x_n),\mathbf{w}-t_n)^2 + \frac{\lambda}{2} \|\mathbf{w}\|^2
+\end{align}
+$ \|\mathbf{w}\|^2 := \mathbf{w}^T\mathbf{w} = w_0^2+w_1^2+...+w_M^2 $
+known in the statistics literature as \textit{shrinkage} methods
+because they reduce the value of the coefficients.
+
+
+
+\section{Probability Theory}
+A key concept in the field of pattern recognition is that of
+uncertainty.It arises both through noise on measurements, as well as through the finite size of data sets.
+\textbf{sum rule and product rule}
+\begin{align*}
+p(X) = \sum_Y p(X,Y)\\
+p(X,Y) = p(Y|X) p(X)
+\end{align*}
+Bayes' theorem, $p(X,Y) = p(Y,X) \Rightarrow p(Y|X) p(X) = p(X|Y)p(Y)$
+\begin{align*}
+p(Y|X) = \frac{p(X|Y)p(Y)}{p(X)}\\
+p(X) = \sum_Y p(Y|X) p(X)
+\end{align*}
+
+if the joint distribution of two variables factorizes into the product
+of the marginals, so that $p(X, Y) = p(X)p(Y)$, then X and Y are said
+to be \textit{independent}. $p(Y |X) = p(Y)$
+
+\subsection{Probability densities}
+If the probability of a real-valued variable $x$ falling in the
+interval $(x, x+\deltax)$ is given by $p(x)$ for $\deltax \to 0$, then
+$p(x)$ is called the \textit{probability density} over $x$. The probability that $x$ will lie in an interval $(a, b)$ is then given by
+\begin{align}
+p(x \in (a,b)) = \int_a^b p(x) dx\\
+p(x) \geq 0\\
+\int_{-\infty}^{infty} p(x) = 1
+\end{align}
+
+The sum and product rules of probability, as well as Bayes' theorem,
+apply equally to the case of probability densities:
+\begin{align}
+p(x) = \int p(x,y)dy\\
+p(x,y) = p(y|x) p(x)
+\end{align}
+
+\subsection{Expectations and covariances}
+For a discrete distribution, it is given by
+\begin{align}
+\mathbb{E}[f] = \sum_x p(x)f(x)
+\end{align}
+In the case of continuous variables
+\begin{align}
+\mathbb{E}[f] = \int p(x)f(x) dx
+\end{align}
+for a given finite number N:
+\begin{align}
+\mathbb{E}[f] \approx \sum_{n=1}^N f(x_n)
+\end{align}
+
+
+The variance of $f(x)$ is defined by
+\begin{align}
+var[f] = E[ (f(x) -E[f(x)])^2 ]\\
+var[f] = E[f(x)^2] -E[f(x)]^2\\
+var[x] = E[x^2] -E[x]^2
+\end{align}
+For two random variables $x$ and $y$, the covariance is defined by
+\begin{align*}
+cov[x,y] &= E_{x,y}[ (x-E[x])(y-E[y]) ]\\
+&= E_{x,y}[xy] - E[x]E[y]
+\end{align*}
+In the case of two vectors of random variables $x$ and $y$, the covariance is a matrix
+\begin{align*}
+cov[\mathbf{x},\mathbf{y}] &= E_{x,y} [ (\mathbf{x}-E[\mathbf{x}])(\mathbf{y}-E[\mathbf{y}]) ]\\
+&= E_{x,y}[\mathbf{x}\mathbf{y}^T] - E[\mathbf{x}]E[\mathbf{y}^T]
+\end{align*}
+
+\section{Bayesian probabilities}
+
+
+
+\subsection{Overlapping class distributions}
+Modify the support vector machine: allow some of the training points to be misclassiﬁed.
+data points are allowed to be on the 'wrong side' of the margin
+boundary, but with a penalty that increases with the distance from that boundary
+introduce \textit{slack variables} $\xi_n \geq 0, n=1,\dots,N$ with
+one slack variable for each training data point.
+\[
+\xi_n =
+\begin{cases}
+ 0 & \text{ data points on or inside the correct margin boundary}\\
+ 1 & y(\mathbf{x}_n) = 0 \text{ (decision boundary)}\\
+ |t_n-y(\mathbf{x}_n)| & \text{ others}
+\end{cases}
+\]
+
+exact classification constraints
+\begin{align}
+t_ny(\mathbf{x}_n) \geq 1 - \xi_n, \text{    $n=1,\dots,N$}
+\end{align}
+maximize the margin while softly penalizing points that lie on the
+wrong side of the margin boundary. minimize
+\begin{align}
+C\sum_{n=1}^N \xi_n + \frac{1}{2}\|\mathbf{w}\|^2
+\end{align}
+$C > 0$ controls the trade-off between the slack variable penalty and the margin.
+We now wish to minimize $C\sum_{n=1}^N \xi_n+\frac{1}{2}\|\mathbf{w}\|^2$, the corresponding Lagrangian is given by
+\begin{align}
+L(\mathbf{w},b,\xi,\mathbf{a},\mu) = \frac{1}{2}\|\mathbf{w}\|^2 +
+  C\sum_{n=1}^N \xi_n - \sum_{n=1}^Na_n\{t_ny(\mathbf{x}_n)-1+\xi_n\} -\sum_{n=1}^Na_n\mu_n\xi_n\\
+a_n \geq 0\\
+t_ny(x_n)-1+\xi_n \geq 0\\
+a_n(t_ny(x_n)-1+\xi_n) = 0\\
+\mu_n \geq 0\\
+\xi_n \geq 0\\
+\mu_n \xi_n = 0\\
+\end{align}
+where $a_n, \mu_n$ are Lagrange multipliers, $N=1,...,N$.
+We now optimize out $w, b, \xi_n$
+\begin{align}
+\frac{\partial L}{\partial \mathbf{w}} = 0 &\Rightarrow \mathbf{w} =
+  \sum_{n=1}^N a_nt_n\phi(x_n)\\
+\frac{\partial L}{\partial b} = 0 &\Rightarrow \sum_{n=1}^N a_nt_n = 0\\
+\frac{\partial L}{\partial \xi} = 0 &\Rightarrow a_n = C - \mu_n
+\end{align}
+eliminate $w, b, \xi_n$ from the Lagrangian, we obtain
+\begin{align}
+\widehat{L}(\mathbf{a}) = \sum_{n=1}^N a_n - \frac{1}{2}
+  \sum_{n=1}^N\sum_{m=1}^N a_na_mt_nt_mk(x_n,x_m)\\
+0 \leq a_n \leq C\\
+\sum_{n=1}^Na_nt_n = 0
+\end{align}
+support vectosr $\{\mathbf{x}_n\}$ given by
+\begin{align}
+t_ny(\mathbf{x}_n) = 1-\xi_n
+\end{align}
+\[
+\begin{cases}
+ a_n<C & \Rightarrow \mu_n>0 \Rightarrow \xi_n=0 \text{ points lie on the margin}\\
+ a_n=C & \text{ lie inside the margin}
+ \begin{cases}
+   \xi_n \leq 1 &\text{ correctly classified}\\
+   \xi_n > 1 & \text{ misclassiﬁed}
+ \end{cases}
+\end{cases}
+\]
+
+\begin{align}
+t_n(\sum_{m \in S} a_mt_mk(x_n,x_m)+b) = 1\\
+b = \frac{1}{N_{\mathcal{M}}} \sum_{n \in \mathcal{M}} (t_n - \sum_{m \in S} a_mt_mk(x_n,x_m))
+\end{align}
+$\mathcal{M}$: the set of indices of data points having $0 < a_n < C$.
+
+\subparagraph{v-SVM}
+An alternative, equivalent formulation of the support vector machine, known as the ν-SVM, this involves maximizing
+\begin{align}
+\widehat{L}(\mathbf{a}) = - \frac{1}{2} \sum_{n=1}^N\sum_{m=1}^N a_na_mt_nt_mk(x_n,x_m)\\
+0 \leq a_n \leq 1/N\\
+\sum_{n=1}^N a_nt_n = 0\\
+\sum_{n=1}^N a_n \geq \nu
+\end{align}
+
+\[
+\rho
+\epsilon
+\varepsilon
+\]
+\end{document}
