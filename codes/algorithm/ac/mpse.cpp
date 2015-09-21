@@ -17,7 +17,7 @@ int mp_add_pattern(mp_struct_t *p, unsigned char *pat, int n, long id)
     mp_pattern_t *plist;
 
     plist = (mp_pattern_t *) calloc(sizeof(mp_pattern_t), 1);
-    plist->pattern = (unsigned char *) calloc(n, 1);
+    plist->pattern = (unsigned char *) calloc(n+1, 1); // add a terminater
     memcpy(plist->pattern, pat, n);
     plist->n = n;
     plist->id = id;
@@ -31,18 +31,17 @@ int mp_add_pattern(mp_struct_t *p, unsigned char *pat, int n, long id)
 
 static void mp_add_state(mp_struct_t *mp, mp_pattern_t *pt)
 {
-    int state = 0, j = 0, n;
+    int state = 0;
     unsigned char *pat;
     mp_pattern_t *newp;
 
-    n = pt->n;
     pat = pt->pattern;
-    while(j < pt->n && mp->stable[state].next[ pat[j] ] != FAIL_STATE) {
-        state = mp->stable[state].next[ *(pat+j) ];
-        j++;
+    while(*pat && mp->stable[state].next[*pat] != FAIL_STATE) {
+        state = mp->stable[state].next[*pat];
+        pat++;
     }
 
-    for(n=j; n<pt->n; ++n, ++pat) {
+    for(; *pat; ++pat) {
         mp->num_states++;
         mp->stable[state].next[ *pat ] = mp->num_states;
         state = mp->num_states;
@@ -171,19 +170,3 @@ int mp_search(mp_struct_t *mp, unsigned char *txt, int n,
     *state = next;
     return count;
 }
-
-#ifdef _MAIN
-void show()
-{
-}
-
-/**
- * Usage: ./a.out he she his hers
- * Compile: g++ -g -Wall -std=c++0x mpse.cpp
- */
-int main(int argc, char *argv[])
-{
-
-    return 0;
-}
-#endif

@@ -1,7 +1,8 @@
 #! /bin/bash
 
 cwd=$PWD
-total=60
+pt_cnt_en=30
+pt_cnt_cn=30
 cd ~/tmp
 
 echo "================ prepare test data... ================"
@@ -24,11 +25,16 @@ fi
 docpath=$PWD/linux-4.2/Documentation
 
 if [ ! -f /tmp/keyword_en ]; then
+
     for doc in $(find $docpath -type f -size +4k)
     do
-        file -b $doc | grep ASCII
+        file -b $doc | grep ASCII >/dev/null
         if [ $? -eq 0 ]; then
-            egrep -o '[a-z]{8,20}' $doc >> /tmp/keyword_en
+            echo "$doc top 10 word"
+            tmp=$(mktemp)
+            egrep -o '[a-z]{8,20}' $doc | sort | uniq -c | sort -nr | head | tee $tmp
+            awk '{ print $2 }' $tmp >> /tmp/keyword_en
+            unlink $tmp
             cp $doc /tmp/data
         fi
     done
@@ -40,9 +46,10 @@ if [ ! -f /tmp/keyword_cn ]; then
     cp $cwd/extract.py ./
     for doc in $(find $docpath/zh_CN -type f)
     do
-        file -b $doc | grep text
+        file -b $doc | grep text >/dev/null
         if [ $? -eq 0 ]; then
             cp $doc /tmp/data
+            echo "$doc top 3 word"
             ./extract.py $doc /tmp/keyword_cn
         fi
     done
@@ -50,17 +57,13 @@ if [ ! -f /tmp/keyword_cn ]; then
     cd ..
 fi
 
-fc=$(ls /tmp/data | wc -l)
+fc=
 cp $cwd/select_pattern.py ./
-chmod +x select_pattern.py
-cn=$(wc -l < /tmp/cn_sorted)
-en=$(($total-$cn))
-./select_pattern.py /tmp/en_sorted $en | tee /tmp/keyword
-#cat /tmp/cn_sorted >> /tmp/keyword
+
+./select_pattern.py /tmp/en_sorted $pt_cnt_en | tee /tmp/keyword
+./select_pattern.py /tmp/cn_sorted $pt_cnt_cn | tee -a /tmp/keyword
 
 echo
-echo "chinese keyword: $cn"
-echo "english keyword: $en"
-echo "file count: $fc"
-echo "keyword count $(wc -l /tmp/keyword)"
-file /tmp/keyword
+echo "total file count: $(ls /tmp/data | wc -l)"
+echo "keyword count:$(wc -l < /tmp/keyword), cn:$pt_cnt_cn, en:$pt_cnt_en"
+echo "keyword file format: $(file /tmp/keyword)"

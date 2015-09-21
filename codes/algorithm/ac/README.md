@@ -27,7 +27,7 @@ the behaviour of the pattern matching machine is dictated by three functions: a 
 </br>  the absense of an arrow indicates *fail*
 </br>  g(0, a) != 0 for all input symbols 'a'
 
-* failure function /f/
+* failure function *f*
 </br>  maps state into a state
 </br>  failure functioin is called whenever the goto function report *fail*
 </br>  centain states are designated as output states which indicate that a set of keywords has been found.
@@ -50,6 +50,7 @@ the behaviour of the pattern matching machine is dictated by three functions: a 
 
 ## Usage ##
 ``` shell
+make
 ENGTYPE=1 ./a.out keyword dir
 ```
 

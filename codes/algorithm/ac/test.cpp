@@ -6,16 +6,14 @@
 
 #include <list>
 #include <string>
+#include <getopt.h>
+#include <sys/resource.h>
 #include "mpse.h"
-
-//#include <dynamic_preproc/str_search.h>
-
 
 extern "C"
 {
-#include "../../../utils/utiltime.h"
-#include <dynamic_preproc/str_search.h>
-//#include "acsmx.h"
+#include "utils/utiltime.h"
+#include <str_search.h>
 
 void FatalError(const char *format,...)
 {
@@ -33,7 +31,7 @@ void LogMessage(const char *format,...)
 }
 typedef struct _TestConfig {
     unsigned nocase;
-    int verbose = 0;
+    int verbose;
 } TestConfig;
 
 static TestConfig sc;
@@ -54,9 +52,42 @@ struct stats {
     long match_count[MAX_KEYWORD];
     double t_compile;
     double t_match;
+    long vms[2]; // 0:before create engine, 1:after compile engine, 2: usage diff
+    long rss[2]; // ditto
 } st;
 
 #define trim(start,end) while(end >= start && isspace(*end)) { *end-- = 0; }
+static void get_memusage(long *vmsize, long *rss) {
+    FILE *fp;
+    char *line = NULL;
+    size_t len = 0;
+    ssize_t sz, i, k;
+
+    char number[16] = {0};
+    fp = fopen("/proc/self/status", "r");
+    if (fp == NULL) {
+        return ;
+    }
+    while ((sz = getline(&line, &len, fp)) != -1) {
+        if (memcmp("VmSize:", line, 7) == 0) {
+            if (sc.verbose > 1) printf("%s", line);
+            for (k=0, i=7; i<sz; ++i)
+                if (isdigit(line[i]))
+                    number[k++] = line[i];
+            *vmsize = atoi(number);
+        } else if (memcmp("VmRSS:", line, 6) == 0) {
+            if (sc.verbose > 1) printf("%s", line);
+            for (k=0, i=6; i<sz; ++i)
+                if (isdigit(line[i]))
+                    number[k++] = line[i];
+            *vmsize = atoi(number);
+            break;
+        }
+    }
+
+    free(line);
+    fclose(fp);
+}
 
 static void load_keywords(const char *filename)
 {
@@ -107,7 +138,9 @@ static char *load_file(const char *filename, int *n)
 
 static int callback1 (int id, int index, void *data)
 {
-//    fprintf (stdout, "match %-8d keyword id %d\n", index, id);
+    if (sc.verbose > 1) {
+        fprintf (stdout, "match %-8d keyword id %d\n", index, id);
+    }
     st.match_count[id]++;
 
     return 0;
@@ -116,7 +149,9 @@ static int callback1 (int id, int index, void *data)
 static int callback (void *id, void *tree,
                      int index, void *data, void *neg_list)
 {
-//    fprintf (stdout, "match %-8d keyword id %ld\n", index, (long)id);
+    if (sc.verbose > 1) {
+        fprintf (stdout, "match %-8d keyword id %ld\n", index, (long)id);
+    }
     st.match_count[(long)id]++;
 
     return 0;
@@ -124,13 +159,24 @@ static int callback (void *id, void *tree,
 
 static int EngineSearch(const char *text, int len)
 {
-    double start = timing_start();
-    int s = 0,c;
-    if (eng_method == 1) {
-    c = mp_search((mp_struct_t *)engine, (unsigned char *)text, len,
-                  callback1, &s);
-    } else {
+    double start;
+    int s = 0, c = 0;
+    start = timing_start();
+    switch(eng_method) {
+    case 1:
+        c = mp_search((mp_struct_t *)engine, (unsigned char *)text, len,
+                      callback1, &s);
+        break;
+    case MPSE_ACF:
+    case MPSE_ACF_Q:
+    case MPSE_ACS:
+    case MPSE_ACB:
+    case MPSE_ACSB:
+        c = SearchInstanceFindStringAll(engine, text, len, 0, callback, NULL);
+        break;
+    default:
         c = SearchInstanceFindString(engine, text, len, 0, callback);
+        break;
     }
     st.t_match += timing_cost(start);
     return c;
@@ -152,6 +198,9 @@ static void EngineCompile()
 
         st.t_compile += timing_cost(start);
         id++;
+        if (sc.verbose > 1) {
+            printf("add pattern [%s]\n", ii->c_str());
+        }
     }
 
     start = timing_start();
@@ -160,12 +209,18 @@ static void EngineCompile()
     } else {
         SearchInstancePrepPatterns(engine);
     }
+
     st.t_compile += timing_cost(start);
     st.pattern_count = id;
+
+    usleep(1000);
+    get_memusage(&st.vms[1], &st.rss[1]);
 }
 
 void *EngineCreate()
 {
+    get_memusage(&st.vms[0], &st.rss[0]);
+
     switch(eng_method) {
     case 1:
         engine = calloc(sizeof(mp_struct_t), 1);
@@ -228,55 +283,78 @@ const char *methods[] = {
     "",
     "LOWMEM, Basic Keyword Search Trie - uses linked lists to build the finite automat",
     "",
-    "ACF_FULL, Full matrix",
-    "ACF_SPARSE, Sparse matrix",
-    "ACF_BANDED, Banded matrix",
-    "ACF_SPARSEBANDS, Sparse-Banded matrix",
-    "AC_BNFA, ",
-    "AC_BNFA_Q",
+    "ACF_FULL, acsmx2.c, Full matrix",
+    "ACF_SPARSE, acsmx2.c, Sparse matrix",
+    "ACF_BANDED, acsmx2.c, Banded matrix",
+    "ACF_SPARSEBANDS, acsmx2.c, Sparse-Banded matrix",
+    "AC_BNFA, bnfa_search.c, Basic NFA based AC, compacted sparse array storage",
+    "AC_BNFA_Q, bnfa_search.c, Basic NFA based AC, compacted sparse array storage",
+    "ACF_FULLQ, acsmx2.c, matching states are queued",
     NULL
 };
-
+void usage()
+{
+    fprintf (stderr, "Usage: METHOD=method ./a.out keyword_file dir\n");
+    fprintf (stderr, "Valid match method as follow:\n");
+    fprintf (stderr, " 1:  %s\n", methods[1]);
+    fprintf (stderr, " 4:  %s\n", methods[4]);
+    fprintf (stderr, " 6:  %s\n", methods[6]);
+    fprintf (stderr, " 7:  %s\n", methods[7]);
+    fprintf (stderr, " 8:  %s\n", methods[8]);
+    fprintf (stderr, " 9:  %s\n", methods[9]);
+    fprintf (stderr, " 10: %s\n", methods[10]);
+    fprintf (stderr, " 11: %s\n", methods[11]);
+    fprintf (stderr, " 12: %s\n", methods[12]);
+    fprintf (stderr, "\nExample:\n");
+    fprintf (stderr, "  METHOD=10 ./a.out /tmp/keyword /tmp/data\n");
+    exit(0);
+}
 int main(int argc, char *argv[])
 {
-    int i = 0;
+    int i = 0, opt;
     char *e;
     memset(&st, 0, sizeof(st));
-    sc.nocase = 1;
-    sc.verbose= 1;
-    if (argc < 3) {
-        fprintf (stderr, "Usage: METHOD=method ./a.out keyword_file dir\n");
-        fprintf (stderr, "Valid match method as follow:\n");
-        fprintf (stderr, " 1:  %s\n", methods[1]);
-        fprintf (stderr, " 4:  %s\n", methods[4]);
-        fprintf (stderr, " 6:  %s\n", methods[6]);
-        fprintf (stderr, " 7:  %s\n", methods[7]);
-        fprintf (stderr, " 8:  %s\n", methods[8]);
-        fprintf (stderr, " 9:  %s\n", methods[9]);
-        fprintf (stderr, " 10: %s\n", methods[10]);
-        fprintf (stderr, " 11: %s\n", methods[11]);
-        fprintf (stderr, "\nExample:\n");
-        fprintf (stderr, "  METHOD=10 ./a.out /tmp/keyword /tmp/data\n");
-        return 1;
-    }
-    load_keywords(argv[1]);
+    memset(&sc, 0, sizeof(sc));
 
+    if (argc < 3) usage();
+    while ((opt = getopt(argc, argv, "vnm:")) != -1) {
+        switch (opt) {
+        case 'n':
+            sc.nocase = 1;
+            break;
+        case 'm':
+            eng_method = atoi(optarg);
+            break;
+        case 'v':
+            sc.verbose++;
+            break;
+        default:
+            usage();
+            break;
+        }
+    }
+
+    load_keywords(argv[optind]);
     if ((e = getenv("METHOD"))) eng_method = atoi(e);
 
     engine = EngineCreate();
     EngineCompile();
-    ScanDir(argv[2]);
+    ScanDir(argv[optind+1]);
 
     printf("\n--------------------------------\n");
     printf("Method        : %s\n", methods[eng_method]);
     printf("pattern count : %ld\n", st.pattern_count);
     printf("file count    : %ld\n", st.file_count);
-    printf("file bytes    : %ld\n", st.file_bytes);
+    printf("file bytes    : %ld kB\n", st.file_bytes/1024);
     printf("compile time  : %lf(s)\n", st.t_compile);
-    printf("\x1b[1m\x1b[31mmatch time    : %lf(s)\x1b[0m\n", st.t_match);
-    printf("match total   : %ld\n", st.match_total);
+
+    printf("Match total   : %ld\n", st.match_total);
+    printf("\x1b[1m\x1b[31mMatch time    : %lf(s)\x1b[0m\n", st.t_match);
+    printf("\x1b[1m\x1b[32m RSS          : %ld kB\x1b[0m\n", st.rss[1]-st.rss[0]);
+    printf("\x1b[1m\x1b[32m VmSize       : %ld kB\x1b[0m\n", st.vms[1]-st.vms[0]);
+
     if (sc.verbose) {
-    printf("match count for each keyword :\n");
+    printf("Match count for each keyword :\n");
     foreach(keywords) {
         printf("  %-20s    %-4ld\n", ii->c_str(), st.match_count[i++]);
     }

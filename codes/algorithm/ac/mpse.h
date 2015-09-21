@@ -8,7 +8,6 @@
 #define foreach(c) \
     for(std::decltype(c)::iterator ii = c.begin(); ii != c.end(); ++ii)
 
-
 #define FAIL_STATE         -1
 #define ALPHABET_SIZE     256
 

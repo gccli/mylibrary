@@ -1,15 +1,16 @@
-BIN=a.out
-INC=-I. -I/usr/local/snort/include/snort
+SNORT=/root/tmp/snort/src
+INC=-I. -I../../.. -I$(SNORT)/dynamic-preprocessors/include
 
-#SNORT_SYNAMIC_PREPROC=/usr/local/snort/lib/snort/dynamic_preproc/libsf_dynamic_preproc.a
-SNORT_SYNAMIC_PREPROC=/root/tmp/snort/src/preprocessors/libspp.a\
-	/root/tmp/snort/src/sfutil/libsfutil.a
+SNORT_SYNAMIC_PREPROC=$(SNORT)/preprocessors/libspp.a\
+	$(SNORT)/sfutil/libsfutil.a
 CFLAGS=-c -g -Wall $(INC)
 CPPFLAGS=-std=c++0x $(CFLAGS)
 LDFLAGS=
+
+BIN=a.out
 all:$(BIN)
 
-OBJS=test.o acsmx.o mpse.o
+OBJS=test.o mpse.o
 
 a.out:$(OBJS) $(SNORT_SYNAMIC_PREPROC)
 	$(CXX) $^ -o $@ $(LDFLAGS)
