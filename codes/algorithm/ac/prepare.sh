@@ -1,8 +1,8 @@
 #! /bin/bash
 
 cwd=$PWD
-pt_cnt_en=30
-pt_cnt_cn=30
+pt_cnt_en=100
+pt_cnt_cn=0
 cd ~/tmp
 
 echo "================ prepare test data... ================"
@@ -30,15 +30,20 @@ if [ ! -f /tmp/keyword_en ]; then
     do
         file -b $doc | grep ASCII >/dev/null
         if [ $? -eq 0 ]; then
-            echo "$doc top 10 word"
+            #echo "$doc top 10 word"
             tmp=$(mktemp)
-            egrep -o '[a-z]{8,20}' $doc | sort | uniq -c | sort -nr | head | tee $tmp
+            #egrep -o '[a-z]{8,20}' $doc | sort | uniq -c | sort -nr | head | tee $tmp
+            egrep -o '[a-z]{8,20}' $doc | sort | uniq -c | sort -nr | head > $tmp
             awk '{ print $2 }' $tmp >> /tmp/keyword_en
             unlink $tmp
             cp $doc /tmp/data
         fi
     done
     sort -u /tmp/keyword_en > /tmp/en_sorted
+    for doc in $(find /usr/share/doc -type f -size +4k)
+    do
+        cp $doc /tmp/data
+    done
 fi
 
 if [ ! -f /tmp/keyword_cn ]; then
@@ -60,9 +65,11 @@ fi
 fc=
 cp $cwd/select_pattern.py ./
 
+sed -i '/ffff/d' /tmp/en_sorted
 ./select_pattern.py /tmp/en_sorted $pt_cnt_en | tee /tmp/keyword
-./select_pattern.py /tmp/cn_sorted $pt_cnt_cn | tee -a /tmp/keyword
-
+if [ $pt_cnt_cn -gt 0 ]; then
+    ./select_pattern.py /tmp/cn_sorted $pt_cnt_cn | tee -a /tmp/keyword
+fi
 echo
 echo "total file count: $(ls /tmp/data | wc -l)"
 echo "keyword count:$(wc -l < /tmp/keyword), cn:$pt_cnt_cn, en:$pt_cnt_en"

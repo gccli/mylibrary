@@ -11,64 +11,46 @@
 \author{}
 \maketitle
 
-
-\section{Aho-Corasick State Machine}
-Aho-Corasick algorithm variants
-
+Description of Aho-Corasick algorithm variants
+\begin{alltt}
+\emph{AC}: standard
+\emph{ACF_FULL}: acsmx2.c, Full matrix
+\emph{ACF_SPARSE}: acsmx2.c, Sparse matrix
+\emph{ACF_BANDED}: acsmx2.c, Banded matrix
+\emph{ACF_SPARSEBANDS}: acsmx2.c, Sparse-Banded matrix
+\emph{ACF_FULLQ}: acsmx2.c, matching states are queued
+\emph{AC_BNFA}: bnfa_search.c, Basic NFA based AC, compacted sparse array storage
+\emph{AC_BNFA_Q}: bnfa_search.c, Basic NFA based AC, compacted sparse array storage
+\end{alltt}
 
 \begin{alltt}
-\textbf{AC}: standard
-\textbf{ACF_FULL}: acsmx2.c, Full matrix
-\textbf{ACF_SPARSE}: acsmx2.c, Sparse matrix
-\textbf{ACF_BANDED}: acsmx2.c, Banded matrix
-\textbf{ACF_SPARSEBANDS}: acsmx2.c, Sparse-Banded matrix
-\textbf{ACF_FULLQ}: acsmx2.c, matching states are queued
-\textbf{AC_BNFA}: bnfa_search.c, Basic NFA based AC, compacted sparse array storage
-\textbf{AC_BNFA_Q}: bnfa_search.c, Basic NFA based AC, compacted sparse array storage
+\emph{Test Environment}
+Virtual Machine Ubuntu 15.04
+Memory: 2G
+CPU: Intel(R) Core(TM) i7-4790 CPU @ 3.60GHz
+File count: 6253
+File size: 862404 kB
 \end{alltt}
 
 \begin{table}
-\begin{tabular*}{0.75\textwidth}{ | c | c | c | r | }
-  \hline
-  label 1 & label 2 & label 3 & label 4 \\
-  \hline
-  item 1  & item 2  & item 3  & item 4  \\
-  \hline
-\end{tabular*}
-\end{table}
-
-\begin{tabular}{llr}
-\hline
-\multicolumn{2}{c}{Item} \\
-\cline{1-2}
-Animal    & Description & Price (\$) \\
-\hline
-Gnat      & per gram    & 13.65      \\
-          & each        & 0.01       \\
-Gnu       & stuffed     & 92.50      \\
-Emu       & stuffed     & 33.33      \\
-Armadillo & frozen      & 8.99       \\
+\begin{tabular}{ |l|p{2cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}| }
+\multicolumn{7}{c}{\textbf{Test Result}}  &
+\hline\hline
+& \multicolumn{3}{|c|}{pattern count 60}  &
+  \multicolumn{3}{|c|}{pattern count 120} \\
+\cline{2-7}
+\textbf{Algorithm} & \textbf{Memory (kB)} & \textbf{Compile Time (s)}
+  & \textbf{Search Time (s)} & \textbf{Memory (kB)} & \textbf{Compile Time(s)} & \textbf{Search Time (s)} \\
+\hline\hline
+Standard & 2604 & 0.007 & 4.32 & & & 4.13 \\
+Full matrix & 5880 & 0.018 & 5.26  & & & \\
+Sparse Matrix & 2606 & 0.018 & 5.02 & & & \\
+Banded Matrix & 5878 & 0.019 & 5.11 & & & \\
+Sparse Banded & 3244 & 0.008 & 6.20 & & & \\
+Full Queued & 6520 & 0.018 & 5.34 & & & \\
 \hline
 \end{tabular}
-
-
-\section{Reference}
-
-\usepackage{booktabs}\\
-  \begin{tabular}{llr}
-    \toprule
-    \multicolumn{2}{c}{Item} \\
-    \cmidrule(r){1-2}
-    Animal    & Description & Price (\$) \\
-    \midrule
-    Gnat      & per gram    & 13.65      \\
-          &    each     & 0.01       \\
-    Gnu       & stuffed     & 92.50      \\
-    Emu       & stuffed     & 33.33      \\
-    Armadillo & frozen      & 8.99       \\
-    \bottomrule
-  \end{tabular}
-
+\end{table}
 
 \end{document}
 
