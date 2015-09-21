@@ -2,7 +2,7 @@
 
 cwd=$PWD
 pt_cnt_en=100
-pt_cnt_cn=0
+pt_cnt_cn=00
 cd ~/tmp
 
 echo "================ prepare test data... ================"

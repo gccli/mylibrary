@@ -1,5 +1,5 @@
 SNORT=/root/tmp/snort/src
-INC=-I. -I../../.. -I$(SNORT)/dynamic-preprocessors/include
+INC=-I. -I../.. -I$(SNORT)/dynamic-preprocessors/include
 
 SNORT_SYNAMIC_PREPROC=$(SNORT)/preprocessors/libspp.a\
 	$(SNORT)/sfutil/libsfutil.a
