@@ -118,7 +118,7 @@ int mp_compile(mp_struct_t *mp)
 {
     int i,k;
     mp_pattern_t *plist;
-
+    mp->max_states = 1;
     for(plist = mp->patterns; plist; plist = plist->next) {
         mp->max_states += plist->n;
     }
