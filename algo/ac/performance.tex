@@ -1,57 +1,70 @@
 \documentclass[a4paper]{article}
 \usepackage{geometry}
 \usepackage[table]{xcolor}
+\usepackage{graphicx}
 \usepackage{multirow}
 \usepackage{alltt}
 \usepackage{tabularx}
 \usepackage{array}
 \usepackage{dcolumn}
+\usepackage[linkcolor=red]{hyperref}
+%\usepackage[hidelinks,linkcolor=red]{hyperref}
 \begin{document}
 \title{Multi-Pattern Search Algorithm comparison}
 \author{}
 \maketitle
 
-Description of Aho-Corasick algorithm variants
-\begin{alltt}
-\emph{AC}: standard
-\emph{ACF_FULL}: acsmx2.c, Full matrix
-\emph{ACF_SPARSE}: acsmx2.c, Sparse matrix
-\emph{ACF_BANDED}: acsmx2.c, Banded matrix
-\emph{ACF_SPARSEBANDS}: acsmx2.c, Sparse-Banded matrix
-\emph{ACF_FULLQ}: acsmx2.c, matching states are queued
-\emph{AC_BNFA}: bnfa_search.c, Basic NFA based AC, compacted sparse array storage
-\emph{AC_BNFA_Q}: bnfa_search.c, Basic NFA based AC, compacted sparse array storage
-\end{alltt}
 
-\begin{alltt}
-\emph{Test Environment}
-Virtual Machine Ubuntu 15.04
-Memory: 2G
-CPU: Intel(R) Core(TM) i7-4790 CPU @ 3.60GHz
-File count: 6253
-File size: 862404 kB
-\end{alltt}
+\textbf{\emph{Description of Aho-Corasick algorithm variants}}
+\begin{itemize}
+\item \emph{AC\_STD}: standard DFA implemented by me, using \textit{state table} and fixed \textit{next move} array for state transition. based on this \hyperlink{effic}{paper}
+\item \emph{ACF\_FULL}: acsmx2.c, Full matrix
+\item \emph{AC\_FULLQ}: acsmx2.c, matching states are queued
+\item \emph{AC\_SPARSE}: acsmx2.c, Sparse matrix
+\item \emph{AC\_BANDED}: acsmx2.c, Banded matrix
+\item \emph{AC\_SPARSEBANDS}: acsmx2.c, Sparse-Banded matrix
+\item \emph{AC\_BNFA}: Basic NFA based AC, compacted sparse array storage
+\item \emph{AC\_BNFAQ}: ditto, with queued state
+\end{itemize}
+
+
+
+\textbf{\emph{Test Environment}}
+ \begin{list}{}
+ \item  Virtual Machine Ubuntu 15.04
+ \item  Memory: 2G
+ \item  CPU: Intel(R) Core(TM) i7-4790 CPU @ 3.60GHz
+ \item  File count: 6253
+ \item  File size: 862404 kB
+ \end{list}
+
 
 \begin{table}
+\caption{\textsc{Test Result}}
 \begin{tabular}{ |l|p{2cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}| }
-\multicolumn{7}{c}{\textbf{Test Result}}  \\
 \hline\hline
 & \multicolumn{3}{|c|}{pattern count 120}  &
   \multicolumn{3}{|c|}{pattern count 240} \\
 \cline{2-7}
-\textbf{Algorithm} & \textbf{Memory (kB)} & \textbf{Compile Time (s)}
-  & \textbf{Search Time (s)} & \textbf{Memory (kB)} & \textbf{Compile Time(s)} & \textbf{Search Time (s)} \\
+\textbf{Algorithm} & \textbf{Compile Time (s)}  & \textbf{Search Time (s)} & \textbf{Memory (kB)} & \textbf{Compile Time (s)} & \textbf{Search Time (s)} & \textbf{Memory (kB)} \\
 \hline\hline
-Standard & 8390 &  & 4.32 & & & 4.13 \\
-Full matrix & 16594 & 0.018 & 5.26  & & & \\
-Full Queued & 16594 & 0.018 & 5.34 & & & \\
-Sparse Matrix & 8418 & 0.018 & 5.02 & & & \\
-Banded Matrix & 13704 & 0.019 & 5.11 & & & \\
-Sparse Banded & 8298 & 0.008 & 6.20 & & & \\
-
+Standard      & 0.0093094 & 4.4257226 & 8390 & 0.0185856 & 4.499131 & 21714\\
+Full Matrix   & 0.0274246 & 5.4931084 & 16594 & 0.0544766 & 5.622883 & 35458\\
+Full Queueed  & 0.032692  & 5.5069188 & 16594 & 0.0479468 & 6.9196432 & 21746\\
+Sparse Matrix & 0.0299582 & 6.0480434 & 8418 & 0.0479468 & 6.9196432 & 21746\\
+Banded Matrix & 0.0299582 & 6.0480434 & 8418 & 0.0479468 & 6.9196432 & 21746\\
+Sparse Banded & 0.0300112 & 6.43706 & 8298 & 0.0458898 & 6.4687386 & 21626\\
 \hline
 \end{tabular}
 \end{table}
+
+
+\textsc{\textbf{Reference}}
+
+\hypertarget{effic}{[1]} \href{http://cr.yp.to/bib/1975/aho.pdf}{\textit{Efficient String matching: An Aid to Bibliographic Search}}
+
+\hypertarget{snort}{[2]} \href{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.103.4663&rep=rep1&type=pdf}{\textit{Optimizing Pattern Matching for Intrusion Detection}}
+
 
 \end{document}
 

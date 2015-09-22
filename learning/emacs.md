@@ -48,6 +48,7 @@ Emacs basic
 [2.5]: http://www.gnu.org/software/emacs/manual/html_node/emacs/Query-Replace.html
 [2.6]: https://www.gnu.org/software/emacs/manual/html_node/emacs/Registers.html "Registers"
 
++ `M-\ delete-horizontal-space`
 + `C-x C-o`
   + Delete all but one of many consecutive blank lines (delete-blank-lines).
 + [key binding and prefix key][2.1]
@@ -119,9 +120,55 @@ The text between point and the mark is called the *region*
 <br/> put a file name into register r: `(set-register r '(file . name))`
 
 
-LaTex mode
-----------
+TeX LaTeX AUCTeX
+----------------
 
+**Font** <br/>
+`C-c C-f C-b`
+    Insert bold face '\textbf{}' text.
+<br/>
+`C-c C-f C-i`
+    Insert italics '\textit{}' text.
+<br/>
+`C-c C-f C-e`
+    Insert emphasized '\emph{}' text.
+<br/>
+`C-c C-f C-s`
+    Insert slanted '\textsl{}' text.
+<br/>
+`C-c C-f C-r`
+    Insert roman \textrm{} text.
+<br/>
+`C-c C-f C-f`
+    Insert sans serif '\textsf{}' text.
+<br/>
+`C-c C-f C-t`
+    Insert typewriter '\texttt{}' text.
+<br/>
+`C-c C-f C-c`
+    Insert SMALL CAPS '\textsc{}' text.
+<br/>
+`C-c C-f C-d`
+    Delete the innermost font specification containing point.
+
+**Entering Mathmatics** <br/>
+`C-c ~` Toggle LaTeX Math mode.
+
+**Marking** <br/>
+`C-c .` mark the current environment
+`C-c *` mark the current section
+
+**Folding Macros and Environments** <br/>
+`TeX-fold-mode` activate the mode in a certain buffer by `C-c C-o C-f`
+`TeX-fold-buffer C-c C-o C-b` Hide all foldable items in the current buffer
+`TeX-fold-region C-c C-o C-r` Hide all configured macros in the marked region.
+`TeX-fold-macro C-c C-o C-m` Hide the macro on which point currently is located.
+`TeX-fold-envC-c C-o C-e` Hide the environment on which point currently is located
+`TeX-fold-comment C-c C-o C-c` Hide the comment point is located on
+`TeX-fold-dwim C-c C-o C-o`  Hide or show items according to the current context. If there is folded content, unfold it. If there is a marked region, fold all configured content in this region. If there is no folded content but a macro or environment, fold it.
+
+**Help**
+`C-c ?` Get documentation about macros, packages or TeX & Co
 
 cscope
 ------
