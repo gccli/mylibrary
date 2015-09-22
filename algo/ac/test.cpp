@@ -8,12 +8,12 @@
 #include <string>
 #include <getopt.h>
 #include <sys/resource.h>
-#include "mpse.h"
+#include "acstd.h"
 
 extern "C"
 {
 #include "utils/utiltime.h"
-#include <str_search.h>
+#include <sfutil/mpse.h>
 
 void FatalError(const char *format,...)
 {
@@ -38,7 +38,7 @@ static TestConfig sc;
 TestConfig *snort_conf = &sc;
 }
 
-#define MAX_KEYWORD    100
+#define MAX_KEYWORD 300
 typedef std::list<std::string> kset_t;
 static kset_t keywords;
 static void *engine;
@@ -93,7 +93,7 @@ static void load_keywords(const char *filename)
 {
     FILE *fp;
     char *line, *pend;
-    size_t len = 0;
+    size_t len = 0, cnt = 0;
     ssize_t sz;
     if ((fp = fopen(filename, "rb")) == NULL) {
         fprintf (stderr, "failed to open '%s': %s\n",
@@ -106,7 +106,10 @@ static void load_keywords(const char *filename)
         pend = line+sz-1;
         trim(line, pend);
         if (line >= pend) continue;
-
+        if (++cnt > MAX_KEYWORD) {
+            fprintf(stderr, "exceed max keyword size %d\n", MAX_KEYWORD);
+            exit(0);
+        }
         len = pend - line + 1;
         if (keyword_max_len < len) keyword_max_len = len;
 
@@ -116,28 +119,6 @@ static void load_keywords(const char *filename)
 
     free(line);
     fclose(fp);
-}
-
-static char *load_file(const char *filename, int *n)
-{
-    FILE *fp;
-    char *buff;
-    if ((fp = fopen(filename, "rb")) == NULL) {
-        fprintf (stderr, "failed to open '%s': %s\n",
-                 filename, strerror(errno));
-        exit(errno);
-    }
-    fseek (fp, 0L, SEEK_END);
-    *n = ftell(fp);
-    rewind(fp);
-    buff = (char *)calloc(*n, 1);
-    if (fread(buff, 1, *n, fp) != (size_t) *n) {
-        printf("failed to read file %s\n", filename);
-        exit(1);
-    }
-    fclose(fp);
-
-    return buff;
 }
 
 static int callback1 (int id, int index, void *data)
@@ -161,25 +142,26 @@ static int callback (void *id, void *tree,
     return 0;
 }
 
-static int EngineSearch(const char *text, int len)
+static int EngineSearch(const char *text, int len, int *state)
 {
     double start;
     int s = 0, c = 0;
+    unsigned char *tx = (unsigned char *)text;
+
     start = timing_start();
     switch(eng_method) {
     case 1:
-        c = mp_search((mp_struct_t *)engine, (unsigned char *)text, len,
-                      callback1, &s);
+        c = mp_search((mp_struct_t *)engine, tx, len,  callback1, &s);
         break;
     case MPSE_ACF:
     case MPSE_ACF_Q:
     case MPSE_ACS:
     case MPSE_ACB:
     case MPSE_ACSB:
-        c = SearchInstanceFindStringAll(engine, text, len, 0, callback, NULL);
+        c = mpseSearchAll(engine, tx, len, callback, NULL, state);
         break;
     default:
-        c = SearchInstanceFindString(engine, text, len, 0, callback);
+        c = mpseSearch(engine, tx, len, callback, NULL, state);
         break;
     }
     st.t_match += timing_cost(start);
@@ -197,7 +179,9 @@ static void EngineCompile()
             mp_add_pattern((mp_struct_t *)engine, (unsigned char *)ii->c_str(),
                            ii->length(), id);
         } else {
-            SearchInstanceAddEx(engine, ii->c_str(), ii->length(), (void *)id, sc.nocase);
+            mpseAddPattern(engine, (void *)ii->c_str(), ii->length(), sc.nocase,
+                           0, 0, 0, (void *)id, id);
+            // unsigned offset, unsigned depth, unsigned negative
         }
 
         st.t_compile += timing_cost(start);
@@ -211,7 +195,7 @@ static void EngineCompile()
     if (eng_method == 1) {
         mp_compile((mp_struct_t *)engine);
     } else {
-        SearchInstancePrepPatterns(engine);
+        mpsePrepPatterns(engine, NULL, NULL);
     }
 
     st.t_compile += timing_cost(start);
@@ -227,10 +211,11 @@ void *EngineCreate()
 
     switch(eng_method) {
     case 1:
+    case 2:
         engine = calloc(sizeof(mp_struct_t), 1);
         break;
     default:
-        engine = SearchInstanceNewEx(eng_method);
+        engine = mpseNew(eng_method, 0, NULL, NULL, NULL);
         break;
     }
     if (engine == NULL) {
@@ -245,18 +230,48 @@ void EngineFree()
 {
     switch(eng_method) {
     case 1:
+        free(engine);
         break;
     default:
-        SearchInstanceFree(engine);
+        mpseFree(engine);
         break;
     }
+}
+
+static char buffer[8192];
+int ScanFile(const char *filename)
+{
+    FILE *fp;
+    size_t len, filesz = 0;
+
+    int state = 0, c = 0;
+    if ((fp = fopen(filename, "rb")) == NULL) {
+        fprintf (stderr, "failed to open '%s': %s\n",
+                 filename, strerror(errno));
+        exit(errno);
+    }
+
+    while (!feof(fp)) {
+        len = fread(buffer, 1, sizeof(buffer), fp);
+        c += EngineSearch(buffer, len, &state);
+
+        filesz += len;
+    }
+
+    fclose(fp);
+
+    st.file_count++;
+    st.file_bytes += filesz;
+    st.match_total += c;
+
+    return 0;
 }
 
 int ScanDir(const char *dirp)
 {
     struct dirent **namelist;
-    int n, c, len;
-    char path[1024], *text;
+    int n;
+    char path[1024];
     n = scandir(dirp, &namelist, 0, alphasort);
     if (n < 0) {
 	printf("failed to scandir '%s'\n", dirp);
@@ -267,13 +282,7 @@ int ScanDir(const char *dirp)
 	snprintf(path, sizeof(path), "%s/%s", dirp, namelist[n]->d_name);
 	if (namelist[n]->d_type == DT_REG) {
             if (sc.verbose > 1) printf("%s\n", path);
-            text = load_file(path, &len);
-            c = EngineSearch(text, len);
-
-            st.file_count++;
-            st.file_bytes += len;
-            st.match_total += c;
-            free(text);
+            ScanFile(path);
 	}
 	free(namelist[n]);
     }
@@ -283,18 +292,18 @@ int ScanDir(const char *dirp)
 
 const char *methods[] = {
     "",
-    "AC, implemented by me (default)",
-    "",
+    "AC_STD, implemented by me (default)",
+    "AC_STD, implemented by me (default)",
     "",
     "LOWMEM, Basic Keyword Search Trie - uses linked lists to build the finite automat",
     "",
-    "ACF_FULL, acsmx2.c, Full matrix",
-    "ACF_SPARSE, acsmx2.c, Sparse matrix",
-    "ACF_BANDED, acsmx2.c, Banded matrix",
-    "ACF_SPARSEBANDS, acsmx2.c, Sparse-Banded matrix",
+    "AC_FULL, acsmx2.c, Full matrix",
+    "AC_SPARSE, acsmx2.c, Sparse matrix",
+    "AC_BANDED, acsmx2.c, Banded matrix",
+    "AC_SPARSEBANDS, acsmx2.c, Sparse-Banded matrix",
     "AC_BNFA, bnfa_search.c, Basic NFA based AC, compacted sparse array storage",
     "AC_BNFA_Q, bnfa_search.c, Basic NFA based AC, compacted sparse array storage",
-    "ACF_FULLQ, acsmx2.c, matching states are queued",
+    "AC_FULLQ, acsmx2.c, matching states are queued",
     NULL
 };
 void usage()
@@ -346,18 +355,16 @@ int main(int argc, char *argv[])
     EngineCompile();
     ScanDir(argv[optind+1]);
 
-    printf("\n--------------------------------\n");
-    printf("Method        : %s\n", methods[eng_method]);
-    printf("pattern count : %ld\n", st.pattern_count);
-    printf("file count    : %ld\n", st.file_count);
-    printf("file bytes    : %ld kB\n", st.file_bytes/1024);
-    printf("compile time  : %lf(s)\n", st.t_compile);
+    printf("--------------------------------\n");
+    printf("Method          : %s\n", methods[eng_method]);
+    printf("pattern count   : %ld\n", st.pattern_count);
+    printf("file count      : %ld\n", st.file_count);
+    printf("file bytes      : %ld kB\n", st.file_bytes/1024);
+    printf("Compile time(s) : \x1b[33m%lf\x1b[0m\n", st.t_compile);
 
+    printf("\x1b[1m\x1b[31mMatch time(s)   : %lf\x1b[0m\n", st.t_match);
+    printf("\x1b[1m\x1b[32m VmSize(kB)     : %ld\x1b[0m\n", st.vms[1]-st.vms[0]);
     printf("Match total   : %ld\n", st.match_total);
-    printf("\x1b[1m\x1b[31mMatch time    : %lf(s)\x1b[0m\n", st.t_match);
-    printf("\x1b[1m\x1b[32m RSS          : %ld kB\x1b[0m\n", st.rss[1]-st.rss[0]);
-    printf("\x1b[1m\x1b[32m VmSize       : %ld kB\x1b[0m\n", st.vms[1]-st.vms[0]);
-
     if (sc.verbose) {
         printf("Match count for each keyword :\n");
         i=0;

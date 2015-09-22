@@ -1,5 +1,5 @@
-#ifndef AC_IMPL_H__
-#define AC_IMPL_H__
+#ifndef AC_STD_IMPL_H__
+#define AC_STD_IMPL_H__
 
 #include <stdio.h>
 #include <stdlib.h>

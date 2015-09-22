@@ -1,8 +1,8 @@
 #! /bin/bash
 
 cwd=$PWD
-pt_cnt_en=100
-pt_cnt_cn=00
+pt_cnt_en=200
+pt_cnt_cn=40
 cd ~/tmp
 
 echo "================ prepare test data... ================"
