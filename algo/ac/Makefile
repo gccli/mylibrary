@@ -2,7 +2,7 @@ SNORT=/root/tmp/snort/src
 INC=-I. -I../.. -I$(SNORT) -I$(SNORT)/sfutil
 
 SNORT_SYNAMIC_PREPROC=$(SNORT)/sfutil/libsfutil.a
-CFLAGS=-c -g -Wall $(INC)
+CFLAGS= -c -g -O2 -Wall $(INC)
 CPPFLAGS=-std=c++0x $(CFLAGS)
 LDFLAGS=
 

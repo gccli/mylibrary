@@ -211,7 +211,6 @@ void *EngineCreate()
 
     switch(eng_method) {
     case 1:
-    case 2:
         engine = calloc(sizeof(mp_struct_t), 1);
         break;
     default:
@@ -293,7 +292,7 @@ int ScanDir(const char *dirp)
 const char *methods[] = {
     "",
     "AC_STD, implemented by me (default)",
-    "AC_STD, implemented by me (default)",
+    "",
     "",
     "LOWMEM, Basic Keyword Search Trie - uses linked lists to build the finite automat",
     "",

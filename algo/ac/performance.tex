@@ -14,23 +14,23 @@
 \author{}
 \maketitle
 
+\subparagraph{Description of Aho-Corasick algorithm variants}
 
-\textbf{\emph{Description of Aho-Corasick algorithm variants}}
-\begin{itemize}
-\item \emph{AC\_STD}: standard DFA implemented by me, using \textit{state table} and fixed \textit{next move} array for state transition. based on this \hyperlink{effic}{paper}
-\item \emph{ACF\_FULL}: acsmx2.c, Full matrix
-\item \emph{AC\_FULLQ}: acsmx2.c, matching states are queued
-\item \emph{AC\_SPARSE}: acsmx2.c, Sparse matrix
-\item \emph{AC\_BANDED}: acsmx2.c, Banded matrix
-\item \emph{AC\_SPARSEBANDS}: acsmx2.c, Sparse-Banded matrix
-\item \emph{AC\_BNFA}: Basic NFA based AC, compacted sparse array storage
-\item \emph{AC\_BNFAQ}: ditto, with queued state
-\end{itemize}
+\begin{list}{}{}
+\item \emph{ AC\_STD}: standard DFA implemented by me, using \textit{state table} and fixed \textit{next move} array for state transition. based on this \hyperlink{effic}{paper}
+\item \emph{ ACF\_FULL}: acsmx2.c, Full matrix
+\item \emph{ AC\_FULLQ}: acsmx2.c, matching states are queued
+\item \emph{ AC\_SPARSE}: acsmx2.c, Sparse matrix
+\item \emph{ AC\_BANDED}: acsmx2.c, Banded matrix
+\item \emph{ AC\_SPARSEBANDS}: acsmx2.c, Sparse-Banded matrix
+\item \emph{ AC\_BNFA}: Basic NFA based AC, compacted sparse array storage
+\item \emph{ AC\_BNFAQ}: ditto, with queued state
+\end{list}
 
 
+\subparagraph{Test Environment}
 
-\textbf{\emph{Test Environment}}
- \begin{list}{}
+ \begin{list}{}{}
  \item  Virtual Machine Ubuntu 15.04
  \item  Memory: 2G
  \item  CPU: Intel(R) Core(TM) i7-4790 CPU @ 3.60GHz
@@ -38,8 +38,7 @@
  \item  File size: 862404 kB
  \end{list}
 
-
-\begin{table}
+\begin{table}[h]
 \caption{\textsc{Test Result}}
 \begin{tabular}{ |l|p{2cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}| }
 \hline\hline
