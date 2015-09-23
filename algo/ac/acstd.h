@@ -35,7 +35,7 @@ typedef struct _mp_struct {
     mp_statetable_t  *stable; // state table
 } mp_struct_t;
 
-
+extern long mp_alloc_total;
 int mp_add_pattern(mp_struct_t *p, unsigned char *pat, int n, long id);
 int mp_compile(mp_struct_t *mp);
 int mp_search(mp_struct_t *mp, unsigned char *txt, int n,

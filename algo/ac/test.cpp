@@ -14,6 +14,7 @@ extern "C"
 {
 #include "utils/utiltime.h"
 #include <sfutil/mpse.h>
+#include <sfutil/acsmx2.h>
 
 void FatalError(const char *format,...)
 {
@@ -32,6 +33,7 @@ void LogMessage(const char *format,...)
 typedef struct _TestConfig {
     unsigned nocase;
     int verbose;
+    int compress;
 } TestConfig;
 
 static TestConfig sc;
@@ -54,6 +56,7 @@ struct stats {
     double t_match;
     long vms[2]; // 0:before create engine, 1:after compile engine, 2: usage diff
     long rss[2]; // ditto
+    long alloc_total;
 } st;
 
 #define trim(start,end) while(end >= start && isspace(*end)) { *end-- = 0; }
@@ -194,8 +197,11 @@ static void EngineCompile()
     start = timing_start();
     if (eng_method == 1) {
         mp_compile((mp_struct_t *)engine);
+        st.alloc_total = mp_alloc_total;
     } else {
         mpsePrepPatterns(engine, NULL, NULL);
+        st.alloc_total = acsm2_total_memory;
+        mpsePrintInfo(engine);
     }
 
     st.t_compile += timing_cost(start);
@@ -215,6 +221,10 @@ void *EngineCreate()
         break;
     default:
         engine = mpseNew(eng_method, 0, NULL, NULL, NULL);
+        if (sc.compress) {
+            mpseSetOpt(engine, 1);
+        }
+
         break;
     }
     if (engine == NULL) {
@@ -233,6 +243,7 @@ void EngineFree()
         break;
     default:
         mpseFree(engine);
+
         break;
     }
 }
@@ -330,10 +341,13 @@ int main(int argc, char *argv[])
     memset(&sc, 0, sizeof(sc));
 
     if (argc < 3) usage();
-    while ((opt = getopt(argc, argv, "vnm:")) != -1) {
+    while ((opt = getopt(argc, argv, "vncm:")) != -1) {
         switch (opt) {
         case 'n':
             sc.nocase = 1;
+            break;
+        case 'c':
+            sc.compress = 1;
             break;
         case 'm':
             eng_method = atoi(optarg);
@@ -362,8 +376,9 @@ int main(int argc, char *argv[])
     printf("Compile time(s) : \x1b[33m%lf\x1b[0m\n", st.t_compile);
 
     printf("\x1b[1m\x1b[31mMatch time(s)   : %lf\x1b[0m\n", st.t_match);
-    printf("\x1b[1m\x1b[32m VmSize(kB)     : %ld\x1b[0m\n", st.vms[1]-st.vms[0]);
-    printf("Match total   : %ld\n", st.match_total);
+    printf("\x1b[1m\x1b[32mMemory(kB)      : %.2f\x1b[0m\n", (float)st.alloc_total/1024);
+    printf("VmSize(kB)      : %ld\n", st.vms[1]-st.vms[0]);
+    printf("Match total     : %ld\n", st.match_total);
     if (sc.verbose) {
         printf("Match count for each keyword :\n");
         i=0;

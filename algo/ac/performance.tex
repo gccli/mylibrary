@@ -1,6 +1,11 @@
-\documentclass[a4paper]{article}
+\documentclass{article}
 \usepackage{geometry}
+%\usepackage{CJK}
 \usepackage[table]{xcolor}
+\usepackage{listings}
+%\usepackage[utf8]{inputenc}
+%\usepackage[T1]{fontenc}
+\usepackage{color}
 \usepackage{graphicx}
 \usepackage{multirow}
 \usepackage{alltt}
@@ -8,24 +13,80 @@
 \usepackage{array}
 \usepackage{dcolumn}
 \usepackage[linkcolor=red]{hyperref}
+%\inputencoding{utf8}
+% Back to the UTF-8 encoding.
+% ...
+
+
+\lstdefinestyle{customc}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=L,
+  xleftmargin=\parindent,
+  language=C,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{orange},
+}
+\lstset{escapechar=@,style=customc}
+
 %\usepackage[hidelinks,linkcolor=red]{hyperref}
 \begin{document}
 \title{Multi-Pattern Search Algorithm comparison}
 \author{}
 \maketitle
 
+
 \subparagraph{Description of Aho-Corasick algorithm variants}
 
-\begin{list}{}{}
-\item \emph{ AC\_STD}: standard DFA implemented by me, using \textit{state table} and fixed \textit{next move} array for state transition. based on this \hyperlink{effic}{paper}
-\item \emph{ ACF\_FULL}: acsmx2.c, Full matrix
-\item \emph{ AC\_FULLQ}: acsmx2.c, matching states are queued
-\item \emph{ AC\_SPARSE}: acsmx2.c, Sparse matrix
-\item \emph{ AC\_BANDED}: acsmx2.c, Banded matrix
-\item \emph{ AC\_SPARSEBANDS}: acsmx2.c, Sparse-Banded matrix
-\item \emph{ AC\_BNFA}: Basic NFA based AC, compacted sparse array storage
-\item \emph{ AC\_BNFAQ}: ditto, with queued state
-\end{list}
+
+\begin{description}
+\item[AC\_STD] \hfill \\
+  Standard DFA, based on this \hyperlink{effic}{paper}. Using \textit{state table}  \textit{state transition} storage, each entry in state table had a vector of transitions for state, a failure state  and match pattern list.
+\begin{lstlisting}
+typedef struct  {
+    int      NextState[ ALPHABET_SIZE ];
+    int      FailState;
+    ACSM_PATTERN *MatchList;
+}ACSM_STATETABLE;
+\end{lstlisting}
+\item[AC\_FULL] \hfill \\
+  Full matrix, broken state table above into state transition table, an array of per state matching pattern lists, and a separate failure pointer list for each state for the NFA.
+\begin{lstlisting}
+typedef struct trans_node_s {
+  acstate_t    key;
+  acstate_t    next_state;
+  struct trans_node_s * next; /* next transition for this state */
+} trans_node_t;
+
+typedef struct {
+...
+    ACSM_PATTERN2    * acsmPatterns;
+    acstate_t        * acsmFailState;
+    ACSM_PATTERN2   ** acsmMatchList;
+
+    /**
+     * list of transitions in each state, this is used to build the nfa and
+     * dfa after construction we convert to sparse or full format matrix
+     * and free the transition lists
+     */
+    trans_node_t ** acsmTransTable;
+    acstate_t ** acsmNextState;
+...
+} ACSM_STRUCT2;
+\end{lstlisting}
+\item[AC\_FULLQ] \hfill \\
+  ditto, but matching states are queued
+\item[AC\_SPARSE] \hfill \\
+  Sparse matrix
+\item[AC\_BANDED] \hfill \\
+  Banded matrix
+\item[AC\_SPARSEBANDS] \hfill \\
+  Sparse-Banded matrix
+\end{description}
 
 
 \subparagraph{Test Environment}
@@ -38,8 +99,18 @@
  \item  File size: 862404 kB
  \end{list}
 
+\subparagraph{Test Result}
+
+\textbf{Note}:
+\begin{enumerate}
+  \item All keyword generated randomly, the keyword includes english and chinese
+  \item The standard AC implemented by me currently only support case sensitive
+  \item The memory show in table 1 just the total allocate size, not the actual page size allocated by kernel.
+\end{enumerate}
+
+
 \begin{table}[h]
-\caption{\textsc{Test Result}}
+\caption{\textsc{performance}}
 \begin{tabular}{ |l|p{2cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}| }
 \hline\hline
 & \multicolumn{3}{|c|}{pattern count 120}  &
@@ -47,23 +118,43 @@
 \cline{2-7}
 \textbf{Algorithm} & \textbf{Compile Time (s)}  & \textbf{Search Time (s)} & \textbf{Memory (kB)} & \textbf{Compile Time (s)} & \textbf{Search Time (s)} & \textbf{Memory (kB)} \\
 \hline\hline
-Standard      & 0.0093094 & 4.4257226 & 8390 & 0.0185856 & 4.499131 & 21714\\
-Full Matrix   & 0.0274246 & 5.4931084 & 16594 & 0.0544766 & 5.622883 & 35458\\
-Full Queueed  & 0.032692  & 5.5069188 & 16594 & 0.0479468 & 6.9196432 & 21746\\
-Sparse Matrix & 0.0299582 & 6.0480434 & 8418 & 0.0479468 & 6.9196432 & 21746\\
-Banded Matrix & 0.0299582 & 6.0480434 & 8418 & 0.0479468 & 6.9196432 & 21746\\
-Sparse Banded & 0.0300112 & 6.43706 & 8298 & 0.0458898 & 6.4687386 & 21626\\
+Standard      & 0.0093094 & 4.4257226 & 1083.24 & 0.0185856 & 4.499131 & 2141.07\\
+Full Matrix   & 0.0274246 & 5.4931084 & 949.76 & 0.0544766 & 5.622883 & 1837.88\\
+Full Queueed  & 0.032692  & 5.5069188 & 949.76 & 0.0479468 & 6.9196432 & 1837.88\\
+Sparse Matrix & 0.0299582 & 6.0480434 & 233.22 & 0.0479468 & 6.9196432 & 495.41\\
+Banded Matrix & 0.0299582 & 6.0480434 & 652.48 & 0.0479468 & 6.9196432 & 1206.72\\
+Sparse Banded & 0.0300112 & 6.43706 & 180.74 & 0.0458898 & 6.4687386 & 339.4\\
 \hline
 \end{tabular}
 \end{table}
 
+\begin{figure}[h]
+\caption{\textsc{Memory allocate}}
+\includegraphics[scale=0.8]{/root/share/x.PNG}
+\end{figure}
 
-\textsc{\textbf{Reference}}
+\begin{figure}[h]
+\caption{\textsc{Search Time}}
+\includegraphics[scale=0.8]{/root/share/y.PNG}
+\end{figure}
 
-\hypertarget{effic}{[1]} \href{http://cr.yp.to/bib/1975/aho.pdf}{\textit{Efficient String matching: An Aid to Bibliographic Search}}
+\begin{figure}[h]
+\caption{\textsc{VmSzie}}
+\includegraphics[scale=0.8]{/root/share/x.PNG}
+\end{figure}
 
-\hypertarget{snort}{[2]} \href{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.103.4663&rep=rep1&type=pdf}{\textit{Optimizing Pattern Matching for Intrusion Detection}}
 
+\subparagraph{Summary}
+
+From the figure 1, we can see that, all implementment of AC in acsmx2.c has remarkable drop compare with $AC\_STD$, but the memory just total allocate size, can not indicate real linux memory allocate. We known that, linux memory allocation is 4k aligned (the page size is 4k). see figure 3
+By compress state table(by the total bytes of keywords), we can still reduce memory usage in $AC\_STD$. In addition, the $AC\_STD$ has best performance and straightforward implement, simple and fast. In keyword size not more than 200, we could just use $AC\_STD$
+
+
+\subparagraph{Reference}
+\begin{list}{}{}
+  \item \hypertarget{effic}{[1]} \href{http://cr.yp.to/bib/1975/aho.pdf}{\textit{Efficient String matching: An Aid to Bibliographic Search}} \\
+  \item \hypertarget{snort}{[2]} \href{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.103.4663&rep=rep1&type=pdf}{\textit{Optimizing Pattern Matching for Intrusion Detection}}
+\end{list}
 
 \end{document}
 

@@ -2,7 +2,14 @@
 *.o
 *.so
 *.lo
+*.a
 *.la
+*.out
+*.log
+*.bak
+*.status
+.libs
 
+Makefile
 a.out
 core*

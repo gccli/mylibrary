@@ -3,11 +3,15 @@
 #include <queue>
 #include <typeinfo>
 
+long mp_alloc_total = 0;
+
 static mp_pattern_t *mp_pattern_dup(mp_pattern_t *pt)
 {
     mp_pattern_t *p = (mp_pattern_t *)calloc(sizeof(*p), 1);
     memcpy(p, pt, sizeof(*p));
     p->next = NULL;
+
+    mp_alloc_total += sizeof(*p);
 
     return p;
 }
@@ -17,7 +21,11 @@ int mp_add_pattern(mp_struct_t *p, unsigned char *pat, int n, long id)
     mp_pattern_t *plist;
 
     plist = (mp_pattern_t *) calloc(sizeof(mp_pattern_t), 1);
+    mp_alloc_total += sizeof(*plist);
+
     plist->pattern = (unsigned char *) calloc(n+1, 1); // add a terminater
+    mp_alloc_total += (n+1);
+
     memcpy(plist->pattern, pat, n);
     plist->n = n;
     plist->id = id;
@@ -52,6 +60,8 @@ static void mp_add_state(mp_struct_t *mp, mp_pattern_t *pt)
     memcpy(newp, pt, sizeof(*pt));
     newp->next = mp->stable[state].match_list;
     mp->stable[state].match_list = newp;
+
+    mp_alloc_total += sizeof(*newp);
 }
 
 static void mp_build_nfa(mp_struct_t *mp)
@@ -125,6 +135,7 @@ int mp_compile(mp_struct_t *mp)
     mp->stable = (mp_statetable_t *) calloc(sizeof(mp_statetable_t),
                                             mp->max_states);
     mp->num_states = 0;
+    mp_alloc_total += mp->max_states * sizeof(mp_statetable_t);
 
     for (k=0; k<mp->max_states; ++k) {
         for(i=0; i<ALPHABET_SIZE; ++i)

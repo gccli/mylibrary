@@ -48,6 +48,8 @@ Emacs basic
 [2.5]: http://www.gnu.org/software/emacs/manual/html_node/emacs/Query-Replace.html
 [2.6]: https://www.gnu.org/software/emacs/manual/html_node/emacs/Registers.html "Registers"
 
++ `M-y`
+  - Replace the text just yanked with an [earlier](http://www.gnu.org/software/emacs/manual/html_node/emacs/Earlier-Kills.html#Earlier-Kills) batch of killed text (yank-pop)
 + `M-\ delete-horizontal-space`
 + `C-x C-o`
   + Delete all but one of many consecutive blank lines (delete-blank-lines).

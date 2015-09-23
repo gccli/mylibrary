@@ -29,7 +29,7 @@ if __name__ == '__main__':
         if any(c in exclude for c in w): continue
         if (w[0] in w[1]): continue
         i += 1
-        if i > 3 : break;
+        if i > 10 : break;
         s = u'%s' % w
         print s
         f.write(s+'\n')
