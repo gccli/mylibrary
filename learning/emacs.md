@@ -54,6 +54,13 @@ Emacs basic
 + `C-x C-o`
   + Delete all but one of many consecutive blank lines (delete-blank-lines).
 + [key binding and prefix key][2.1]
++ [A sample .emacs file](https://www.freebsd.org/doc/en/books/developers-handbook/emacs.html), in this link show define key
+
+**Transposing Text**
+`C-t` Transpose two characters (transpose-chars).
+`M-t` Transpose two words (transpose-words).
+`C-M-t` Transpose two balanced expressions (transpose-sexps).
+`C-x C-t` Transpose two lines (transpose-lines)
 
 ##### [Move][2.4] #####
 + `M-<`
@@ -79,9 +86,9 @@ Emacs basic
 + `M-%` string RET newstring RET
 <br/> Replace some occurrences of string With newstring.
 + `C-M-%` regexp RET newstring RET
-<br/> Replace some matches for regexp with newstring
+<br/> Replace some matches for regexp with SPC
 
-    * `SPC or y`
+    * `newstring or y`
         <br/> to replace the occurrence With newstring.
     * `DEL or n`
         <br/> to skip to the next occurrence without replacing this one.

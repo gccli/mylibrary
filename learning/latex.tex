@@ -1,27 +1,47 @@
 \documentclass{article}
 \usepackage{xeCJK}
-\setCJKmainfont{STKaiti}
-%\setCJKmainfont[BoldFont={WenQuanYi Zen Hei}, ItalicFont={WenQuanYi Zen Hei}]{WenQuanYi Zen Hei Mono}
+%\setCJKmainfont{Microsoft YaHei}
+\setCJKmainfont[BoldFont={WenQuanYi Zen Hei}, ItalicFont={WenQuanYi Zen Hei}]{WenQuanYi Zen Hei Mono}
 %\setCJKfamilyfont{hei}{WenQuanYi Zen Hei}
-\setCJKfamilyfont{song}{SimSun}
+%\setCJKmainfont{SimSun}
+%\setCJKfamilyfont{song}{SimSun}
 
 \begin{document}
-\begin{titlepage}
-  学习LaTeX
-\end{titlepage}
+\title{学习LaTeX}
 
-\paragraph{中文输入} \ref{3}
+\textbf{TeX格式}
+
+最基本的TeX程序只是由一些很原始的命令组成，它们可以完成简单的排版操作和程序设计功能。然而，TeX也允许用这些原始命令定义一些更复杂的高级命令。这样就可以利用低级的块结构，形成一个用户界面相当友好的环境。
+
+在处理器运行期间，该程序首先读取所谓的格式文件，其中包含各种以原始语言写成的高级命令，也包含分割单词的连字号安排模式。接着处理程序就处理源文件，其中包含要处理的真正文本，以及在格式文件中已定义了的格式命令。
+
+创建新格式是一件需要由具有丰富知识程序员来做的事情。把定义写到一个源文件中，这个文件接着被一个名叫initex的特殊版本的TeX程序处理。它采用一种紧凑的方式存贮这些新格式，这样就可以被通常TeX程序很快地读取。
+
+\textbf{Plain TeX}
+
+Knuth设计了一个名叫Plain TeX的基本格式，以与低层次的原始TeX呼应。这种格式是用TeX处理文本时相当基本的部分，以致于我们有时都分不清到底哪条指令是真正的处理程序TeX的原始命令，哪条是Plain TeX格式的。大多数声称只使用TeX的人，实际上指的是只用Plain TeX。
+
+Plain TeX也是其它格式的基础，这进一步加深了很多人认为TeX和Plain TeX是同一事物的印象。
+
+\textbf{LaTeX}
+
+Plain TeX的重点还只是在于如何排版的层次上，而不是从一位作者的观点出发。对它的深层功能的进一步发掘，需要相当丰富的编程技巧。因此它的应用就局限于高级排版和程序设计人员。
+
+Leslie Lamport开发的LaTeX是当今世界上最流行和使用最为广泛的TeX格式。它构筑在Plain TeX的基础之上，并加进了很多的功能以使得使用者可以更为方便的利用TeX的强大功能。使用LaTeX基本上不需要使用者自己设计命令和宏等，因为LaTeX已经替你做好了。因此，即使使用者并不是很了解TeX，也可以在短短的时间内生成高质量的文档。对于生成复杂的数学公式，LaTeX表现的更为出色。
+
+\textbf{LaTeX2e}
+
+LaTeX自从二十世纪八十年代初问世以来，也在不断的发展。最初的正式版本为2.09，在经过几年的发展之后，许多新的功能，机制被引入到LaTeX中。在享受这些新功能带来的便利的同时，它所伴随的副作用也开始显现，这就是不兼容性。标准的LaTeX 2.09，引入了“新字体选择框架”(NFSS)的LaTeX，SLiTeX，AMSLaTeX等等，相互之间并不兼容。这给使用者和维护者都带来很大的麻烦。
+
+为结束这中糟糕的状况，Frank Mittelbach 等人成立了LaTeX3项目小组，目标是建立一个最优的，有效的，统一的，标准的命令集合。即得到LaTeX的一个新版本3。这是一个长期目标，向这个目标迈出第一步就是在1994年发布的LaTeX2e。LaTeX2e采用了NFSS作为标准，加入了很多新的功能，同时还兼容旧的LaTeX 2.09。LaTeX2e每6个月更新一次，修正发现的错误并加入一些新的功能。在LaTeX3最终完成之前，LaTeX2e将是标准的LaTeX版本。
+
+\paragraph{中文输入}
 
 texdoc xecjk
 
 
-据新华网报道，“一带一路”工作领导小组办公室负责人、国家发展改革委西部开发司巡视员欧晓理日前表示，“一带一路”的顶层设计已经完成，下一步将扎实推进全面建设六大经济合作走廊和若干海上重要战略节点。中国正与“一带一路”沿线国家一道，积极规划中蒙俄、新亚欧大陆桥、中国—中亚—西亚、中国—中南半岛、中巴、孟中印缅六大经济走廊建设。\cite{1}
-
-
 \begin{thebibliography}{99}
-\bibitem[1]{1} http://www.ifeng.com
-\bibitem[2]{wiki} https://en.wikipedia.org
-\bibitem[3]{latex tutorial} $http://cs2.swfc.edu.cn/~wx672/lecture_notes/linux/latex/latex_tutorial.html$
+\bibitem[1]{latex tutorial} $http://cs2.swfc.edu.cn/~wx672/lecture_notes/linux/latex/latex_tutorial.html $
 \end{thebibliography}
 
 \end{document}

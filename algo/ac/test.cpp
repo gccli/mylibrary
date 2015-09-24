@@ -40,7 +40,7 @@ static TestConfig sc;
 TestConfig *snort_conf = &sc;
 }
 
-#define MAX_KEYWORD 300
+#define MAX_KEYWORD 1000
 typedef std::list<std::string> kset_t;
 static kset_t keywords;
 static void *engine;
@@ -73,13 +73,14 @@ static void get_memusage(long *vmsize, long *rss) {
     }
     while ((sz = getline(&line, &len, fp)) != -1) {
         if (memcmp("VmSize:", line, 7) == 0) {
-            if (sc.verbose > 1) printf("%s", line);
+            if (sc.verbose > 0) printf("%s", line);
             for (k=0, i=7; i<sz; ++i)
                 if (isdigit(line[i]))
                     number[k++] = line[i];
             *vmsize = atoi(number);
+            printf("got %ld\n", *vmsize);
         } else if (memcmp("VmRSS:", line, 6) == 0) {
-            if (sc.verbose > 1) printf("%s", line);
+            if (sc.verbose > 0) printf("%s", line);
             for (k=0, i=6; i<sz; ++i)
                 if (isdigit(line[i]))
                     number[k++] = line[i];
@@ -175,7 +176,7 @@ static void EngineCompile()
 {
     long id = 0;
     double start;
-
+    if(sc.verbose > 2) acsmSetVerbose2();
     foreach(keywords) {
         start = timing_start();
         if (eng_method == 1) {
@@ -385,7 +386,7 @@ int main(int argc, char *argv[])
         foreach(keywords) {
             printf("  %-*s\t%ld\t\t",
                    keyword_max_len, ii->c_str(), st.match_count[i++]);
-            if (i%2 == 0) printf("\n");
+            if (i%4 == 0) printf("\n");
         }
         printf("\n");
     }

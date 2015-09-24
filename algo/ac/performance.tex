@@ -1,10 +1,9 @@
 \documentclass{article}
+\usepackage{xeCJK}
+\setCJKmainfont[BoldFont={WenQuanYi Zen Hei}, ItalicFont={WenQuanYi Zen Hei}]{WenQuanYi Zen Hei Mono}
 \usepackage{geometry}
-%\usepackage{CJK}
 \usepackage[table]{xcolor}
 \usepackage{listings}
-%\usepackage[utf8]{inputenc}
-%\usepackage[T1]{fontenc}
 \usepackage{color}
 \usepackage{graphicx}
 \usepackage{multirow}
@@ -63,9 +62,15 @@ typedef struct trans_node_s {
 } trans_node_t;
 
 typedef struct {
-...
+    int acsmMaxStates; // depend on the total bytes of keywords
+    int acsmNumStates; // <= acsmMaxState
+
     ACSM_PATTERN2    * acsmPatterns;
+
+    //per-state failure state, used for build NFA
     acstate_t        * acsmFailState;
+
+    // 每个状态对应一个MatchList
     ACSM_PATTERN2   ** acsmMatchList;
 
     /**
@@ -73,7 +78,10 @@ typedef struct {
      * dfa after construction we convert to sparse or full format matrix
      * and free the transition lists
      */
+// 基于链表的状态跃迁表，用于创建NFA和DFA，当构建完成，将其转化为full format matrix然后将内存释放
     trans_node_t ** acsmTransTable;
+
+// Alloc a separate state transition table == in state 's' due to event 'k', transition to 'next' state
     acstate_t ** acsmNextState;
 ...
 } ACSM_STRUCT2;
@@ -140,7 +148,7 @@ Sparse Banded & 0.0300112 & 6.43706 & 180.74 & 0.0458898 & 6.4687386 & 339.4\\
 
 \begin{figure}[h]
 \caption{\textsc{VmSzie}}
-\includegraphics[scale=0.8]{/root/share/x.PNG}
+\includegraphics[scale=0.8]{/root/share/z.PNG}
 \end{figure}
 
 
