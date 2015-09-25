@@ -73,14 +73,13 @@ static void get_memusage(long *vmsize, long *rss) {
     }
     while ((sz = getline(&line, &len, fp)) != -1) {
         if (memcmp("VmSize:", line, 7) == 0) {
-            if (sc.verbose > 0) printf("%s", line);
+            //if (sc.verbose > 0) printf("%s", line);
             for (k=0, i=7; i<sz; ++i)
                 if (isdigit(line[i]))
                     number[k++] = line[i];
             *vmsize = atoi(number);
-            printf("got %ld\n", *vmsize);
         } else if (memcmp("VmRSS:", line, 6) == 0) {
-            if (sc.verbose > 0) printf("%s", line);
+            //if (sc.verbose > 0) printf("%s", line);
             for (k=0, i=6; i<sz; ++i)
                 if (isdigit(line[i]))
                     number[k++] = line[i];
@@ -190,9 +189,6 @@ static void EngineCompile()
 
         st.t_compile += timing_cost(start);
         id++;
-        if (sc.verbose > 1) {
-            printf("add pattern [%s]\n", ii->c_str());
-        }
     }
 
     start = timing_start();
