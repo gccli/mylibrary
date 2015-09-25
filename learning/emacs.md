@@ -128,7 +128,6 @@ The text between point and the mark is called the *region*
 + File Names in Registers
 <br/> put a file name into register r: `(set-register r '(file . name))`
 
-
 TeX LaTeX AUCTeX
 ----------------
 
