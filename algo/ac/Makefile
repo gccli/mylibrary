@@ -1,4 +1,4 @@
-SNORT=/root/tmp/snort/src
+SNORT=$(HOME)/tmp/snort/src
 INC=-I. -I../.. -I$(SNORT) -I$(SNORT)/sfutil
 
 SNORT_SYNAMIC_PREPROC=$(SNORT)/sfutil/libsfutil.a
