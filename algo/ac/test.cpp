@@ -66,24 +66,25 @@ static void get_memusage(long *vmsize, long *rss) {
     size_t len = 0;
     ssize_t sz, i, k;
 
-    char number[16] = {0};
     fp = fopen("/proc/self/status", "r");
     if (fp == NULL) {
         return ;
     }
     while ((sz = getline(&line, &len, fp)) != -1) {
+        char number[16] = {0};
         if (memcmp("VmSize:", line, 7) == 0) {
-            //if (sc.verbose > 0) printf("%s", line);
             for (k=0, i=7; i<sz; ++i)
                 if (isdigit(line[i]))
                     number[k++] = line[i];
             *vmsize = atoi(number);
+
+            printf("%s    %ld\n", line, *vmsize);
         } else if (memcmp("VmRSS:", line, 6) == 0) {
-            //if (sc.verbose > 0) printf("%s", line);
             for (k=0, i=6; i<sz; ++i)
                 if (isdigit(line[i]))
                     number[k++] = line[i];
-            *vmsize = atoi(number);
+            *rss = atoi(number);
+            printf("%s   %ld\n", line, *rss);
             break;
         }
     }
@@ -375,6 +376,7 @@ int main(int argc, char *argv[])
     printf("\x1b[1m\x1b[31mMatch time(s)   : %lf\x1b[0m\n", st.t_match);
     printf("\x1b[1m\x1b[32mMemory(kB)      : %.2f\x1b[0m\n", (float)st.alloc_total/1024);
     printf("VmSize(kB)      : %ld\n", st.vms[1]-st.vms[0]);
+    printf("RSS(kB)         : %ld\n", st.rss[1]-st.rss[0]);
     printf("Match total     : %ld\n", st.match_total);
     if (sc.verbose) {
         printf("Match count for each keyword :\n");

@@ -1,8 +1,8 @@
 #! /bin/bash
 
-sample_orig=/root/tmp/samples/orig
-sample_prep=/root/tmp/samples/prepare
-sample_data=/root/tmp/samples/data
+sample_orig=$HOME/tmp/samples/orig
+sample_prep=$HOME/tmp/samples/prepare
+sample_data=$HOME/tmp/samples/data
 
 # original -> prepare -> data
 function copyalldoc() {
