@@ -224,20 +224,30 @@ DFA和NFA最大的区别在于DFA能够\textbf{精确的}将每一个输入映�
 
 \section{Implementation Again}
 前面一章讲到AC算法的全部原理，对于实现高效的$AC^{STD}$足矣，但是$AC^{STD}$会占用太多的内存，$AC_{v2}$主要的优化在于对存储结构的优化，其中不乏动用\textit{sparse matrix}和\textit{banded matrix}，接下来我们首先来看看snort最简单的优化\textit{full matrix}版的AC实现$AC^{FULL}$。\\
-前一章得到的DFA存储在\lstinline|TransTable|中，生成\textit{full matrix}的过程就是将转换为\lstinline|NextState|的过程，其实现通过\lstinline|Conv_List_To_Full|函数完成，其主要过程如下
+前一章得到的DFA存储在\lstinline|TransTable|中，生成\textit{full matrix}的过程就是将转换为\lstinline|NextState|的过程，其实现通过\lstinline|Conv_List_To_Full|函数完成，其主要过程如下，其中sizeofstate的值根据是否开启压缩模式可以为1,2,4。
 \begin{lstlisting}
 foreach(state as k)
-    p = allocate(sizeofstate*(AlphabetSize+2), sizeofstate);
-    trans_node_t *t = TransTable[k];
-    p += 2;
+    p = ALLOCATE(sizeofstate * (AlphabetSize+2)); // 多分配两项用，基中第一项用于表示AC存储格式，第二项表示是否配置关键字
+    t = TransTable[k];
     while (t != NULL)
-      *((type_t *)p + t->key) = (type_t)t->next_state;
+      p[t->key+2] = t->next_state; //为了使算法简洁，这里假设sizeofstate为4
       t = t->next;
-    p[0] = ACF_FULL;  // set format
-    p[1] = 0;
+    p[0] = ACF_FULL;  // Set AC storage format
+    p[1] = 0;  // 暂时设为0，若MatchList[k]不为NULL，则设置为1
     NextState[k] = p
 \end{lstlisting}
-
+对应的搜索算法如下，Tx表示待搜索文本，T指向Tx，callback是用户传入的回调函数
+\begin{lstlisting}
+for(T = Tx; T < Tend; T++) {
+    if (NextState[state][1]) {
+        if ((mlist = MatchList[state])) {
+            index = T -  mlist->n - Tx;
+            callback //调用用户回调函数，是否继续搜索文本取决于用户
+        }
+    }
+    state = NextState[ 2+T[0] ] // next move transition
+}
+\end{lstlisting}
 最终生成的\textit{full matrix}如下所示：
 \begin{figure}[h]
   \centering
