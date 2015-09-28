@@ -1,5 +1,9 @@
 #! /bin/bash
 
+count=100
+if [ -n "$1" ]; then
+    count=$1
+fi
 sample_orig=$HOME/tmp/samples/orig
 sample_prep=$HOME/tmp/samples/prepare
 sample_data=$HOME/tmp/samples/data
@@ -16,10 +20,13 @@ function copyalldoc() {
 }
 
 cwd=$(pwd)
-pt_cnt_en=800
-pt_cnt_cn=200
+pt_cnt_en=$((4*$count/5))
+pt_cnt_cn=$(($count/5))
 
 echo "================ Prepare test data... ================"
+echo "================ EN:$pt_cnt_en"
+echo "================ CN:$pt_cnt_cn"
+
 cd $sample_prep
 if [ "$1" == "clean" ]; then
     rm -f keyword* *sorted

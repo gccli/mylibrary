@@ -3,6 +3,7 @@
 \setCJKmainfont[BoldFont={WenQuanYi Zen Hei}, ItalicFont={WenQuanYi Zen Hei}]{WenQuanYi Zen Hei Mono}
 \usepackage{geometry}
 \usepackage{graphicx}
+\usepackage{subcaption}
 \usepackage{mathtools}
 \usepackage[sc,osf,slantedGreek]{mathpazo}
 \usepackage{color}
@@ -22,6 +23,7 @@
   stringstyle=\color{orange},
 }
 \lstset{escapechar=@,style=customc}
+
 
 %\usepackage[hidelinks,linkcolor=red]{hyperref}
 
@@ -266,6 +268,61 @@ Print DFA - 10 active states
    9: -> (I->4) -> (T->3) HERS
 \end{verbatim}
 \end{figure}
+
+对于$AC^{SPARSE}$和$AC^{BANDED}$，我就不在这里展开过多，不同的实现在对搜索算法会有一些改动。
+
+\section{Performance Test}
+\subparagraph{Test Environment}
+ \begin{list}{}{}
+ \item  Virtual Machine Ubuntu 15.04
+ \item  Memory: 2G
+ \item  CPU: Intel(R) Core(TM) i7-4790 CPU @ 3.60GHz
+ \item  File count: 6253
+ \item  File size: 862404 kB
+ \end{list}
+
+以下列出4个AC变种的性能比较，其中关键字集合分别是100,200,500,1000，每组数据取平均值得到。图5列出查询时间和内存分配的精确值，可以看来，$AC^{STD}$最快，但内存分配最多，$AC^{BANDED}$在综合性能表现最好。但值得注意的是，Linux分配内存是以页对齐的，一页的大小为4096，一般来说，在内存充足的情况下，VmSize和RSS能够反映真实的内存分配情况，详见图6，我们同时给出VmSize和Rss的观测数据，可以看出$AC^{STD}$的存储性能并没有想象中的那么差，因为$AC^{STD}$分配的是连续的大块内存，内存管理需要的额外开销较小。
+\begin{figure}[h]
+  \centering
+  \caption{\textsc{Performance Comparison}}
+\begin{subfigure}[b]{0.3\textwidth}
+  \includegraphics[scale=0.6]{/root/share/1.png}
+  \caption{Search Time}
+  \label{fig:search}
+\end{subfigure}
+
+\begin{subfigure}[b]{0.3\textwidth}
+  \includegraphics[scale=0.6]{/root/share/2.png}
+  \caption{Memory Allocate}
+  \label{fig:mem}
+\end{subfigure}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+\caption{\textsc{VmSzie \& RSS comparison}}
+\includegraphics[scale=0.6]{res/3.png}
+\includegraphics[scale=0.6]{res/4.png}
+\end{figure}
+
+
+\section{Conclusion}
+综上所述，我们以搜索速度，内存分配和实现复杂度三个方面比较AC的几个变种，如下表所示：
+\begin{table}[h]
+  \centering
+\caption{\textsc{AC变种的综合性能对比}}
+\begin{tabular}{ |l|p{2cm}|p{2cm}|p{2cm}| }
+\textbf{Algorithm} & \textbf{Search Speed}  & \textbf{Memory} & \textbf{Complexity)}\\
+\hline\hline
+$AC^{STD}$   & $\star\star\star$ & $\star\star$ & $\star$\\
+$AC^{FULL}$  & $\star\star$ & $\star\star$ & $\star\star$\\
+$AC^{SPARSE}$ & $\star$  & $\star\star\star$ & $\star\star\star$\\
+$AC^{BANDED}$ & $\star\star\star$ & $\star\star$ & $\star\star\star$\\
+\hline
+\end{tabular}
+\end{table}
+
+在性能和存储上最优的算法是$AC^{BANDED}$，但实现比$AC^{STD}$要复杂的多。因此，对于关键字引擎，实现$AC^{STD}$和$AC^{BANDED}$就足够了，可以先实现$AC^{STD}$，并对之进行存储上的优化（如用2个字节表示state，前提是关键字w集合的总量不超过65535字节），则可节省40\%以上的内存。按一个keyword 64 bytes来算，对1000个关键字来说，$AC^{STD}$能够很轻松的应付，如果关键字集特别大，超过65535字节，就需要考虑使用$AC^{BANDED}$的变种了.
 
 
 \begin{thebibliography}{99}

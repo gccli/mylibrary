@@ -82,6 +82,8 @@ static void get_memusage(long *vmsize, long *rss) {
                 if (isdigit(line[i]))
                     number[k++] = line[i];
             *rss = atoi(number);
+
+            printf("RSS %s [%s] %ld\n", line, number, *rss);
             break;
         }
     }
@@ -368,14 +370,14 @@ int main(int argc, char *argv[])
     printf("pattern count   : %ld\n", st.pattern_count);
     printf("file count      : %ld\n", st.file_count);
     printf("file bytes      : %ld kB\n", st.file_bytes/1024);
-    printf("Compile time(s) : \x1b[33m%lf\x1b[0m\n", st.t_compile);
+    printf("Compile time(s) : %lf\n", st.t_compile);
 
     printf("\x1b[1m\x1b[31mMatch time(s)   : %lf\x1b[0m\n", st.t_match);
     printf("\x1b[1m\x1b[32mMemory(kB)      : %.2f\x1b[0m\n", (float)st.alloc_total/1024);
     printf("VmSize usage    : %ld kB from %ld to %ld\n",
            st.vms[1]-st.vms[0], st.vms[0], st.vms[1]);
     printf("RSS usage       : %ld kB from %ld to %ld\n",
-           st.rss[1]-st.rss[0], st.rss[1], st.rss[0]);
+           st.rss[1]-st.rss[0], st.rss[0], st.rss[1]);
     printf("Match total     : %ld\n", st.match_total);
     if (sc.verbose) {
         printf("Match count for each keyword :\n");

@@ -1,0 +1,39 @@
+#! /bin/bash
+
+dir=100
+if [ -n "$2" ]; then
+    dir=$2
+fi
+mkdir -p $dir
+
+function perf() {
+    for i in $(echo "1 6 12 7 8 9")
+    do
+        > $i.out
+    done
+
+    for i in $(echo "1 6 12 7 8 9")
+    do
+        for j in `seq 1 5`
+        do
+            ./a.out /tmp/keyword ~/tmp/samples/data -m$i | tee -a $i.out
+            sleep 1
+        done
+        mv $i.out $dir/
+    done
+}
+
+function result() {
+    for i in $(echo "1 6 12 7 8 9")
+    do
+        echo "---- $i ----"
+        grep 'Compile time' $dir/$i.out  | awk -F ': ' '{sum+=$2; count+=1} END {print "Compile time Sum =",sum, "Count =",count, "Average=",sum/count}'
+        grep 'Match time' $dir/$i.out  | awk -F ': ' '{sum+=$2; count+=1} END {print "Mach time Sum =",sum, "Count =",count, "Average=",sum/count}'
+        grep 'Memory' $dir/$i.out  | awk -F ': ' '{sum+=$2; count+=1} END {print "Memory Sum =",sum, "Count =",count, "Average=",sum/count}'
+        grep 'VmSize' $dir/$i.out  | awk -F ': ' '{sum+=$2; count+=1} END {print "VmSize Sum =",sum, "Count =",count, "Average=",sum/count}'
+        grep 'RSS' $dir/$i.out  | awk -F ': ' '{sum+=$2; count+=1} END {print "RSS Sum =",sum, "Count =",count, "Average=",sum/count}'
+
+    done
+}
+
+$1
