@@ -1,0 +1,154 @@
+\documentclass[a4paper]{article}
+\usepackage{xeCJK}
+\setCJKmainfont[BoldFont={WenQuanYi Zen Hei}, ItalicFont={WenQuanYi Zen Hei}]{WenQuanYi Zen Hei Mono}
+%\usepackage{xeCJK}
+%\setCJKmainfont{STFangsong}
+\usepackage{geometry}
+\usepackage{mathtools}
+\usepackage[sc,osf,slantedGreek]{mathpazo}
+\begin{document}
+\title{Probability Distributions}
+\author{}
+\maketitle
+
+The SVM is a decision machine and so does not provide posterior probabilities.
+\section{二元变量(Binary Variables)}
+$x \in \{0,1\}, p(x=1|\mu) = \mu, p(x=0|\mu) = 1-\mu$, Bernoulli distribution $Bern(x|\mu) = \mu^x(1-\mu)^{1-x}$
+data set $D = {x_1,...,x_n}$ of observed values of x. likehood function
+\begin{align}
+p(D|\mu) = \prod_{n=1}^N p(x_n|\mu) = \prod_{n=1}^N \mu^{x_n}(1-\mu)^{1-x_n}\\
+ln p(D|\mu) = \sum_{n=1}^N \{ x_nln\mu + (1-x_n)ln(1-\mu) \}
+\end{align}
+binomial distribution
+\begin{align}
+  Bin(m|N,\mu) = {N \choose m} \mu^m (1-\mu)^{N-m}
+\end{align}
+
+\subsection{Beta Distribution}
+
+Introduce a prior distribution p(μ)
+\begin{align}
+  Beta(\mu|a,b) = \frac{ \Gamma(a+b) } {\Gamma(a)\Gamma(b)} \mu^{a-1} (1-\mu)^{b-1}\\
+  \Gamma(t) = \int_0^{inf} x^{t-1}e^{-x} dx\\
+  \int_0^1 Beta(\mu|a,b) d\mu = 1\\
+  \mathbb{E}[\mu] = \frac{a}{a+b}\\
+  var[\mu] = \frac{ab}{(a+b)^2(a+b+1)}
+\end{align}
+
+Posterior distribution of $\mu$ is now obtained by multiplying the beta prior by the binomial likelihood function
+
+\begin{align*}
+  p(\mu|m,l,a,b) &\propto \mu^{m+a-1} (1-\mu)^{l+b-1}\\
+  p(\mu|m,l,a,b) &=  \frac{ \Gamma(m+a+l+b) } {\Gamma(m+a)\Gamma(l+b)} \mu^{m+a-1} (1-\mu)^{l+b-1}
+\end{align*}
+a and b in the prior as an \textit{effective number of observations} of x = 1 and x = 0
+
+\section{Multinomial Variables}
+用参数$\mu_k$表示$x_k=1$的概率，$\mathbf{x}$的分布如下：
+\begin{align*}
+  \mathbf{x} = (0,0,1,0,0,0)^T\\
+  p(\mathbf{x}|\mu) = \prod_{k=1}^K\mu_k^{x_k}
+\end{align*}
+$N$个独立观测值$\mathbf{x_1},...,\mathbf{x_n}$的数据集$D$
+\begin{align*}
+  p(D|\mu) = \prod_{n=1}^N  \prod_{k=1}^K \mu_k^{x_{nk}} = \prod_{k=1}^K \mu_k^{m_k}\\
+  m_k = \sum_n x_{nk}
+\end{align*}
+$m_k$表示观测到$x_k=1$的次数，这被称为这个分布的充分统计量（sufficient statistics）
+多项式分布(multinomial distribution)
+\begin{align*}
+  Mult(m_1,m_2,...,m_K|\mu,N) = {N \choose m_1m_2...m_K} \prod_{k=1}^K \mu_k^{m_k}\\
+  \sum_{k=1}^K m_k = N
+\end{align*}
+共轭先验为：
+\begin{align*}
+  Dir(\mu|\alpha) &= \frac{\Gamma(\alpha_0)}{\Gamma(\alpha_1)...\Gamma(\alpha_K)} \prod_{k=1}^K \mu_k^{m_k}\\
+\alpha_0 &= \sum \alpha_k
+\end{align*}
+似然函数乘以先验，得到参数${\mu_k}$的后验概率
+\begin{align*}
+  p(\mu|D,\alpha) = Dir(\mu|\alpha+\mathbf{m}) = \frac{\Gamma(\alpha_0+N)}{\Gamma(\alpha_1+m_1)...\Gamma(\alpha_K+m_K)} \prod_{k=1}^K \mu_k^{\alpha_k+m_k-1}
+\end{align*}
+$\alpha_k$看作$x_k=1$的有效观测数。
+
+\section{高斯分布}
+\begin{align*}
+  \mathcal{N}(x|\mu,\sigma^2) &= \frac{1}{(2\pi\sigma^2)^{1/2}} exp \{-\frac{1}{2\sigma^2} (x-\mu)^2\}\\
+  \mathcal{N}(\mathbf{x}|\boldsymbol{\mu},\boldsymbol{\Sigma}) &= \frac{1}{(2\pi)^{D/2}} \frac{1}{|\Sigma|^{1/2}} exp \{-\frac{1}{2} (x-\mu)^T \Sigma^{-1} (x-\mu) \}\\
+  \Delta^2 &= (x-\mu)^T \Sigma^{-1} (x-\mu)
+\end{align*}
+
+\subsection{Conditional Gaussian distributions}
+\begin{align*}
+  \boldsymbol{x} =
+    \begin{pmatrix} \boldsymbol{x}_a\\ \boldsymbol{x}_b \end{pmatrix},
+  \boldsymbol{\mu} =
+    \begin{pmatrix} \boldsymbol{\mu}_a\\ \boldsymbol{\mu}_b \end{pmatrix},
+  \boldsymbol{\Sigma} =
+    \begin{pmatrix}
+      \boldsymbol{\Sigma}_{aa} & \boldsymbol{\Sigma}_{ab}\\
+      \boldsymbol{\Sigma}_{ba} & \boldsymbol{\Sigma}_{bb}
+    \end{pmatrix}
+\end{align*}
+协方差矩阵的对称性$\Sigma = \Sigma^T$表明$\Sigma_{aa}, \Sigma_{bb}$也是对称的，$\Sigma_{ab}^T=\Sigma_{ba}$.引入精度矩阵：$\Lambda = \Sigma^{-1}$
+\begin{align*}
+  \boldsymbol{\Lambda} =
+    \begin{pmatrix}
+      \boldsymbol{\Lambda}_{aa} & \boldsymbol{\Lambda}_{ab}\\
+      \boldsymbol{\Lambda}_{ba} & \boldsymbol{\Lambda}_{bb}
+    \end{pmatrix}
+\end{align*}
+
+寻找条件概率$p(\boldsymbol{x}_a|\boldsymbol{x}_b)$，用精度矩阵展开二次型$\Delta^2$
+$p(\boldsymbol{x}_a|\boldsymbol{x}_b)$也是高斯分布，确定其均值与协方差
+选出与$x_a$相关的二阶项，得到方差
+\begin{align*}
+  -\frac{1}{2} \boldsymbol{x}_a^T \boldsymbol{\Lambda}_{aa} \boldsymbol{x}_a
+  \Sigma_{a|b} = \Lambda_{aa}^{-1}
+\end{align*}
+选出与$x_a$相关的线性项，all of the terms that are linear in $x_a$
+\begin{align*}
+  x_a^T\{ \Lambda_{aa}\mu_a - \Lambda_{ab}(x_b-\mu_b) \}\\
+  \mu_{a|b} &= \Sigma_{a|b} \{ \Lambda_{aa}\mu_a - \Lambda_{ab}(x_b-\mu_b) \}\\
+         &=  \mu_a - \Lambda_{aa}^{-1}\Lambda_{ab}(x_b - \mu_b)
+\end{align*}
+
+\subsection{Marginal Gaussian distributions}
+$p(x_a) = \int p(x_a,x_b) dx_b$
+注意力集中于联合分布的指数项的二次型
+\begin{align*}
+  \mathbb{E}[x_a] &= \mu_a\\
+  var[x_a] &= \Sigma_{aa}
+\end{align*}
+
+
+分块高斯的边缘分布条件分布总结，给定联合高斯分布$\mathcal{N}(\mathbf{x}|\boldsymbol{\mu},\boldsymbol{\Sigma})$
+\begin{align*}
+  \boldsymbol{x} =
+    \begin{pmatrix} \boldsymbol{x}_a\\ \boldsymbol{x}_b \end{pmatrix},
+  \boldsymbol{\mu} =
+    \begin{pmatrix} \boldsymbol{\mu}_a\\ \boldsymbol{\mu}_b \end{pmatrix}\\
+  \boldsymbol{\Sigma} =
+    \begin{pmatrix}
+      \boldsymbol{\Sigma}_{aa} & \boldsymbol{\Sigma}_{ab}\\
+      \boldsymbol{\Sigma}_{ba} & \boldsymbol{\Sigma}_{bb}
+    \end{pmatrix},
+  \boldsymbol{\Lambda} =
+    \begin{pmatrix}
+      \boldsymbol{\Lambda}_{aa} & \boldsymbol{\Lambda}_{ab}\\
+      \boldsymbol{\Lambda}_{ba} & \boldsymbol{\Lambda}_{bb}
+    \end{pmatrix}
+\end{align*}
+条件概率分布
+\begin{align*}
+  p(x_a|x_b) &= \mathcal{N}(\mathbf{x_a}|\boldsymbol{\mu}_{a|b},\boldsymbol{\Lambda}_{aa}^{-1})\\
+  \mu_{a|b}  &=  \mu_a - \Lambda_{aa}^{-1}\Lambda_{ab}(x_b - \mu_b)
+\end{align*}
+边缘概率分布
+\begin{align*}
+  p(x_a) &= \mathcal{N}(\mathbf{x_a}|\boldsymbol{\mu}_a,\boldsymbol{\Sigma}_{aa})
+\end{align*}
+
+
+
+\end{document}

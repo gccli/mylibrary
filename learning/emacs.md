@@ -132,32 +132,23 @@ TeX LaTeX AUCTeX
 ----------------
 
 **Font** <br/>
-`C-c C-f C-b`
-    Insert bold face '\textbf{}' text.
+`C-c C-f C-b`    Insert bold face '\textbf{}' text.
 <br/>
-`C-c C-f C-i`
-    Insert italics '\textit{}' text.
+`C-c C-f C-i`    Insert italics '\textit{}' text.
 <br/>
-`C-c C-f C-e`
-    Insert emphasized '\emph{}' text.
+`C-c C-f C-e`    Insert emphasized '\emph{}' text.
 <br/>
-`C-c C-f C-s`
-    Insert slanted '\textsl{}' text.
+`C-c C-f C-s`    Insert slanted '\textsl{}' text.
 <br/>
-`C-c C-f C-r`
-    Insert roman \textrm{} text.
+`C-c C-f C-r`    Insert roman \textrm{} text.
 <br/>
-`C-c C-f C-f`
-    Insert sans serif '\textsf{}' text.
+`C-c C-f C-f`    Insert sans serif '\textsf{}' text.
 <br/>
-`C-c C-f C-t`
-    Insert typewriter '\texttt{}' text.
+`C-c C-f C-t`    Insert typewriter '\texttt{}' text.
 <br/>
-`C-c C-f C-c`
-    Insert SMALL CAPS '\textsc{}' text.
+`C-c C-f C-c`    Insert SMALL CAPS '\textsc{}' text.
 <br/>
-`C-c C-f C-d`
-    Delete the innermost font specification containing point.
+`C-c C-f C-d`    Delete the innermost font specification containing point.
 
 **Entering Mathmatics** <br/>
 `C-c ~` Toggle LaTeX Math mode.
