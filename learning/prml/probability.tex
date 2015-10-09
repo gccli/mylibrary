@@ -4,6 +4,7 @@
 %\usepackage{xeCJK}
 %\setCJKmainfont{STFangsong}
 \usepackage{geometry}
+\usepackage{amsmath}
 \usepackage{mathtools}
 \usepackage[sc,osf,slantedGreek]{mathpazo}
 \begin{document}
@@ -149,6 +150,146 @@ $p(x_a) = \int p(x_a,x_b) dx_b$
   p(x_a) &= \mathcal{N}(\mathbf{x_a}|\boldsymbol{\mu}_a,\boldsymbol{\Sigma}_{aa})
 \end{align*}
 
+\subsection{Bayes’ theorem for Gaussian variables}
+\label{sec:2.3.3}
+
+给定一个高斯边缘分布$p(x)$和一个高斯条件分布$p(y | x)$, 其中$p(y | x)$的均值是$x$的线性函数,协方差与$x$无关, 我们想找到边缘概率分布$p(y)$和条件概率分布$p(x|y)$
+令边缘概率分布和条件概率分布：
+\begin{align}
+  p(\boldsymbol{x}) &= \mathcal{N}(\boldsymbol{x}|\boldsymbol{\mu},\boldsymbol{\Lambda}^{-1})\\
+  p(\boldsymbol{y}|\boldsymbol{x}) &= \mathcal{N}(\boldsymbol{y}|\boldsymbol{Ax}+\boldsymbol{b},\b
+oldsymbol{L}^{-1})
+\end{align}
+$x$和$y$的维度分别是M和D，则矩阵A的维度是$D \times M$.
+考虑$x$和$y$的联合分布
+$\boldsymbol{z} = \begin{pmatrix} \boldsymbol{x}\\ \boldsymbol{y} \end{pmatrix}$
+
+\begin{align*}\label{eq:lnpz}
+  ln p(z) &= ln p(x) + ln p(y) \\
+  &= -{1 \over 2}(\boldsymbol{x}-\boldsymbol{\mu}^T)\boldsymbol{\Lambda}(\boldsymbol{x}-\boldsymbol{\mu})\\
+  &= -{1 \over 2}(\boldsymbol{y-Ax-b})^T\boldsymbol{L}(\boldsymbol{y-Ax-b}) + const
+\end{align*}
+
+$p(z)$是一个高斯分布，为了找到这个高斯的精度，考虑公式\ref{eq:lnpz}的二阶项
+\begin{align*}
+-{1 \over 2}\boldsymbol{x}^T(\boldsymbol{\Lambda}+\boldsymbol{A^TLA})\boldsymbol{x} - {1 \over 2}\boldsymbol{y}^T\boldsymbol{Ly} + {1 \over 2}\boldsymbol{y}^T\boldsymbol{LAx} + {1 \over 2}\boldsymbol{x}^T\boldsymbol{A}^T\boldsymbol{Ly} = -{1 \over 2} z^T\boldsymbol{R}z\\
+\boldsymbol{R} =
+  \begin{pmatrix}
+    \boldsymbol{\Lambda}+\boldsymbol{A^TLA} & - \boldsymbol{A}^T\boldsymbol{L}\\
+   -\boldsymbol{LA} & \boldsymbol{L}
+  \end{pmatrix}
+\end{align*}
+找到$z$的高斯分布mean:
+\begin{align}
+  \mathbb{E}[z] =  \begin{pmatrix}
+    \boldsymbol{\mu}\\ \boldsymbol{A\mu}+\boldsymbol{b} \end{pmatrix}\\
+  \mathbb{E}[y] = \boldsymbol{A\mu}+\boldsymbol{b}\\
+  cov[y] = \boldsymbol{L}^{-1}+\boldsymbol{A}\Lambda^{-1}\boldsymbol{A}^T
+\end{align}
+给定$p(x), p(y|x)$，$y$的边缘分布及给定$y$的条件下$x$的条件概率为：
+\begin{align}
+  p(y) = \mathcal{N}(y|A\mu+b,L^{-1}+A\Lambda^{-1}A^T)\\
+  p(x|y) = \mathcal{N}(x|\Sigma\{ A^TL(y-b)+\Lambda\mu \}, \Sigma)\\
+  \Sigma = (\Lambda+A^TLA)^{-1}
+\end{align}
+
+\subsection{Maximum likelihood for the Gaussian}
+\begin{align}
+  \mu_{ML} = {1 \over N} \sum_{n=1}^N x_n\\
+  \Sigma_{ML} = {1 \over N} \sum_{n=1}^N (x_n-\mu_{ML})(x_n-\mu_{ML})^T\\
+  \mathbb{E}[\mu_{ML}] = \mu\\
+  \mathbb{E}[\Sigma_{ML}] = {N-1 \over N} \Sigma
+\end{align}
+
+\subsection{Sequential estimation}
+Robbins-Monro 算法
+考虑随机变量$\theta$ and $z$,它们以联合概率分布$p(\theta,z)$控制。已知$\theta$，$z$的条件分布定义为一个确定的函数$f(\theta)$, called \textit{regression functions}
+\begin{align}
+  f(\theta) \equiv \mathbb{E}[z|\theta] = \int zp(z|\theta)dz
+\end{align}
+
+Goal: find root $\theta^*$ s.t. $f(\theta^*) = 0$
+\begin{align}
+  \theta^{(N)} = \theta^{(N-1)} + \alpha_{N-1} z(\theta^{(N-1)})
+\end{align}
+where $z(\theta^{(N)})$ is an observed value of $z$ when $\theta$ takes the value $\theta^{(N)}$. $\{\alpha_N\}$ satisfy the conditions:
+\begin{align*}
+\lim_{N \to \infty} \alpha_N = 0\\
+\sum_{N=1}^\infty \alpha_N = \infty\\
+\sum_{N=1}^\infty \alpha_N^2 < \infty\\
+\end{align*}
+
+\subsection{Bayesian inference for the Gaussian}
+\label{sec:2.3.6}
+The maximum likelihood framework gave point estimates for the parameters $\mu$ and $\Sigma$.
+
+mean is known, infer the variance $\sigma^2$. $ \lambda \equiv 1/\sigma^2 $ likelihood function for $\lambda$ takes the form
+\begin{align}
+  p(\mathbf{X}|\lambda) = \prod \mathcal{N}(x_n|\mu,\lambda^{-1}) \propto \lambda^{N/2} exp \{ -{\lambda \over 2} \sum (x_n-\mu)^2 \}
+\end{align}
+conjugate prior is \textit{gamma} distribution given by:
+\begin{align}
+  Gam(\lambda|a,b) = {1 \over \Gamma(a)} b^a\lambda^{a-1}exp(-b\lambda)\\
+  \mathtt{E}[\lambda] = {a \over b},\,\,var[\lambda] = {a \over b^2}
+\end{align}
+
+...
+
+\subsection{Student’s t-distribution}
+
+\subsection{Periodic variables}
+
+\subsection{Mixtures of Gaussians}
+\label{sec:2.3.8}
+
+\section{The Exponential Family}
+\label{sec:2.4}
+
+\section{Nonparametric Methods}
+\label{sec:2.5}
+consider some nonparametric approaches to density estimation that make few assumptions about the form of the distribution.
+
+\subsection{Kernel density estimators}
+\label{sec:2.5.1}
+假设观测服从$D$维空间的某个末知概率密度$p(x)$,概率质量(probability mass)
+\begin{align}
+  P = \int_R p(x)dx
+\end{align}
+N次观测，位于区域$R$的数据点总数为$K$将服从二项分布
+\begin{align}
+  Bin(K|N,P) = {N \choose K} P^K(1-P)^{N-K}\\
+  K \simeq NP\\
+  P \simeq p(x)V\\
+  p(x) = {K \over NV}
+\end{align}
+ﬁx $K$ determine $V$ \textit{K-nearest-neighbour}
+ﬁx $V$ determine $K$ \textit{kernel} approach
+
+区域$R$取定义为以$x$为中心的小超立方体,为了统计落在区域内的数据点的数量$K$,定义如下函数：
+\begin{align}
+  k(\mathbf{u}) =
+  \begin{cases}
+    1,\, |u_i| <= 1/2, i = 1,...,D\\
+    0,\, otherwise
+  \end{cases}
+\end{align}
+$k(u)$ is an example of a \textit{kernel function}
+
+\begin{align}
+  K = \sum k({x-x_n \over h})\\
+  p(x) = {1 \over N} \sum {1 \over h^D} k({x-x_n \over h})
+\end{align}
+$V = h^D$ the volume of the hypercube of side $h$ in $D$ dimension
+
+Gaussian kernel
+\begin{align}
+  p(x) = {1 \over N} \sum {1 \over (2 \pi h^2)^{1/2}} exp({- {\|x-x_n\|^2 \over 2h^2 }})
+\end{align}
 
 
 \end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
