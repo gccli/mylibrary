@@ -286,6 +286,24 @@ Gaussian kernel
   p(x) = {1 \over N} \sum {1 \over (2 \pi h^2)^{1/2}} exp({- {\|x-x_n\|^2 \over 2h^2 }})
 \end{align}
 
+\subsection{Nearest-neighbour methods}
+\label{sec:2.5.2}
+Consider a ﬁxed value of $K$ and use the data to ﬁnd an appropriate value for $V$.
+Consider a small sphere \emph{centred} on the point $x$ at which we wish to estimate the  density $p(x)$, and we allow the radius of the sphere to grow until it contains precisely K data points. known as \textit{K nearest neighbours}
+
+假设有一数据集，有$N_k$个数据点属于类别$C_k$，数据点总数为$N$，即$\sum_k N_k = N$。如果对一个新数据点$\mathbf{x}$进行分类，画一个以$x$为中心的球体，这个球体精确的包含$K$个数据点，假设球体的体积为$V$,并且包含来自$C_k$的$K_k$个点。
+\begin{align}
+  p(\mathbf{x}|C_k) = {K_k \over N_kV}\\
+  p(\mathbf{x}) = {K \over NV}
+\end{align}
+class priors given by:
+\begin{align}
+  p(C_k) = N_k/N
+\end{align}
+class posterior
+\begin{align}
+  p(C_k|x) = {p(x|C_k)p(C_k) \over p(x)} = K_k/K
+\end{align}
 
 \end{document}
 
