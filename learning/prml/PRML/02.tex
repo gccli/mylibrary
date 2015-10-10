@@ -1,8 +1,8 @@
 \documentclass[a4paper]{article}
 \usepackage{xeCJK}
-\setCJKmainfont[BoldFont={WenQuanYi Zen Hei}, ItalicFont={WenQuanYi Zen Hei}]{WenQuanYi Zen Hei Mono}
-%\usepackage{xeCJK}
+%\setCJKmainfont[BoldFont={WenQuanYi Zen Hei}, ItalicFont={WenQuanYi Zen Hei}]{WenQuanYi Zen Hei Mono}
 %\setCJKmainfont{STFangsong}
+\setCJKmainfont{STKaiti}
 \usepackage{geometry}
 \usepackage{amsmath}
 \usepackage{mathtools}
@@ -304,6 +304,8 @@ class posterior
 \begin{align}
   p(C_k|x) = {p(x|C_k)p(C_k) \over p(x)} = K_k/K
 \end{align}
+
+$K$近邻方法和核密度估计方法都需要存储整个训练数据。如果数据集很大的话,这会造成很大的计算代价。通过建立一个基于树的搜索结构,使得(近似)近邻可以高效地被找到,而不必遍历整个数据集,这种计算代价可以被抵消,代价就是需要进行一次性的额外计算量
 
 \end{document}
 
