@@ -160,12 +160,14 @@ int mp_compile(mp_struct_t *mp)
 int mp_search(mp_struct_t *mp, unsigned char *txt, int n,
               match_callback callback, int *state)
 {
-    int index, next = 0, count = 0;
+    int index, next, count = 0;
     unsigned char *t, *tend;
     mp_pattern_t *m; // pattern match list
 
     t = txt;
     tend = txt + n;
+
+    next = *state;
     for(; t < tend; ++t) {
         next = mp->stable[next].next[*t];
         for (m = mp->stable[next].match_list; m; m = m->next) {

@@ -12,6 +12,10 @@
 
 #define DATE_STR_SIZE 32
 
+#ifdef __cpluplus
+extern "C" {
+#endif
+
 // %Y-%m-%d, the ISO 8601 date format
 static inline char *to_date(time_t t, char* datestr)
 {
@@ -96,5 +100,9 @@ static inline double timing_cost(double start)
 
     return end - start;
 }
+
+#ifdef __cpluplus
+}
+#endif
 
 #endif                                            //UTIL_TIME_H__

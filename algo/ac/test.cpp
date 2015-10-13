@@ -82,8 +82,7 @@ static void get_memusage(long *vmsize, long *rss) {
                 if (isdigit(line[i]))
                     number[k++] = line[i];
             *rss = atoi(number);
-
-            printf("RSS %s [%s] %ld\n", line, number, *rss);
+            //printf("RSS %s [%s] %ld\n", line, number, *rss);
             break;
         }
     }
@@ -148,13 +147,13 @@ static int callback (void *id, void *tree,
 static int EngineSearch(const char *text, int len, int *state)
 {
     double start;
-    int s = 0, c = 0;
+    int c = 0;
     unsigned char *tx = (unsigned char *)text;
 
     start = timing_start();
     switch(eng_method) {
     case 1:
-        c = mp_search((mp_struct_t *)engine, tx, len,  callback1, &s);
+        c = mp_search((mp_struct_t *)engine, tx, len,  callback1, state);
         break;
     case MPSE_ACF:
     case MPSE_ACF_Q:
