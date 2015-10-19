@@ -22,7 +22,7 @@ t = sin(X) + beta*randn(1,n);
 x = linspace(min(X)-1,max(X)+1,n);   % test data
 %
 
-model = regressEbFp(X, t);
+model = regress(X, t);
 
 y = linInfer(x, model);
 figure;

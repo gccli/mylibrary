@@ -1,21 +1,111 @@
 \documentclass[a4paper]{article}
+\usepackage{xeCJK}
+\setCJKmainfont{STKaiti}
 \usepackage{geometry}
 \usepackage{mathtools}
 \usepackage[sc,osf,slantedGreek]{mathpazo}
+
 \begin{document}
+\title{Bayesian Linear Regression}
+\author{}
+\maketitle
+
+Objective:
+在给定$D$维输入变量$\mathbf{x}$ 的情况下,预测一个或者多个连续目标(target)变量$t$的值.
+
+\section{Linear Basis Function Models}
+\begin{align*}
+  y(\mathbf{x},\mathbf{w}) = w_0 + \sum w_j\phi_j(\mathbf{x})\\
+  y(\mathbf{x},\mathbf{w}) = \boldsymbol{\phi}^T(\mathbf{x})
+\end{align*}
+在许多模式识别的实际应用中,我们会对原始的数据变量进行某种固定形式的预处理或者特征抽取。如果原始变量由向量$x$组成,那么特征可以用基函数$\{\phi_j(x)\}$ 来表示
+基函数的选择：
+\begin{align*}
+  \phi_j(x) &= exp(-{(x-\mu_j)^2 \over 2s^2 }) \text{ Gaussian basis function}\\
+  \phi_j(x) &= \sigma(-{(x-\mu_j) \over s }) \text{  sigmoid basis function}\\
+  \sigma(a) &= {1 \over 1+exp(-a)}
+\end{align*}
+
+\subsection{Maximum likelihood and least squares}
+输入集$X = \{x_1,...,x_N\}$, target $\{t_n\}$, likelihood function as bellow:
+\begin{align*}
+  p(\mathbf{x}|\mathbf{X},\mathbf{w},\beta) &= \prod_{n=1}^N \mathcal{N}(t_n|w^T\phi(\mathbf{x}_n), \beta^{-1})\\
+\mathrm{ln} p(\mathbf{x}|\mathbf{w},\beta) &= \sum_{n=1}^N \mathrm{ln} \mathcal{N}(t_n|w^T\phi(\mathbf{x}_n), \beta^{-1}) \\
+& = {N \over 2} \mathrm{ln} \beta - {N \over 2} \mathrm{ln} (2\pi) - \beta E_D(w)\\
+E_D(w) &= {1 \over 2} \sum_{n=1}^N \{t_n -w^T\phi(x_n)\}^2\\
+\end{align*}
+\begin{align*}
+\nabla \mathrm{ln} p(\mathbf{t}|w,\beta) &= \beta \sum_{n=1}^N \{t_n -w^T\phi(x_n)\} \phi(x_n)^T\\
+w_{ML} &= (\Phi^T\Phi)^{-1}\Phi^Tt
+\end{align*}
+which are known as the \textit{normal equations} for the least squares problem. Here $\Phi$ is an $N \times M$ matrix, called \textit{design matrix}. whose elements are given by $\Phi_{nj} = \phi_j(x_n)$
+\begin{align}
+  \Phi =
+  \begin{pmatrix}
+    \phi_0(x_1) & \phi_1(x_1) & \cdots & \phi_{M-1}(x_1)\\
+    \phi_0(x_2) & \phi_1(x_2) & \cdots & \phi_{M-1}(x_2)\\
+    \vdots & \vdots & \ddots & \vdots\\
+    \phi_0(x_N) & \phi_1(x_N) & \cdots & \phi_{M-1}(x_N)
+  \end{pmatrix}
+\end{align}
+
+\subsection{Sequential learning}
+\label{sec:3.1.3}
+
+We can obtain a sequential learning algorithm by applying the technique of \textit{stochastic gradient descent}, also known as \textit{sequential gradient descent}, as follows
+\begin{align*}
+  w^{(\tau+1)} &= w^{(\tau)} + \eta \nabla E\\
+  w^{(\tau+1)} &= w^{(\tau)} + \eta (t_n - w^{(\tau)}^T\phi_n) \phi_n
+\end{align*}
+$\eta$ is a learning rate parameter. $\phi_n = \phi(x_n)$. This is known as least-mean-squares or the LMS algorithm.
+
+\subsection{Regularized least squares}
+\label{sec:3.1.4}
+
+Introduce the idea of adding a regularization term to an error function in order to control over-fitting
+\begin{align}
+  E_D(w) + \lambda E_w(w)
+\end{align}
+
+\section{The Bias-Variance Decomposition}
+\label{sec:3.2}
+
+A popular choice of loss function is squared loss functon, for which the optimal prediction is given by the conditional expectation, given by
+\begin{align}
+  h(x) = \mathbb{E}[t|x] = \int t p(t|x) dt
+\end{align}
+it is worth distinguishing between the \textit{squared loss function} arising from decision theory and the \textit{sum-of-squares error function} that arose in the maximum likelihood estimation of model parameters.
+expected \emph{squared loss} can be written in the form
+\begin{align}
+  \mathbb{E}{L} = \int \{y(x) - h(x)\}^2 p(x) \mathrm{d}x + \iint \{h(x) -t\}^2 p(x,t)\mathrm{d}x \mathrm{d}t
+\end{align}
+The integrand of the first term:
+\begin{align}
+  \{y(x;D) - h(x)\}^2\\
+  \{y(x|D) - \mathbb{E}_D[y(x;D)] + \mathbb{E}_D[y(x;D)] - h(x)\}^2
+\end{align}
+\begin{align*}
+\mathbb{E}_D[ \{y(x;D) - h(x)\}^2 ] &= (bias)^2 + variance + noise \text{ (expected loss)}\\
+(bias)^2 &= \int \{ \mathbb{E}_D[y(x;D)] - h(x) \}^2 p(x) dx\\
+variance &= \int \mathbb{E}_D[\{ y(x;D) - \mathbb{E}_D[y(x;D)] \}^2 ] p(x) dx\\
+noise &= \iint {h(x) - t}^2 p(x,t) \mathrm{d}x \mathrm{d}t
+\end{align*}
+squared \textit{bias}: 所有数据集的平均预测与预期的回归函数之间的差异
+goal is to minimize the expected loss, which we have decomposed into the sum of a (squared) bias, a variance, and a constant noise term.
+As we shall see, there is a trade-off between bias and variance, with very flexible models having low bias and high variance, and relatively rigid models having high bias and low variance.
+The model with the optimal predictive capability is the one that leads to the best balance between bias and variance
 
 \section{Bayesian Linear Regression}
+\label{sec:3.3}
+
 
 \subsection{Parameter distribution}
-
 conjugate prior over the model parameters $ \mathbf{w} $
-
 \[
 p(\mathbf{w}) = \mathcal{N}(\mathbf{w} | \mathbf{m}_0, \mathbf{S}_0)
 \]
 having mean $ \mathbf{m}_0 $ and convariance $ \mathbf{S}_0 $
 posterior distribution
-
 \begin{align}
 p(\mathbf{w}|\mathbf{t}) = \mathcal{N}(\mathbf{w} | \mathbf{m}_N, \mathbf{S}_N)
 \\
@@ -24,8 +114,7 @@ p(\mathbf{w}|\mathbf{t}) = \mathcal{N}(\mathbf{w} | \mathbf{m}_N, \mathbf{S}_N)
 \mathbf{S}_N^{-1} = \mathbf{S}_0^{-1} + \beta \Phi^T \Phi
 \end{align}
 
-Specifically, we consider a zero-mean
-isotropic Gaussian governed by a single precision parameter α so that
+Specifically, we consider a zero-mean isotropic Gaussian governed by a single precision parameter $\alpha$ so that
 
 \begin{align}
 p(\mathbf{w}|\alpha) = \mathcal{N}(\mathbf{w} | \mathbf{0},
@@ -36,6 +125,7 @@ p(\mathbf{w}|\alpha) = \mathcal{N}(\mathbf{w} | \mathbf{0},
 \mathbf{S}_N^{-1} =  \alpha \mathit{\mathbf{I}} + \beta \Phi^T \Phi
 \end{align}
 
+贝叶斯学习的顺序本质，当新数据点被观测到时，当前后验分布变成了先验分布。
 
 \subsection{Predictive distribution}
 
