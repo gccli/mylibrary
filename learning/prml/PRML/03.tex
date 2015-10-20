@@ -10,19 +10,23 @@
 \author{}
 \maketitle
 
+通过将一组输入变量的非线性进行线性组合，得到基函数。这样的模型是参数的线性函数。
+by taking linear combinations of a fixed set of nonlinear functions of the input variables
 Objective:
-在给定$D$维输入变量$\mathbf{x}$ 的情况下,预测一个或者多个连续目标(target)变量$t$的值.
+给输入集$\{x_n\}$及对应的目标$\{t_n\}$ey,预测新的$x$对应目标$t$的值.
 
 \section{Linear Basis Function Models}
+将输入变量的固定非线性函数进行线性组合：（得到参数$w_0,...,w_{M-1}$的线性函数），$w_0$称为偏置参数。
 \begin{align*}
-  y(\mathbf{x},\mathbf{w}) = w_0 + \sum w_j\phi_j(\mathbf{x})\\
+  y(\mathbf{x},\mathbf{w}) = w_0 + \sum_{n=1}^{M-1} w_j\phi_j(\mathbf{x})\\
   y(\mathbf{x},\mathbf{w}) = \boldsymbol{\phi}^T(\mathbf{x})
 \end{align*}
-在许多模式识别的实际应用中,我们会对原始的数据变量进行某种固定形式的预处理或者特征抽取。如果原始变量由向量$x$组成,那么特征可以用基函数$\{\phi_j(x)\}$ 来表示
+通过引入非线性基函数，我们能够让$y(\mathbf{x},\mathbf{w})$成为输入$x$的非线性函数，但上式被称为线性模型因为这个函数是参数$w$的线性函数。
 基函数的选择：
 \begin{align*}
-  \phi_j(x) &= exp(-{(x-\mu_j)^2 \over 2s^2 }) \text{ Gaussian basis function}\\
-  \phi_j(x) &= \sigma(-{(x-\mu_j) \over s }) \text{  sigmoid basis function}\\
+  \phi_j(x) &= x^j &\text{ polynomial basis function}\\
+  \phi_j(x) &= exp(-{(x-\mu_j)^2 \over 2s^2 }) &\text{ Gaussian basis function}\\
+  \phi_j(x) &= \sigma(-{(x-\mu_j) \over s }) &\text{  sigmoid basis function}\\
   \sigma(a) &= {1 \over 1+exp(-a)}
 \end{align*}
 

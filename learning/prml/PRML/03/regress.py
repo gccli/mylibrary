@@ -4,11 +4,10 @@ import matplotlib.pyplot as plt
 # Polynomial regression: extending linear models with basis functions
 # http://scikit-learn.org/stable/modules/linear_model.html
 from sklearn.preprocessing import PolynomialFeatures
-from sklearn import linear_model
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import LinearRegression,BayesianRidge
 from sklearn.pipeline import Pipeline
 
-degree = 6
+degree = 3
 sigma = 0.1
 n = 100
 x = np.linspace(0, 3*np.pi, n)
@@ -16,7 +15,9 @@ y = np.sin(x) + np.random.normal(0, sigma, n)
 X = x.reshape(x.size,1)
 
 model = Pipeline([('poly', PolynomialFeatures(degree=degree)),
-                  ('linear', linear_model.LinearRegression(fit_intercept=False))])
+                  ('linear', BayesianRidge())])
+#model = Pipeline([('poly', PolynomialFeatures(degree=degree)),
+#                  ('linear', LinearRegression(fit_intercept=False))])
 model = model.fit(X, y)
 print model.named_steps['linear'].coef_
 
