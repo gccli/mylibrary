@@ -19,7 +19,7 @@ Objective:
 将输入变量的固定非线性函数进行线性组合：（得到参数$w_0,...,w_{M-1}$的线性函数），$w_0$称为偏置参数。
 \begin{align*}
   y(\mathbf{x},\mathbf{w}) = w_0 + \sum_{n=1}^{M-1} w_j\phi_j(\mathbf{x})\\
-  y(\mathbf{x},\mathbf{w}) = \boldsymbol{\phi}^T(\mathbf{x})
+  y(\mathbf{x},\mathbf{w}) = w^T \boldsymbol{\phi}^T(\mathbf{x})
 \end{align*}
 通过引入非线性基函数，我们能够让$y(\mathbf{x},\mathbf{w})$成为输入$x$的非线性函数，但上式被称为线性模型因为这个函数是参数$w$的线性函数。
 基函数的选择：
@@ -152,15 +152,19 @@ the variance $ \sigma_N^2(\mathbf{x}) $ of the predictive distribution is given 
 
 \subsection{Equivalent kernel}
 predictive mean
-\begin{align}
+\begin{align*}
+y(\mathbf{x},\mathbf{w}) = w^T \boldsymbol{\phi}^T(\mathbf{x})\\
+\mathbf{m}_N = \beta \mathbf{S}_N \boldsymbol{\Phi}^T \mathbf{t}\\
+S_N^{-1} = \alpha \mathbf{I} + \beta\Phi^T\Phi\\
+\Rightarrow\\
 y(\mathbf{x},\mathbf{m}_N) = \mathbf{m}_N^T \Phi(\mathbf{x}) =
-\displaystyle\sum_{n=1}^{N} \beta \Phi(\mathbf{x})^T \mathcal{S}_N \Phi(\mathbf{x_n}) t_n
-\end{align}
+\displaystyle\sum_{n=1}^{N} \beta \Phi(\mathbf{x})^T \mathcal{S}_N \Phi(\mathbf{x_n}) t_n\\
+y(\mathbf{x},\mathbf{m}_N) = \sum k(\mathbf{x},\mathbf{x}_n)t_n\\
+k(\mathbf{x},\mathbf{x}') = \beta\phi(\mathbf{x})^T\mathbf{S}_N\phi(x')
+\end{align*}
 the mean of the predictive distribution at a point
 $ \mathbf{x} $ is given by a linear combination of the training set target
 variables $ t_n $
-
-
 
 \begin{align}
 y(\mathbf{x},\mathbf{m}_N) =
@@ -174,14 +178,8 @@ as this, which make predictions by taking linear combinations of the training se
 target values are known as \textit{linear smoothers}. Intuitively, it seems reasonable
 that we should weight local evidence more strongly than distant evidence.
 
-Instead of introducing a set of basis
-functions, which implicitly determines an equivalent kernel, we can instead define
-a localized kernel directly and use this to make predictions for new input vectors x,
-given the observed training set. This leads to a practical framework for regression
-(and classification) called \textit{Gaussian processes}.
-We have seen that the effective kernel defines the weights by which the training
-set target values are combined in order to make a prediction at a new value of x, and
-it can be shown that these weights sum to one, in other words
+Instead of introducing a set of basis functions, which implicitly determines an equivalent kernel, we can instead define a localized kernel directly and use this to make predictions for new input vectors $x$, given the observed training set. This leads to a practical framework for regression (and classification) called \textit{Gaussian processes}.
+We have seen that the effective kernel defines the weights by which the training set target values are combined in order to make a prediction at a new value of $x$, and it can be shown that these weights sum to one, in other words
 \begin{align}
 \displaystyle\sum_{n=1}^{N} k(\mathbf{x},\mathbf{x}_n) = 1
 \end{align}
