@@ -30,11 +30,11 @@ for iter = 2:maxiter
     w = beta*(V*(V'*Xt));
     w2 = dot(w,w);
     err = sum((t-w'*X).^2);
-    
-    logdetA = 2*sum(log(diag(U)));    
-    llh(iter) = 0.5*(d*log(alpha)+n*log(beta)-alpha*w2-beta*err-logdetA-n*log(2*pi)); 
+
+    logdetA = 2*sum(log(diag(U)));
+    llh(iter) = 0.5*(d*log(alpha)+n*log(beta)-alpha*w2-beta*err-logdetA-n*log(2*pi));
     if llh(iter)-llh(iter-1) < tol*abs(llh(iter-1)); break; end
-    
+
     trS = dot(V(:),V(:));
     gamma = d-alpha*trS;
     alpha = gamma/w2;
