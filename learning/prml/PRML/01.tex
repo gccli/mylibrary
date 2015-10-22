@@ -1,4 +1,6 @@
 \documentclass[a4paper]{article}
+\usepackage{xeCJK}
+\setCJKmainfont{STKaiti}
 \usepackage{geometry}
 \usepackage{mathtools}
 \usepackage[sc,osf,slantedGreek]{mathpazo}
@@ -28,8 +30,6 @@ $ \|\mathbf{w}\|^2 := \mathbf{w}^T\mathbf{w} = w_0^2+w_1^2+...+w_M^2 $
 known in the statistics literature as \textit{shrinkage} methods
 because they reduce the value of the coefficients.
 
-
-
 \section{Probability Theory}
 A key concept in the field of pattern recognition is that of
 uncertainty.It arises both through noise on measurements, as well as through the finite size of data sets.
@@ -50,7 +50,7 @@ to be \textit{independent}. $p(Y |X) = p(Y)$
 
 \subsection{Probability densities}
 If the probability of a real-valued variable $x$ falling in the
-interval $(x, x+\deltax)$ is given by $p(x)$ for $\deltax \to 0$, then
+interval $(x, x + \delta x)$ is given by $p(x)$ for $\delta x \to 0$, then
 $p(x)$ is called the \textit{probability density} over $x$. The probability that $x$ will lie in an interval $(a, b)$ is then given by
 \begin{align}
 p(x \in (a,b)) = \int_a^b p(x) dx\\
@@ -97,94 +97,33 @@ cov[\mathbf{x},\mathbf{y}] &= E_{x,y} [ (\mathbf{x}-E[\mathbf{x}])(\mathbf{y}-E[
 &= E_{x,y}[\mathbf{x}\mathbf{y}^T] - E[\mathbf{x}]E[\mathbf{y}^T]
 \end{align*}
 
-\section{Bayesian probabilities}
-
-
-
-\subsection{Overlapping class distributions}
-Modify the support vector machine: allow some of the training points to be misclassiﬁed.
-data points are allowed to be on the 'wrong side' of the margin
-boundary, but with a penalty that increases with the distance from that boundary
-introduce \textit{slack variables} $\xi_n \geq 0, n=1,\dots,N$ with
-one slack variable for each training data point.
-\[
-\xi_n =
-\begin{cases}
- 0 & \text{ data points on or inside the correct margin boundary}\\
- 1 & y(\mathbf{x}_n) = 0 \text{ (decision boundary)}\\
- |t_n-y(\mathbf{x}_n)| & \text{ others}
-\end{cases}
-\]
-
-exact classification constraints
+\subsection{Bayesian probabilities}
+在观察到数据之前,我们有一些关于参数$w$的假设,这以先验概率$p(w)$的形式给出,观测数据$D = {t_1,...,t_N}$的效果可以通过条件概率$p(D|w)$表达,贝叶斯定理的形式为
 \begin{align}
-t_ny(\mathbf{x}_n) \geq 1 - \xi_n, \text{    $n=1,\dots,N$}
+  p(w|D) = { p(w)p(D|w) \over p(D) }
 \end{align}
-maximize the margin while softly penalizing points that lie on the
-wrong side of the margin boundary. minimize
+通过后验概率$p(w|D)$,在观测到$D$之后估计$w$的不确定性。$p(D|w)$由观测数据集$D$来估计,可以看做参数$w$的函数，叫做\textit{似然函数}（likelihood function）.
+\emph{似然函数表达了在不同参数$w$下，观测数据可能出现的大小}。
+Given this definition of likelihood, we can state Bayes' theorem in words.
 \begin{align}
-C\sum_{n=1}^N \xi_n + \frac{1}{2}\|\mathbf{w}\|^2
+  posterior \propto likelihood \times prior \text{ (viewed as functions of $w$)}
 \end{align}
-$C > 0$ controls the trade-off between the slack variable penalty and the margin.
-We now wish to minimize $C\sum_{n=1}^N \xi_n+\frac{1}{2}\|\mathbf{w}\|^2$, the corresponding Lagrangian is given by
+分母$p(D)$是一个归一化常数,确保了后验概率$p(w|D)$是一个合理的概率密度,积分为1。可以用\emph{先验概率}和\emph{似然函数}来表达贝叶斯定理的分母$p(D)$
 \begin{align}
-L(\mathbf{w},b,\xi,\mathbf{a},\mu) = \frac{1}{2}\|\mathbf{w}\|^2 +
-  C\sum_{n=1}^N \xi_n - \sum_{n=1}^Na_n\{t_ny(\mathbf{x}_n)-1+\xi_n\} -\sum_{n=1}^Na_n\mu_n\xi_n\\
-a_n \geq 0\\
-t_ny(x_n)-1+\xi_n \geq 0\\
-a_n(t_ny(x_n)-1+\xi_n) = 0\\
-\mu_n \geq 0\\
-\xi_n \geq 0\\
-\mu_n \xi_n = 0\\
-\end{align}
-where $a_n, \mu_n$ are Lagrange multipliers, $N=1,...,N$.
-We now optimize out $w, b, \xi_n$
-\begin{align}
-\frac{\partial L}{\partial \mathbf{w}} = 0 &\Rightarrow \mathbf{w} =
-  \sum_{n=1}^N a_nt_n\phi(x_n)\\
-\frac{\partial L}{\partial b} = 0 &\Rightarrow \sum_{n=1}^N a_nt_n = 0\\
-\frac{\partial L}{\partial \xi} = 0 &\Rightarrow a_n = C - \mu_n
-\end{align}
-eliminate $w, b, \xi_n$ from the Lagrangian, we obtain
-\begin{align}
-\widehat{L}(\mathbf{a}) = \sum_{n=1}^N a_n - \frac{1}{2}
-  \sum_{n=1}^N\sum_{m=1}^N a_na_mt_nt_mk(x_n,x_m)\\
-0 \leq a_n \leq C\\
-\sum_{n=1}^Na_nt_n = 0
-\end{align}
-support vectosr $\{\mathbf{x}_n\}$ given by
-\begin{align}
-t_ny(\mathbf{x}_n) = 1-\xi_n
-\end{align}
-\[
-\begin{cases}
- a_n<C & \Rightarrow \mu_n>0 \Rightarrow \xi_n=0 \text{ points lie on the margin}\\
- a_n=C & \text{ lie inside the margin}
- \begin{cases}
-   \xi_n \leq 1 &\text{ correctly classified}\\
-   \xi_n > 1 & \text{ misclassiﬁed}
- \end{cases}
-\end{cases}
-\]
-
-\begin{align}
-t_n(\sum_{m \in S} a_mt_mk(x_n,x_m)+b) = 1\\
-b = \frac{1}{N_{\mathcal{M}}} \sum_{n \in \mathcal{M}} (t_n - \sum_{m \in S} a_mt_mk(x_n,x_m))
-\end{align}
-$\mathcal{M}$: the set of indices of data points having $0 < a_n < C$.
-
-\subparagraph{v-SVM}
-An alternative, equivalent formulation of the support vector machine, known as the ν-SVM, this involves maximizing
-\begin{align}
-\widehat{L}(\mathbf{a}) = - \frac{1}{2} \sum_{n=1}^N\sum_{m=1}^N a_na_mt_nt_mk(x_n,x_m)\\
-0 \leq a_n \leq 1/N\\
-\sum_{n=1}^N a_nt_n = 0\\
-\sum_{n=1}^N a_n \geq \nu
+  p(D) = \int p(w) p(D|w) \mathrm{d} w
 \end{align}
 
-\[
-\rho
-\epsilon
-\varepsilon
-\]
+\textbf{似然函数$p(D|w)$的贝叶斯观点和频率学家观点}
+\begin{itemize}
+\item frequentist：$w$被认为是一个固定的参数,它的值由某种形式的“估计”来确定,这个估计的误差通过考察可能的数据集$D$的概率分布来得到
+\item Bayesian: 只有一个数据集$D$(即实际观测到的数据集),参数的不确定性通过$w$的概率分布来表达
+\end{itemize}
+
+\textbf{最大似然(maximum likelihood)}
+频率学家广泛使用的一个估计是最大似然(maximum likelihood)估计,其中$w$的值是使似然函数$p(D|w)$达到最大值的$w$值
+似然函数的负对数被叫做\emph{误差函数}(error function)
+
+\subsection{Gaussian Distribution}
+
+
 \end{document}
