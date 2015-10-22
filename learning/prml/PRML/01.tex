@@ -125,5 +125,23 @@ Given this definition of likelihood, we can state Bayes' theorem in words.
 
 \subsection{Gaussian Distribution}
 
+\subsection{Bayesian curve fitting}
+\label{sec:1.2.6}
+
+predictive distribution
+\begin{align}
+  p(t|x, \mathbf{X}, \mathbf{t}) = \int p(t|x,\mathbf{w}) p(\mathbf{w}|\mathbf{X},\mathbf{t}) \mathrm{d} \mathbf{w}
+\end{align}
+$p(t|x, w, \beta) = \mathcal{N}(t|y(x,w), \beta^{-1}) \text{ (1.60)}$
+$p(\mathbf{w}|\mathbf{X},\mathbf{t})$ is posterior distribution over $w$, can be found by normalizing $p(\mathbf{t}|\mathbf{X},\mathbf{w},\beta)p(\mathbf{w}|\alpha)$
+
+\emph{Predictive distribution is given by a Gaussian}
+\begin{align*}
+  p(t|x, \mathbf{X}, \mathbf{t}) &= \mathcal{N}(t|m(x), s^2(x))\\
+  m(x) &= \beta \phi(x)^T \mathbf{S} \sum_{n=1}^N \phi(x_n)t_n\\
+  s^2(x) &= \beta^{-1} + \phi(x) S \phi(x)^T\\
+  S^{-1} &= \alpha I + \beta  \sum_{n=1}^N \phi(x_n)\phi(x_n)
+\end{align*}
+
 
 \end{document}

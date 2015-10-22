@@ -12,7 +12,7 @@ from sklearn import svm
 # Sample data
 degree = 7
 sigma = 0.1
-n = 100
+n = 50
 m = 5    # number of pi
 i = 4    # number of extra test data
 x = np.append(np.linspace(0, 2*np.pi, 2*n/m), np.linspace(3*np.pi, 5*np.pi, 2*n/m))
@@ -73,11 +73,14 @@ def mean(a):
 def predict(x):
     return np.random.normal(mean(x), var(x))
 
-myfunc = np.vectorize(predict)
 xpred = np.linspace(0, m*np.pi, n).reshape(n,1)
 
 S = fit(x,y)
-plt.plot(xpred, myfunc(xpred), 'c-', label="Bayesian")
+vfunc = np.vectorize(predict)
+plt.plot(xpred, vfunc(xpred), 'c-', label="Bayesian")
+vfunc = np.vectorize(mean)
+plt.plot(xpred, vfunc(xpred), 'k-', label="Bayesian mean")
+
 # End
 
 plt.legend(loc='upper right')
