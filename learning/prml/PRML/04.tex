@@ -7,9 +7,7 @@
 \author{}
 \maketitle
 
-The goal in classification is to take an input vector \textbf{x}
- and to assign it to one of \textbf{K} discrete classes $
- \mathcal{C}_k $ where $ \mathnormal{k} = 1,...,\mathnormal{K} $.
+The goal in classification is to take an input vector \textbf{x} and to assign it to one of \textbf{K} discrete classes $\mathcal{C}_k $ where $ \mathnormal{k} = 1,...,\mathnormal{K} $.
  The input space is thereby divided into \textit{decision regions} whose
  boundaries are called \textit{decision boundaries} or
  \textit{decision surfaces}.
@@ -34,8 +32,10 @@ y(\mathbf{x}) = f(\mathbf{w^T}\mathbf{x} + w_o)
 
 
 \section{Discriminant Functions}
-A discriminant is a function that takes an input vector $\mathbf{x}$
- and assigns it to one of $\mathbf{K}$ classes, denoted $C_k$.
+A discriminant is a function that takes an input vector $\mathbf{x}$ and assigns it to one of $\mathbf{K}$ classes, denoted $C_k$.
+\emph{线性判别函数}（linear discriminant function）,即那些决策面是超平面的判别函数
+An input vector $x$ is assigned to class $C_1$ if $y(x) \geq 0$ and to class $C_2$ otherwise. The corresponding decision boundary is therefore defined by the relation $y(x) = 0$, which corresponds to a $(D − 1)$-dimensional hyperplane within the D-dimensional input space.
+向量$w$与决策面内的任何向量都正交.
 
 \subsection{Two classes}
 

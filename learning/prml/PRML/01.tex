@@ -143,5 +143,28 @@ $p(\mathbf{w}|\mathbf{X},\mathbf{t})$ is posterior distribution over $w$, can be
   S^{-1} &= \alpha I + \beta  \sum_{n=1}^N \phi(x_n)\phi(x_n)
 \end{align*}
 
+\section{Decision Theory}
+\label{sec:1.5}
+
+\subsection{Inference and decision}
+\label{sec:1.5.4}
+
+把分类问题划分成了两个阶段:推断(inference)阶段和决策(decision)阶段.
+简单地学习一个函数,将输入$x$直接映射为决策,这样的函数被称为\emph{判别函数}(discriminant function).
+\textbf{三种不同的方法来解决决策问题}
+1. 生成式模型（generative model）
+对于每个类别$C_k$ ,独立地确定类条件密度$p(x| C_k)$,然后,推断先验类概率 $p(C_k)$.之后,使用贝叶斯定理求出后验类概率$p(C_k|x)$
+\begin{align}
+  p(C_k|\mathbf{x}) = {p(\mathbf{x}|C_k)p(C_k) \over p(\mathbf{x})}
+\end{align}
+\textit{亦可以直接对联合概率分布$p(x, C_k)$建模,然后归一化,得到后验概率}
+得到后验概率之后,我们可以使用决策论来确定每个新的输入$x$的类别
+显式地或者隐式地对输入以及输出进行建模的方法被称为\emph{生成式模型}（generative model）
+
+2. 判别式模型（discriminative models）
+首先解决确定后验类密度$p(C_k|x)$这一推断问题,接下来使用决策论来对新的输入$x$进行分类。这种直接对后验概率建模的方法被称为\emph{判别式模型}（discriminative models）
+
+3. 找到一个函数$f(x)$,被称为\emph{判别函数},这个函数把每个输入$x$直接映射为类别标签.
+
 
 \end{document}
