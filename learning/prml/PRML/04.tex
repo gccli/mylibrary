@@ -114,6 +114,8 @@ $S_B$ is the between-class covariance matrix,
 \mathbf{S_W} = \displaystyle\sum_{n \in C_k}(x_n - m_1) (x_n - m_1)^T +
 \displaystyle\sum_{n \in C_k}(x_n - m_2) (x_n - m_2)^T
 \end{align}
+上式称为Fisher\emph{线性判别函数}(Fisher linear discriminant),虽然严格来说它并不是一个判别函数,而是对于数据向一维投影的方向的一个具体选择
+
 \begin{align}
 \mathbf{w} \propto  \mathbf{S_W} (\mathbf{m_2} - \mathbf{m_1})
 \end{align}
@@ -148,9 +150,69 @@ w^{(\tau+1)} = w^{(\tau)} - \eta \nabla E_p(w) = w^{(\tau)} + \eta
   \phi_n t_n
 \end{align}
 
+\section{Probabilistic Generative Models}
+\label{sec:4.2}
+这种方法通过对类条件概率密度$p(x|C_k)$和类先验概率分布$p(C_k)$建模,然后使用这两个概率密度通过贝叶斯定理计算后验概率密度$p(C_k |x)$
+考虑二分类
+\begin{align*}
+\label{e:4.2}
+\mathbf{x}
+p(C_1|\mathbf{x}) &= {p(\mathbf{x}|C_1)p(C_1) \ over p(\mathbf{x}|C_1)p(C_1) + p(\mathbf{x}|C_2)p(C_2)} \\
+&= {1 \over 1+exp(-a)} = \sigma(a)\\
+a &= \ln {p(\mathbf{x}|C_1)p(C_1) \ over  p(\mathbf{x}|C_2)p(C_2)}\\
+\sigma(a) &= {1 \over \sigma{-a}} \textit{ (logistic sigmoid function)}\\
+\sigma(-a) &= 1 - \sigma(a)
+\end{align*}
+logistic sigmoid 的反函数为
+\begin{align}
+  a = \ln {\sigma \over 1-\sigma}
+\end{align}
+称之为\emph{logit function},表示两类概率的对数比值
+
+\subsection{Continuous inputs}
+\label{sec:4.2.1}
+$C_k$的类条件概率为
+\begin{align*}
+p(\mathbf{x}|C_k) = \mathcal{N}(x|\boldsymbol{\mu}_k, \Sigma)
+\end{align*}
+根据公式\ref{e:4.2}：
+\begin{align*}
+p(C_1|\mathbf{x}) &= \sigma(\mathbf{w}^T \mathbf{x} + w_0)\\
+\mathbf{w} &= \Sigma^{-1} (\mu_1, \mu_2)\\
+w_0 &= -{1 \over 2} \mu_1^T \Sigma^{-1}\mu_1 + {1 \over 2} \mu_2^T \Sigma^{-1}\mu_2 + \ln {p(C_1)/p(C_2)}
+\end{align*}
+
+\subsection{Maximum likelihood solution}
+\label{sec:4.2.2}
+一旦具体化了$p(x|C_k)$的参数化的函数形式,就能够使用最大似然法确定参数的值,以及先验类概率$p(C_k)$
+考虑二分类情形：每个类别都有一个高斯类条件概率密度,且协方差矩阵相同.数据集${x_n, t_n}$,
+把先验概率记作 $p(C_1) = \pi$, $p(C_2) = 1 − \pi$
+likelihood function as follow:
+\begin{align*}
+  p(\mathbf{t},\mathbf{X}|\pi,\boldsymbol{\mu}_1,\boldsymbol{\mu}_2,\boldsymbol{\Sigma}) = \prod_{n=1}^N [\pi \mathcal{N}(x_n|\mu_1,\Sigma)]^{t_n} [(1-\pi) \mathcal{N}(x_n|\mu_2,\Sigma)]^{1-t_n}
+\end{align*}
+
+\begin{align}
+  \pi = {N_1 \over N_1 + N_2}
+\end{align}
+
+\subsection{Discrete features}
+\label{sec:4.2.3}
+考察二元特征值$x_i \in \{0,1\}$
+
+\subsection{Exponential family}
+\label{sec:4.2.4}
+
+
 \section{Probabilistic Discriminative Models}
 
+\subsection{Fixed basis functions}
+\label{sec:4.3.1}
+先使用一个基函数向量 $\phi(x)$对输入变量进行一个\emph{固定的}非线性变换.
+对于许多实际问题,类条件概率密度$p(x|C_k)$之间有着相当大的重叠,表明至少对于某些$x$的值,后验概率$p(C_k |x)$不等于$0$或$1$
+
 \subsection{Logistic regression}
+仍然考虑二分类，类别$C_1$的后验概率可以写成作用在特征向量$\phi$的线性函数上的 \emph{logistic sigmoid}函数的形式
 \begin{align}
 p(C|\phi) = y(\phi) = \sigma(\mathbf{w}^T \phi)
 \end{align}
