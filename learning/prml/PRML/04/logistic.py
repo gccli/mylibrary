@@ -27,9 +27,9 @@ iris = datasets.load_iris()
 X = iris.data[:, :2]  # we only take the first two features.
 Y = iris.target
 
-h = .02  # step size in the mesh
+h = .01  # step size in the mesh
 
-logreg = linear_model.LogisticRegression(C=1e5)
+logreg = linear_model.LogisticRegression(C=1e5,solver='newton-cg')
 
 # we create an instance of Neighbours Classifier and fit the data.
 logreg.fit(X, Y)
@@ -40,14 +40,15 @@ x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
 y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 Z = logreg.predict(np.c_[xx.ravel(), yy.ravel()])
+print logreg.predict(X)
 
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
-plt.figure(1, figsize=(4, 3))
+plt.figure(1, figsize=(8, 6))
 plt.pcolormesh(xx, yy, Z, cmap=plt.cm.Paired)
 
 # Plot also the training points
-plt.scatter(X[:, 0], X[:, 1], c=Y, edgecolors='k', cmap=plt.cm.Paired)
+plt.scatter(X[:, 0], X[:, 1], c=Y, edgecolors='k')
 plt.xlabel('Sepal length')
 plt.ylabel('Sepal width')
 

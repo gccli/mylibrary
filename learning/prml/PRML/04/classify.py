@@ -1,87 +1,99 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import time
 import numpy as np
-import numpy.matlib as matrix
+import numpy.linalg as linalg
+import numpy.matlib
 import matplotlib.pyplot as plt
+from sklearn import linear_model, datasets
 
-# Polynomial regression: extending linear models with basis functions
-# http://scikit-learn.org/stable/modules/linear_model.html
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.linear_model import LinearRegression,BayesianRidge
-from sklearn.pipeline import Pipeline
-from sklearn import svm
 
-# Sample data
-degree = 7
-sigma = 0.1
-n = 50
-m = 5    # number of pi
-i = 4    # number of extra test data
-x = np.append(np.linspace(0, 2*np.pi, 2*n/m), np.linspace(3*np.pi, 5*np.pi, 2*n/m))
-y = np.sin(x) + np.random.normal(0, sigma, 4*n/m)
-x = x.reshape(x.size,1)
+iris = datasets.load_iris()
+X = iris.data[:, :2]  # only take the first two features.
+Y = iris.target
+t = Y[Y < 2]   # only for two-class classification
+X = X[:t.size]
+mu= [X[:,0].mean(), X[:,1].mean()]
+sigma = [X[:,0].std(), X[:,1].std()]
+N,M = X.shape
 
-model = Pipeline([('poly', PolynomialFeatures(degree=degree)),
-                  ('linear', BayesianRidge(fit_intercept=True))])
-#model = Pipeline([('poly', PolynomialFeatures(degree=degree)),
-#                  ('linear', LinearRegression(fit_intercept=False))])
-model = model.fit(x, y)
-print 'Coefficient\n', model.named_steps['linear'].coef_
+iterations = 10
 
-svr = svm.NuSVR(kernel='rbf')
-svr.fit(x, y)
+# (4.59)
+def sigmoid(x):
+    #x = float(x)
+    ret = 1/(1 + np.exp(x))
+    return ret
 
-# Plot outputs
-plt.scatter(x, y, label="training points")
-plt.plot(np.arange(0, (m+2)*np.pi, 0.1), np.sin(np.arange(0, (m+2)*np.pi, 0.1)),
-         'r', label="sin(x)", linewidth=0.5)
-xpred = np.linspace(0, m*np.pi, n)
-xpred = xpred.reshape(xpred.size, 1)
-plt.plot(xpred, model.predict(xpred), label="polynomial^%d" % degree)
-xpred = np.linspace(0, (m+1)*np.pi, n)
-xpred = xpred.reshape(xpred.size, 1)
-plt.plot(xpred, svr.predict(xpred), 'g-', label="svr")
-
-# Bayesian method
-alpha=5e-3; beta=11.1
+# Gaussian basis function
 def phi(x):
-    D = degree + 1
-    Phi = np.matlib.zeros((D, 1))
-    for i in range(D):
-        Phi[i] = pow(x,i)
-    return Phi
+    ret = np.matlib.ones((M+1, 1))
+    for i in range(1, M+1):
+        ret[i] = np.exp( -np.power((x[i-1]-mu[i-1]),2)/(2*np.power(sigma[i-1], 2)) )
 
-def fit(x, y):
-    S = np.matlib.zeros((8,8))
-    for i in range(x.size):
-        phix = phi(float(x[i]))
-        S += alpha * np.identity(8) + beta * phix * phix.T
-    S = np.linalg.inv(S) # (1.72)
-    return S
+    return ret
 
-def var(x):
-    phix = phi(x)
-    sigma = 1/beta + phix.T * S * phix # (1.71)
-    return float(sigma)
+# (4.87) Posterior probability of class C1
+def predict(x, w):
+    ret = w.T * phi(x)
+    return sigmoid(float(ret))
 
-def mean(a):
-    t = np.matlib.zeros((8,1))
-    for i in range(x.size):
-        t += y[i] * phi(float(x[i]))
-    r = beta * phi(a).T * S * t # (1.70)
+logreg = linear_model.LogisticRegression(C=1e5,solver='newton-cg')
+logreg.fit(X, t)
 
-    return float(r)
 
-def predict(x):
-    return np.random.normal(mean(x), var(x))
+plt.figure(1)
+plt.subplot(311)
+plt.scatter(X[:, 0], X[:, 1], c=t, edgecolors='k')
 
-xpred = np.linspace(0, m*np.pi, n).reshape(n,1)
+plt.subplot(312)
+xx = np.linspace(-5, 5, 100)
+plt.plot(xx, sigmoid(xx), 'k-')
+plt.title('sigmoid(x)')
 
-S = fit(x,y)
-vfunc = np.vectorize(predict)
-plt.plot(xpred, vfunc(xpred), 'c-', label="Bayesian")
-vfunc = np.vectorize(mean)
-plt.plot(xpred, vfunc(xpred), 'k-', label="Bayesian mean")
+plt.show(block=False)
 
-# End
+Phi = np.matlib.zeros((N, M+1))
+for i in range(N):
+    Phi[i] = phi(X[i]).T
+print 'Φ:\n',Phi,'\n--------\n',Phi.shape
 
-plt.legend(loc='upper right')
+w0 = np.matlib.zeros((M+1, 1))
+w0[0] = 0.02; w0[1] = 0.02
+for j in range(iterations):
+    R = np.matlib.eye(N, dtype=float)
+    y = np.matlib.zeros((N, 1))
+    z = np.matlib.zeros((N, 1))
+    for i in range(N):
+        y_n = predict(X[i], w0)
+        R[i,i] = y_n * (1 - y_n)
+        y[i] = y_n
+    try:
+        #print '----\n',R
+        Rinv = linalg.inv(R)
+        #print '----\n',Rinv,'\n========'
+        z = Phi * w0 - Rinv * (y - np.mat(t).T)  # (4.100)
+        H = Phi.T * R * Phi                      # (4.97)
+        w = linalg.inv(H) * Phi.T * R * z        # (4.99)
+        w0 = w
+        print 'w^new:', w.A1
+        plt.subplot(313)
+        plt.scatter(X[:, 0], X[:, 1], c=t, edgecolors='k')
+
+        phi_0 = np.linspace(X[:, 0].min()-2, X[:, 0].max()+1, 100)
+        phi_1 = -float(w[0])/float(w[2]) - float(w[1]) * phi_0 /float(w[2])
+        plt.plot(phi_0, phi_1, 'k-')
+        plt.draw()
+    except:
+        print "%d'th iterations end of loop" % j
+        for i in range(N):
+            print 'p(C1|φ,',X[i],'):', predict(X[i], w), ' tn:', t[i], 'logreg', logreg.predict(X[i])
+        break
+
+
+
+#logreg.fit(X, Y)
+#print logreg.predict(X)
+
 plt.show()

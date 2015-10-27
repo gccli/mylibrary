@@ -59,7 +59,7 @@ which are known as the \textit{normal equations} for the least squares problem. 
 We can obtain a sequential learning algorithm by applying the technique of \textit{stochastic gradient descent}, also known as \textit{sequential gradient descent}, as follows
 \begin{align*}
   w^{(\tau+1)} &= w^{(\tau)} + \eta \nabla E\\
-  w^{(\tau+1)} &= w^{(\tau)} + \eta (t_n - w^{(\tau)}^T\phi_n) \phi_n
+  w^{(\tau+1)} &= w^{(\tau)} + \eta (t_n - w^{(\tau)^T}\phi_n) \phi_n
 \end{align*}
 $\eta$ is a learning rate parameter. $\phi_n = \phi(x_n)$. This is known as least-mean-squares or the LMS algorithm.
 
@@ -195,3 +195,8 @@ k(\mathbf{x},\mathbf{z}) = \psi(\mathbf{x})^T\psi(\mathbf{x})
 
 
 \end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
