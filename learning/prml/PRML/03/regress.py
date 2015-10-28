@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.matlib
 import matplotlib.pyplot as plt
 
 # Polynomial regression: extending linear models with basis functions

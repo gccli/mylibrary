@@ -1,4 +1,6 @@
 \documentclass[a4paper]{article}
+\usepackage{xeCJK}
+\setCJKmainfont{STKaiti}
 \usepackage{geometry}
 \usepackage{mathtools}
 \usepackage[sc,osf,slantedGreek]{mathpazo}
@@ -283,13 +285,10 @@ The Newton-Raphson update formula for the logistic regression model then becomes
   \mathbf{\Phi}^T (\mathbf{y} - \mathbf{t}) \}
 \\
 &=(\mathbf{\Phi}^T \mathbf{R} \mathbf{\Phi})^{-1} \mathbf{\Phi}^T \mathbf{z}
-\end{align}
+\end{align*}
 
 \begin{align}
 \mathbf{z} = \mathbf{\Phi} \mathbf{w} - \mathbf{R}^{-1}(\mathbf{y} - \mathbf{t})
 \end{align}
-
-
-\delta
 
 \end{document}
