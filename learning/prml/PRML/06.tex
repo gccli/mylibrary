@@ -1,4 +1,6 @@
 \documentclass[a4paper]{article}
+\usepackage{xeCJK}
+\setCJKmainfont{STKaiti}
 \usepackage{geometry}
 \usepackage{mathtools}
 \usepackage[sc,osf,slantedGreek]{mathpazo}
@@ -7,38 +9,28 @@
 \author{}
 \maketitle
 
-Many linear parametric models can be re-cast into an equivalent
- 'dual representation' in which the predictions are also based on linear
- combinations of a kernel function evaluated at the training data points.
-As we shall see, for models which are based on a fixed nonlinear feature
- space mapping $\phi(x)$, the kernel function is given
+Many linear parametric models can be re-cast into an equivalent \emph{dual representation} in which the predictions are also based on linear combinations of a \emph{kernel} function evaluated at the training data points. As we shall see, for models which are based on a fixed nonlinear feature space mapping $\phi(x)$, the kernel function is given
 \begin{align}
 \mathbf{k}(\mathbf{x}, \mathbf{x'}) = \phi(x)^T\phi(x')
 \end{align}
 
+用特征空间的内积的方式表示核的概念使得我们能够对许多著名的算法进行有趣的扩展。扩展的方法是使用\emph{核技巧}(kernel trick),也被称为\emph{核替换}(kernel substitution)
+
 \section{Dual Representations}
-Many linear models for regression and classification can be reformulated in terms of
- a dual representation in which the kernel function arises naturally.
-Here we consider a linear regression model whose parameters are determined by
-minimizing a regularized sum-of-squares error function given by
+正则化平方误差函数
 \begin{align}
 J(w) = \frac{1}{2} \sum_{n=1}^{N} \{ w^T\phi(x_n) -t_n \}^2 + \frac{\lambda}{2}w^tw
 \end{align}
-If we set the gradient of $J(w)$ with respect to $\mathbf{w}$ equal to zero,
- we see that the solution for $\mathbf{w}$ takes the form of a linear
- combination of the vectors $\phi(x_n)$
+Set the gradient of $J(w)$ with respect to $\mathbf{w}$ equal to zero, we see that the solution for $\mathbf{w}$ takes the form of a linear combination of the vectors $\phi(x_n)$
 \begin{align}
 w = -\frac{1}{\lambda} \sum_{n=1}^{N} \{ w^T\phi(x_n) -t_n \}\phi(x_n)
   = \sum_{n=1}^Na_n\phi(x_n) = \mathbf{\Phi}(x_n)\mathbf{a_n}
 \end{align}
-The nth row of $\mathbf{\Phi}$ is given by $\phi(x_n)^T$, $\mathbf{a}
-= (a_1,...,a_n)$
+$\mathbf{a} = (a_1,...,a_n)^T$
 \begin{align}
 a_n = -\frac{1}{\lambda} \sum_{n=1}^{N} \{ w^T\phi(x_n) -t_n \}
 \end{align}
-Instead of working with the parameter vector $\mathbf{w}$, we can now
- reformulate the leastsquares algorithm in terms of the parameter vector
- $\mathbf{a}$, giving rise to a \textit{dual representation}.
+Instead of working with the parameter vector $\mathbf{w}$, we can now reformulate the leastsquares algorithm in terms of the parameter vector $\mathbf{a}$, giving rise to a \textit{dual representation}.
 
 \begin{align}
 J(\mathbf{a}) = \frac{1}{2} \mathbf{a}^T \mathbf{\Phi} \mathbf{\Phi}^T
@@ -47,8 +39,7 @@ J(\mathbf{a}) = \frac{1}{2} \mathbf{a}^T \mathbf{\Phi} \mathbf{\Phi}^T
   \mathbf{t} + \frac{\lambda}{2} \mathbf{a}^T \mathbf{\Phi}
   \mathbf{\Phi}^T \mathbf{a}
 \end{align}
-where $t = (t_1,...,t_N)^T$, We now define the \textit{Gram matrix}
-$\mathbf{K} = \mathbf{\Phi} \mathbf{\Phi}^T$, which is an N × N symmetric matrix with elements
+where $t = (t_1,...,t_N)^T$, We now define the \textit{Gram matrix} $\mathbf{K} = \mathbf{\Phi} \mathbf{\Phi}^T$, which is an $N \times N$ symmetric matrix with elements
 \begin{align}
 \mathit{K}_{nm} = \phi(x_n)^T\phi(x_m) = k(x_n, x_m)
 \end{align}
@@ -60,10 +51,12 @@ J(\mathbf{a}) = \frac{1}{2} \mathbf{a}^T \mathbf{K} \mathbf{K} \mathbf{a} - \mat
 \\
 \mathbf{a} = (\mathbf{K} + \lambda \mathit{\mathbf{I}_N})^{-1} \mathbf{t}
 \\
-y(x) = w^T\phi(x) = a^T\Phi\phi(x) = \mathbf{k}(x)^T (\mathbf{K} +
-  \lambda \mathit{\mathbf{I}_N})^{-1} \mathbf{t}
+y(\mathbf{x}) = w^T\phi(\mathbf{x}) = a^T\Phi\phi(\mathbf{x}) = \mathbf{k}(\mathbf{x})^T (\mathbf{K} + \lambda \mathit{\mathbf{I}_N})^{-1} \mathbf{t}
 \end{align}
 where we have defined the vector $\mathbf{k}(x)$ with elements $k_n(x) = k(x_n, x)$.
+\emph{注意,在$x$处的预测由训练集数据的目标值的线性组合给出}
+
+work directly in terms of kernels and avoid the explicit introduction of the feature vector $\phi(x)$, which allows us implicitly to use feature spaces of high, even infinite, dimensionality.
 
 \section{Constructing Kernels}
 Another commonly used kernel takes the form
@@ -77,55 +70,56 @@ Given a generative model $p(x)$ we can define a kernel by
 \begin{align}
 k(x, x') = p(x)p(x')\\
 k(x, x') = \sum_{i}p(x|i)p(x'|i)p(i)\\
-k(x, x') = \int p(x|z)p(x'|z)p(z)dz
 \end{align}
-Now suppose that our data consists of ordered sequences of length $L$
-so that an observation is given by $\mathbf{X} = {x_1,...,x_L}$. A
-popular generative model for sequences is the hidden Markov
-model. which expresses the distribution $p(\mathbf{X})$ as a
-marginalization over a corresponding sequence of hidden states
-$\mathbf{Z} = {z_1,...,z_L}$. We can use this approach to define a
-kernel function measuring the similarity of two sequences $X$ and $X'$
-by extending the mixture representation
+
+\subparagraph{概率生成式模型}
+\begin{align*}
+  k(x, x') = p(x)p(x')\\
+  k(x, x') = \sum_i p(x|i)p(x'|i)p(i)\\
+  k(x, x') = \int p(x|z)p(x'|z)p(z)dz\\
+\end{align*}
+
+\emph{Hidden Markov Model}
+Observation is given by $\mathbf{X} = {x_1,...,x_L}$, which expresses the distribution $p(\mathbf{X})$ as a marginalization over a corresponding sequence of \emph{hidden states} $\mathbf{Z} = {z_1,...,z_L}$. We can use this approach to define a kernel function measuring the similarity of two sequences $X$ and $X'$ by extending the mixture representation
 \begin{align}
 k(X, X') = \sum_{Z}p(X|Z)p(X'|Z)p(Z)
 \end{align}
 
-An alternative technique for using generative models to define kernel
-functions is known as the \textit{Fisher kernel}. Consider a
-parametric generative model $p(x|\theta)$ where $\theta$ denotes the
-vector of parameters. The goal is to find a kernel that measures the
-similarity of two input vectors $x$ and $x'$ induced by the generative model.
-\textit{Fisher score}
-\begin{align}
-g(\theta, \mathbf{x}) = \nabla_\theta ln p(\mathbf{x}|\theta)\\
-k(x, x') = g(\theta, \mathbf{x})^T F^{-1} g(\theta, \mathbf{x'})\\
-F = \mathbb{E}_x [g(\theta, \mathbf{x}) g(\theta, \mathbf{x})^T]
-\textit{ (Fisher information matrix)}
-\end{align}
-the expectation is with respect to $x$ under the distribution $p(x|\theta)$.
-In practice, it is often infeasible to evaluate the Fisher information
-matrix. One approach is simply to replace the expectation in the
-definition of the Fisher information with the sample average
+{Fisher kernel}
+Consider a parametric generative model $p(x|\theta)$ where $\theta$ denotes the vector of parameters. The goal is to find a kernel that measures the similarity of two input vectors $x$ and $x'$ induced by the generative model. consider the gradient with respect to $\theta$, which defines a vector in a feature space, particular, consider \textit{Fisher score}
+\begin{align*}
+  g(\theta, \mathbf{x}) &= \nabla_\theta ln p(\mathbf{x}|\theta) \\
+  k(x, x') &= g(\theta, \mathbf{x})^T F^{-1} g(\theta, \mathbf{x'}) \textit{ (Fisher kernel)}\\
+  F &= \mathbb{E}_x [g(\theta, \mathbf{x}) g(\theta, \mathbf{x})^T] \textit{ (Fisher information matrix)}
+\end{align*}
+the expectation is with respect to $x$ under the distribution $p(x|\theta)$. In practice, it is often infeasible to evaluate the Fisher information matrix. One approach is simply to replace the expectation in the definition of the Fisher information with the sample average
 
-A final example of a kernel function is the sigmoidal kernel given by
+\emph{sigmoidal kernel}
 \begin{align}
 k(x,x') = tanh(a \mathbf{x}^T \mathbf{x}' + b)
 \end{align}
 
 \section{Radial Basis Function Networks}
-One choice that has been widely used is that of radial basis
-functions, which have the property that each basis function depends
-only on the radial distance (typically Euclidean) from a centre
-$\mu_j$ , so that $\phi_j(x) = h(\| − \mu_j\|) $.
-
+Widely used basis function: \emph{radial basisfunctions}, which have the property that each basis function depends only on the radial distance (typically Euclidean) from a centre $\mu_j$ , so that $\phi_j(x) = h(\| − \mu_j\|) $.
+输入变量$\mathbf{x}$上的噪声由一个服从分布$\nu(\xi)$的变量$\xi$描述，平方误差和（sum-of-squares error）函数：
+\begin{align*}
+  E &= {1 \over 2} \sum_{n=1}^N \int \{y(\mathbf{x}_n + \xi) - t_n\} \nu(\xi) \mathrm{d} \xi\\
+  y(\mathbf{x}) &= \sum_{n=1}^N t_nh(\mathbf{x}-\mathbf{x}_n)\\
+  h(\mathbf{x},\mathbf{x}_n) &= { \nu(\mathbf{x} - \mathbf{x}_n) \over sum_{n=1}^N \nu(\mathbf{x} - \mathbf{x}_n)} \textit{ (basic function)}
+\end{align*}
+basis function centred on every data point. This is known as the \emph{Nadaraya-Watson model}
 \subsection{Nadaraya-Watson model}
+use a Parzen density estimator to model the joint distribution $p(x, t)$
+\begin{align}
+  p(x, t) = {1 \over N} \sum_{n=1}^N f(\mathbf{x}-\mathbf{x}_n, t-t_n) \textit{ (component density function)}
+\end{align}
+ $f(x, t)$ centred on each data point.
 
 \section{Gaussian Processes}
+在高斯过程的观点中,我们抛弃参数模型,直接定义函数上的先验概率分布。
 
 \subsection{Linear regression revisited}
-Consider a model deﬁned in terms of a linear combination of $M$ ﬁxed
-basis functions given by the elements of the vector $\phi(x)$ so that
+Consider a model deﬁned in terms of a linear combination of $M$ ﬁxed basis functions given by the elements of the vector $\phi(x)$ so that
 \begin{align}
 y(x) = \mathbf{w}^T\phi(\mathbf{x})\\
 p(\mathbf{w}) = \mathcal{N} (\mathbf{w}|0, \alpha^{-1}\mathit{I})
@@ -142,8 +136,9 @@ where $K$ is the Gram matrix with elements
 \mathit{K}_{nm} = k(x_n, x_m) = \frac{1}{\alpha} \phi(x_n)^T\phi(x_m)
 \end{align}
 
-We can also deﬁne the kernel function directly, rather than indirectly
-through a choice of basis function. Figure 6.4 shows samples of functions drawn from Gaussian processes for two different choices of kernel function.
+通常来说,\textbf{高斯过程被定义为函数$y(x)$上的一个概率分布,使得在任意点集$x_1,...,x_N$处计算的$y(x)$的值的集合联合起来服从高斯分布}.
+在输入向量$x$是二维的情况下,这也可以被称为高斯随机场(Gaussian random field).
+可以用一种合理的方式为 $y(x_1),...,y(x_N)$赋予一个联合的概率分布,来确定一个随机过程(stochastic process) $y(x)$
 
 \subsection{Gaussian processes for regression}
 Apply Gaussian process models to regression, we need to take account of the noise on the observed target values, which are given by
@@ -162,18 +157,12 @@ $p(\mathbf{y})$ is given by a Gaussian whose mean is zero and whose covariance i
 \begin{align}
 p(\mathbf{y}) = \mathcal{N}(\mathbf{y}|0, \mathbf{K})
 \end{align}
-The kernel function that determines $K$ is typically chosen to express the property
-that, for points $x_n$ and $x_m$ that are similar, the corresponding
-values $y(x_n)$ and $y(x_m)$ will be more strongly correlated than for
-dissimilar points. Here the notion of similarity will depend on the application.
-the marginal distribution of $\mathbf{t}$ is given by
+The kernel function that determines $K$ is typically chosen to express the property that, for points $x_n$ and $x_m$ that are similar, the corresponding values $y(x_n)$ and $y(x_m)$ will be more strongly correlated than for dissimilar points. Here the notion of similarity will depend on the application. the marginal distribution of $\mathbf{t}$ is given by
 \begin{align}
 p(\mathbf{t}) = \int p(t|y)p(y)dy = \mathcal{N}(\mathbf{t}|0, \mathbf{C})\\
 C(x_n, x_m) = k(x_n, x_m) + \beta^{-1} \delta_{nm}
 \end{align}
-One widely used kernel function for Gaussian process regression is
-given by the exponential of a quadratic form, with the addition of
-constant and linear terms to give
+One widely used kernel function for Gaussian process regression is given by the exponential of a quadratic form, with the addition of constant and linear terms to give
 \begin{align}
 k(x_n, x_m) = \theta_0 exp\{ -\frac{\theta_1}{2}\|x_n-x_m\|^2\} +
   \theta_2 + \theta_3x_n^Tx_m
@@ -318,8 +307,6 @@ p(\mathbf{t}_N |\theta) = \int p(\mathbf{t}_N|\mathbf{a}_N) p(\mathbf{a}_N |\the
   \frac{1}{2}\mathsf{ln}|\mathbf{W}_N+C_N^{-1}| + \frac{N}{2} \mathsf{ln}(2\pi)
 \end{align}
 where $\Psi(\mathbf{a}_N^*) = \mathsf{ln} p(\mathbf{a}_N^* |\theta) + p(\mathbf{t}_N |\mathbf{a}_N^*)$
-
-
 
 
 \end{document}

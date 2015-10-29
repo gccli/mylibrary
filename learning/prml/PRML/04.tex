@@ -1,4 +1,6 @@
 \documentclass[a4paper]{article}
+\usepackage{xeCJK}
+\setCJKmainfont{STKaiti}
 \usepackage{geometry}
 \usepackage{mathtools}
 \usepackage[sc,osf,slantedGreek]{mathpazo}
@@ -283,13 +285,19 @@ The Newton-Raphson update formula for the logistic regression model then becomes
   \mathbf{\Phi}^T (\mathbf{y} - \mathbf{t}) \}
 \\
 &=(\mathbf{\Phi}^T \mathbf{R} \mathbf{\Phi})^{-1} \mathbf{\Phi}^T \mathbf{z}
-\end{align}
+\end{align*}
 
 \begin{align}
 \mathbf{z} = \mathbf{\Phi} \mathbf{w} - \mathbf{R}^{-1}(\mathbf{y} - \mathbf{t})
 \end{align}
 
+\section{The Laplace Approximation}
+\label{sec:4.4}
+目标是找到定义在一组连续变量上的概率密度的高斯近似.
+\begin{align}
+  p(z) = {1 \over Z} f(z)
+\end{align}
+$Z = \int f(z)dz$ normalizaion coefficient, goal is to find Gaussian approximation $q(z)$ centred on the mode of the distribution $p(z)$.
 
-\delta
 
 \end{document}
