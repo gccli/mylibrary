@@ -5,22 +5,55 @@
 \usepackage{amsmath}
 \usepackage{mathpazo}
 \usepackage{mathtools}
+\usepackage{pst-text}
+\usepackage{eepic}
+\usepackage{pstricks}
+\usepackage{tikz}
+
 \begin{document}
+\title{Trigonometric functions}
+\author{}
+\maketitle
 \bibliographystyle{plain}
 
-\section{Introduction}
+\section{Definitions}\cite{wiki:tri_func}
 
-Using typesetting systems like \LaTeX{} \cite{wiki:latex}.
-\section{Serials}
+\setlength{\unitlength}{1cm}
+\begin{picture}(0,4)
+% Right-angled triangle
+\put(1,0){\line(0,1){4}}
+\put(1,0){\line(1,0){3}}
+\put(1,4){\line(3,-4){3}}
 
+\put(0.7,3.8){$A$}
+\put(0.7,0.0){$C$}
+\put(4.1,0.0){$B$}
+\put(2.5,-0.2){$a$}
+\put(0.7,2){$b$}
+\put(2.8,2){$h \textit{ (hypotenuse)}$}
 
-See \cite{wiki:tri_func}
+% Unit-circle
+\put(7,2){\circle{4}}
+\put(5,2){\line(1,0){4}}
+\put(7,2){\line(1,1){2}}
+\put(9,0){\line(0,1){4.5}}
+\put(8.414,2){\line(0,1){1.414}}
+
+\put(8.20,3.6){$\sec \theta$}
+\put(8.20,2.5){$\sin \theta$}
+\put(9.30,2.5){$\tan \theta$}
+
+\end{picture}
+
+This document using typesetting systems \LaTeX{} \cite{wiki:latex}.
+\subsection{Series definitions}
+
 
 \begin{align*}
-  sin(x) &= x - {x^3 \frac 3!} + {x^5 \frac 5!} - {x^7 \frac 7!} + ... =
-           \sum_{n=0}^\infty {(-1)^n \frac (2n+1)!} x^{2n+1}\\
-  cos(x) &= 1 - {x^2 \frac 2!} + {x^4 \frac 4!} - {x^6 \frac 6!} + ... =
-           \sum_{n=0}^\infty {(-1)^n \frac (2n)!} x^{2n}\\
+  sin(x) &= x - {x^3 \over 3!} + {x^5 \over 5!} - {x^7 \over 7!} + ... =
+           \sum_{n=0}^\infty {(-1)^n \over (2n+1)!} x^{2n+1}\\
+  cos(x) &= 1 - {x^2 \over 2!} + {x^4 \over 4!} - {x^6 \over 6!} + ... =
+           \sum_{n=0}^\infty {(-1)^n \over (2n)!} x^{2n}\\
 \end{align*}
 
 \section{Identites}
