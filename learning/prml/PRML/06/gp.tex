@@ -1,0 +1,145 @@
+\documentclass[a4paper]{article}
+\usepackage{xeCJK}
+\setCJKmainfont{STKaiti}
+\usepackage{amsmath}
+\usepackage{geometry}
+\usepackage{mathtools}
+\usepackage{mathrsfs}
+\usepackage[sc,osf,slantedGreek]{mathpazo}
+\begin{document}
+\title{Gaussian Process classification(GPC)}
+\author{}
+\maketitle
+
+Supervised learning can be divided into regression and classification problems. outputs for classification are \emph{discrete class labels}, regression is concerned with the \emph{prediction of continuous quantities}.
+
+\section{Regression}
+One can think of a Gaussian process as defining a distribution over functions, and inference taking place directly in the space of functions, the \emph{function-space view}
+
+\subsection{Weight-space View}
+Bayesian treatment of the linear model. Enhancement to this class of models by projecting the inputs into a high-dimensional \emph{feature space} and applying the linear model.
+
+\textbf{Training set} $\mathcal{D}$ of $n$ observations, $\mathcal{D} = \{(\mathbf{x}_i, y_i)|i = 1,...,n\}$, $\mathbf{x}$ denotes an input vector (covariates) of dimension $D$ and $y$ denotes a scalar output or target (dependent variable). the column vector inputs for all $n$ cases are aggregated in the $D \times n$ \emph{design matrix} $X$, $\mathcal{D} = \{X,\mathbf{y}\}$
+
+\subsubsection{The Standard Linear Model}
+
+\begin{align}
+  f(\mathbf{x}) = \mathbf{x}^T\mathbf{w},\;y = f(\mathbf{x}) + \epsilon
+\end{align}
+
+\begin{align}
+  \epsilon \sim \mathcal{N}(0,\sigma_n^2)
+\end{align}
+
+\emph{likelihood}, the probability density of the observations given the parameters, which is factored over cases in the training set
+\begin{align}
+  p(\mathbf{y}|X,\mathbf{w}) = \prod p(y_i|\mathbf{x}_i,\mathbf{w}) = \mathcal{N}(X^T\mathbf{w},\sigma_n^2 I)
+\end{align}
+
+\subsubsection{Projections of Inputs into Feature Space}
+
+first project the inputs into some high dimensional space using a set of \emph{basis functions} and then apply the linear model in this space instead of directly on the inputs themselves. e.g. $\phi(x) = (1, x, x^2, x^3,...)^T$, \emph{the model is still linear in the parameters}. Now the model is
+\begin{align}
+  f(x) = \phi(x)^T \mathbf{w}
+\end{align}
+\emph{disign matrix} $\Phi(X)$ is substituted for $X$.
+
+predictive distribution
+
+
+\subsection{Function-space View}
+
+\textbf{Definition} A Gaussian process is \emph{a collection of random variables, any finite number of which have a joint Gaussian distribution}.
+A Gaussian process $f(\mathbf{x})$ is completely specified by its mean function $m(\mathbf{x})$ and covariance function $k(\mathbf{x},\mathbf{x}')$.
+\begin{align*}
+  m(\mathbf{x}) &= \mathbb{E}[f(\mathbf{x})]\\
+  k(\mathbf{x},\mathbf{x}') &= \mathbb{E}[f(\mathbf{x}-m(\mathbf{x}))\: f(\mathbf{x}'-m(\mathbf{x}'))]
+\end{align*}
+Gaussian process as
+\begin{align}
+  f(\mathbf{x}) \sim \mathscr{G} \mathcal{P}(m(\mathbf{x}), k(\mathbf{x}, \mathbf{x}'))
+\end{align}
+
+A simple example of a Gaussian process can be obtained from our Bayesian linear regression model$f(x) = \phi(x)^T\mathbf{w}$ with prior $\mathbf{w} \sim \mathcal{N}(0,\Sigma_p)$
+
+\begin{align*}
+  \mathbb{E}[f(x)] &= \phi(\mathbf{x})^T \mathbb{E}[w] = 0\\
+  \mathbb{E}[f(x)f'(x)] &= \phi(x)^T \Sigma_p \phi(x')
+\end{align*}
+
+\emph{squared exponential}
+\begin{align*}
+  cov[f(x_p), f(x_q)] = k(x_p,x_q) = exp(-\frac{1}{2} |x_p - x_q|^2)
+\end{align*}
+
+\begin{align}
+  f_* \sim \mathcal{N} (0, K(X_*, X_*))
+\end{align}
+
+\paragraph{Prediction with Noise-free Observations}
+Consider the simple special case where the observations are noise free $\{(\mathbf{x_i},f_i)| i=1,...,n\}$
+The joint distribution of the training outputs $f$ and the test outputs $f_*$ is
+\begin{align}
+  \begin{bmatrix}
+    f\\
+    f_*
+  \end{bmatrix}
+  \sim \mathcal{N}(0,
+  \begin{bmatrix}
+    K(X,X) & K(X,X_*)\\
+    K(X_*,X) & K(X_*,X_*)\\
+  \end{bmatrix})
+\end{align}
+$K(X, X_*)$ denotes the $n \times n_*$ matrix of the covariances evaluated at all pairs of training and test points.
+
+\begin{align}
+\label{eq:joint_posterior}
+  f_*|X_*,X,f \sim \mathcal{N} (K(X_*,X) K(X_,X)^{-1} \mathbf{f},\: K(X_*,X_*) - K(X_*,X) K(X,X)^{-1} K(X,X_*) )
+\end{align}
+
+Function values $f_*$ can be sampled from the joint posterior distribution by evaluating the mean and covariance matrix from \cite{eq:joint_posterior} \refeq{eq:joint_posterior}
+
+\paragraph{Prediction using Noisy Observations}
+
+
+
+\section{Classification}
+
+For classification models, where the targets are discrete class labels, the Gaussian likelihood is inappropriate.
+In the classification case the likelihood is non-Gaussian but the posterior process can be \emph{approximated} by a GP.
+
+\subsection{Classification Problems}
+Discussing joint probability $p(y, x)$, where $y$ denotes the class label. Using Bayes’ theorem
+this joint probability can be decomposed either as $p(y)p(x|y)$ or as $p(x)p(y|x)$. This gives rise to two different approaches:
+\emph{generative}: model the class-conditional probability $p(x|y)$ and poior $p(y)$ for each class, and then compute the posterior
+\begin{align}
+  p(y|\mathbf{x}) = { p(y)p(\mathbf{x}|y) \over p(\mathbf{x})} = {p(y)p(\mathbf{x}|y) \over \sum_C p(C_k)p(\mathbf{x}|C_k) }
+\end{align}
+\emph{discriminative}: model $p(y|x)$ directly.
+For \textbf{generative} case, model the class-conditional densities with Gaussians: $p(x|C_k) = N(\mu_k, \Sigma_k)$
+For \textbf{discriminative} case, model the class-conditional densities with \emph{linear logistic regression}: $p(x|C_k) = \lambda(\mathbf{x}^T\mathbf{w})$, $\lambda(x) = {1 \over 1+exp(-x)} $
+
+\subsubsection{Decision Theory for Classification}
+Predictive probabilities $p(y_* |x_*)$ for a test input $x_*$,
+
+\subsection{Gaussian Process Classification}
+For binary classification the basic idea behind Gaussian process prediction:
+place a GP prior over the \emph{latent function} $f(x)$ and then squash this through the logistic function to obtain a prior on $\pi(x) \gets  p(y=+1|x) = \sigma(f(x))$.
+
+Inference is naturally divided into two steps:
+1. computing the distribution of the latent variable corresponding to a test case
+\begin{align}
+  p(f_*|X,y,x_*) = \int p(f_*|X,x_*,f)p(f|X,y) df
+\end{align}
+$p(f|X,y) = p(y|f)p(f|X)/p(y|X)$
+
+2. using this distribution over the latent $f_*$ to produce a probabilistic prediction
+\begin{align}
+  \overline{\pi}_* \gets p(y_*=+1|X,y,x_*) = \int \sigma(f_*)p(f_*|X,y,x_*) df_*
+\end{align}
+
+
+\subsection{The Laplace Approximation for the Binary GP Classifier}
+
+
+\end{document}
