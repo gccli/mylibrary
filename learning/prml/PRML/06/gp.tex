@@ -101,7 +101,23 @@ Function values $f_*$ can be sampled from the joint posterior distribution by ev
 
 \paragraph{Prediction using Noisy Observations}
 
-
+\begin{align}
+  \begin{bmatrix}
+    f\\
+    f_*
+  \end{bmatrix}
+  \sim \mathcal{N}(0,
+  \begin{bmatrix}
+    K(X,X) + \sigma_n^2 I & K(X,X_*)\\
+    K(X_*,X) & K(X_*,X_*)\\
+  \end{bmatrix})
+\end{align}
+predictive
+\begin{align*}
+  \mathbf{f}_*|X,y,X_* &\sim \mathcal{N}(\overline{f}_*,\overline{cov{f_*}})\\
+  \overline{\mathbf{f}}_* &= K(X_*,X)[K(X,X)+\sigma_n^2I]^{-1} \mathbf{y}\\
+  cov(\mathbf{f}_*) &= K(X_*,X_*) - K(X_*,X)[K(X_*,X)+\sigma_n^2I]^{-1} K(X,X_*)
+\end{align*}
 
 \section{Classification}
 
@@ -109,8 +125,7 @@ For classification models, where the targets are discrete class labels, the Gaus
 In the classification case the likelihood is non-Gaussian but the posterior process can be \emph{approximated} by a GP.
 
 \subsection{Classification Problems}
-Discussing joint probability $p(y, x)$, where $y$ denotes the class label. Using Bayes’ theorem
-this joint probability can be decomposed either as $p(y)p(x|y)$ or as $p(x)p(y|x)$. This gives rise to two different approaches:
+natural starting point for discussing joint probability $p(y, x)$, where $y$ denotes the class label. Using Bayes’ theorem this joint probability can be decomposed either as $p(y)p(x|y)$ or as $p(x)p(y|x)$. This gives rise to two different approaches:
 \emph{generative}: model the class-conditional probability $p(x|y)$ and poior $p(y)$ for each class, and then compute the posterior
 \begin{align}
   p(y|\mathbf{x}) = { p(y)p(\mathbf{x}|y) \over p(\mathbf{x})} = {p(y)p(\mathbf{x}|y) \over \sum_C p(C_k)p(\mathbf{x}|C_k) }
@@ -140,6 +155,17 @@ $p(f|X,y) = p(y|f)p(f|X)/p(y|X)$
 
 
 \subsection{The Laplace Approximation for the Binary GP Classifier}
+Laplace’s method utilizes a Gaussian approximation $q(f|X, y)$ to the posterior $p(f|X, y)$ in the integral
+\begin{align}
+  q(\mathbf{f}|X,\mathbf{y}) = \mathcal{N}(\mathbf{f}|\mathbf{\hat{f}}, A^{-1}) \propto exp(-\frac{1}{2} (\mathbf{f} - \mathbf{\hat{f}})^T A (\mathbf{f} - \mathbf{\hat{f}})
+\end{align}
+where $\hat{f} = argmax_f p(f|X, y)$, and $A = -\nabla\nabla log p(f|X, y)|_{f=\hat{f}}$ is the Hessian of the negative log posterior at that point.
 
+\subsubsection{Posterior}
+\label{sec:3.4.1}
+
+\begin{align}
+  \Phi(\mathbf{f}) \gets \log p(y|f) + \log p(f|X) = log
+\end{align}
 
 \end{document}

@@ -9,7 +9,7 @@ from matplotlib import cm
 np.set_printoptions(2)
 
 # input train data
-X = np.linspace(0, 5, 30)
+X = np.linspace(0, 3*np.pi, 60)
 beta = .05
 
 def se(x,y): return np.exp(-1/2 * np.power(abs(x-y), 2))
@@ -33,10 +33,12 @@ def gp_train(x):
             break
         except np.linalg.linalg.LinAlgError as e:
             print 'TRAIN: Compute Cholesky', e
-            time.sleep(0.1)
+            time.sleep(0.5)
 
     mu = np.random.randn(x.size)
     y = np.dot(L, mu)
+    # y = np.sin(x) + np.random.normal(0,beta) * np.ones((1, x.size))
+    print y.shape
     return (K,y)
 
 # targets
@@ -69,13 +71,14 @@ plt.scatter(X, t, edgecolors='k')
 plt.plot(X, t, 'g.-.', label=u'$Gaussian\,Process\,\,f(x) $')
 
 # for test
-x = np.linspace(0,6,20)
+end = 3.5 * np.pi
+x = np.linspace(0, end, 40)
 y = gp_predict(x)
 plt.plot(x, y, 'y', label=u'$posterior\,of\,\mathcal{GP}$')
-x = np.linspace(0,6,20)
+x = np.linspace(0, end, 40)
 y = gp_predict(x)
 plt.plot(x, y, 'k', label=u'$posterior\,of\,\mathcal{GP}$')
-x = np.linspace(0,6,20)
+x = np.linspace(0, end, 40)
 y = gp_predict(x)
 plt.plot(x, y, 'r', label=u'$posterior\,of\,\mathcal{GP}$')
 
