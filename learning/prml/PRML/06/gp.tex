@@ -114,8 +114,8 @@ Function values $f_*$ can be sampled from the joint posterior distribution by ev
 \end{align}
 predictive
 \begin{align*}
-  \mathbf{f}_*|X,y,X_* &\sim \mathcal{N}(\overline{f}_*,\overline{cov{f_*}})\\
-  \overline{\mathbf{f}}_* &= K(X_*,X)[K(X,X)+\sigma_n^2I]^{-1} \mathbf{y}\\
+  \mathbf{f}_*|X,y,X_* &\sim \mathcal{N}(\hat{f}_*,\hat{cov{f_*}})\\
+  \hat{\mathbf{f}}_* &= K(X_*,X)[K(X,X)+\sigma_n^2I]^{-1} \mathbf{y}\\
   cov(\mathbf{f}_*) &= K(X_*,X_*) - K(X_*,X)[K(X_*,X)+\sigma_n^2I]^{-1} K(X,X_*)
 \end{align*}
 
@@ -144,19 +144,21 @@ place a GP prior over the \emph{latent function} $f(x)$ and then squash this thr
 Inference is naturally divided into two steps:
 1. computing the distribution of the latent variable corresponding to a test case
 \begin{align}
+\label{eq:latent_dist}
   p(f_*|X,y,x_*) = \int p(f_*|X,x_*,f)p(f|X,y) df
 \end{align}
-$p(f|X,y) = p(y|f)p(f|X)/p(y|X)$
+$p(f|X,y) = p(y|f)p(f|X)/p(y|X)$ is the posterior over the latent variables.
 
 2. using this distribution over the latent $f_*$ to produce a probabilistic prediction
 \begin{align}
-  \overline{\pi}_* \gets p(y_*=+1|X,y,x_*) = \int \sigma(f_*)p(f_*|X,y,x_*) df_*
+  \hat{\pi}_* \gets p(y_*=+1|X,y,x_*) = \int \sigma(f_*)p(f_*|X,y,x_*) df_*
 \end{align}
 
 
 \subsection{The Laplace Approximation for the Binary GP Classifier}
-Laplace’s method utilizes a Gaussian approximation $q(f|X, y)$ to the posterior $p(f|X, y)$ in the integral
+Laplace’s method utilizes a Gaussian approximation $q(f|X, y)$ to the posterior $p(f|X, y)$ in the integral \ref{eq:latent_dist}
 \begin{align}
+\label{eq:gaussian_appro}
   q(\mathbf{f}|X,\mathbf{y}) = \mathcal{N}(\mathbf{f}|\mathbf{\hat{f}}, A^{-1}) \propto exp(-\frac{1}{2} (\mathbf{f} - \mathbf{\hat{f}})^T A (\mathbf{f} - \mathbf{\hat{f}})
 \end{align}
 where $\hat{f} = argmax_f p(f|X, y)$, and $A = -\nabla\nabla log p(f|X, y)|_{f=\hat{f}}$ is the Hessian of the negative log posterior at that point.
@@ -164,8 +166,57 @@ where $\hat{f} = argmax_f p(f|X, y)$, and $A = -\nabla\nabla log p(f|X, y)|_{f=\
 \subsubsection{Posterior}
 \label{sec:3.4.1}
 
+By Bayes's rule the posterior over the latent variables is given by $p(\mathbf{f}|X,\mathbf{y}) = p(\mathbf{y}|\mathbf{f})p(\mathbf{f}|X)/p(\mathbf{y}/X)$, $p(\mathbf{y}|X)$ is independent of $\mathbf{f}$, $\log(\mathbf{y}|X) = -\frac{1}{2} \mathbf{f}^T K^{-1} \mathbf{f} - \frac{1}{2} \log |K| - \frac{n}{2} \log 2\pi$
+\begin{align*}
+\label{eq:logposterior}
+  \Psi(\mathbf{f}) &\gets \log p(\mathbf{y}|\mathbf{f}) + \log p(\mathbf{f}|X) \\
+  &= \log p(\mathbf{y}|\mathbf{f}) -\frac{1}{2} \mathbf{f}^T K^{-1} \mathbf{f} - \frac{1}{2} \log |K| - \frac{n}{2} \log 2\pi
+\end{align*}
+Differentiating \ref{eq:logposterior},
+\begin{align*}
+  \nabla \Psi(\mathbf{f}) &= \nabla \log p(\mathbf{y}|\mathbf{f}) - K^{-1}\mathbf{f}\\
+  \nabla\nabla \Psi(\mathbf{f}) &= \nabla\nabla \log p(\mathbf{y}|\mathbf{f}) - K^{-1} = -W - K^{-1}
+\end{align*}
+where $W = \nabla\nabla \log p(\mathbf{y}|\mathbf{f})$ is diagonal
+
 \begin{align}
-  \Phi(\mathbf{f}) \gets \log p(y|f) + \log p(f|X) = log
+  \nabla \Psi(\mathbf{f}) = 0 \implies \hat{\mathbf{f}} = K(\nabla p(\mathbf{y}|\hat{\mathbf{f}}))
 \end{align}
+Using Newton's method
+\begin{align*}
+  \mathbf{f}^{new} &= \mathbf{f} -   \nabla\nabla\Psi^{-1} \nabla\Psi\\
+  &= (K^{-1}+W)^{-1} (W \mathbf{f} + \nabla \log p(\mathbf{y}|\mathbf{f}))
+\end{align*}
+break $\mathbf{f}$ into two subvectors $f_1$ not well-explained and $f_2$ well-explained.
+\begin{align*}
+  f_1^{new} &= K_{11}(I_{11}+W_{11}K_{11})^{-1} (W_{11}f_1 + \nabla \log p(y_1|f_1))\\
+  f_2^{new} &= K_{21}K_{11}^{-1} f_1^{new}
+\end{align*}
+where $K_{21}$ denotes the $n_2 \times n_1$ block of $K$ containing
+$f_1^{new}$ is computed by ignoring entirely the well-explained points($\nabla \log p(y|f) \simeq 0$), and $f_2^{new}$ is predicted from $f_1^{new}$ using the usual GP prediction methods
+
+Having found the maximum posterior $\mathbf{\hat{f}}$
+\begin{align*}
+  q(\mathbf{f}|X,\mathbf{y}) = \mathcal{N}(\mathbf{\hat{f}}, (K^{-1}+W)^{-1})
+\end{align*}
+
+\subsubsection{Predictions}
+The posterior mean for $f_*$
+\begin{align*}
+  \mathbb{E}_q[f_*|X,y,x_*] &= k(x_*)^TK^{-1}\hat{\mathbf{f}} = k(x_*)^T \nabla \log p(\mathbf{y}|\mathbf{\hat{f}}\\
+  \mathbb{E}_q[f_*|X,y,x_*] &= k(x_*)^TK^{-1} \mathbb{E}[\mathbf{f}|X,\mathbf{y}]
+\end{align*}
+The variance of $f_*|W,y$
+\begin{align*}
+  \mathbb{V}_q[f_*|X,y,x_*] &= \mathbb{E}_{p(f_*)} [(f_* - \mathbb{E}[f_*|X,x_*,f])]\\
+  &+ \mathbb{E}_q [(\mathbb{E}[f_*|X,x_*,f]-\mathbb{E}[f_*|X,y,x_*])^2]\\
+  \mathbb{V}_q[f_*|X,y,x_*] &= k(x_*,x_*)-k_*^T(K-W^{-1})^{-1}k_*
+\end{align*}
+
+\begin{align*}
+  \bar{\pi}_* = \mathbb{E}_q[\pi_*|X,y,x_*] = \int \sigma(f_*)q(f_*|X,y,x_*) df_*
+\end{align*}
+the sigmoid of the expectation of $\mathbf{f}: \hat{\pi}_* = \sigma(\mathbb{E}_q[f_*|\mathbf{y}])$, \textit{MAP prediction}
+note that the decision boundary using the MAP value $E_q[f_*|X,y,x_*]$ corresponds to $\sigma(E_q) = 1/2$ or $\sigma(E_q) = 0$.
 
 \end{document}
