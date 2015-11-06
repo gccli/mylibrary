@@ -46,6 +46,14 @@
 \end{picture}
 
 This document using typesetting systems \LaTeX{} \cite{wiki:latex}.
+
+\begin{align*}
+  \tan \theta = \frac{\sin \theta}{\cos \theta},\,
+  \cot \theta = \frac{1}{\tan \theta} = \frac{\cos \theta}{\sin \theta}\\
+  \sec \theta = \frac{1}{\sin \theta},\,
+  \csc \theta = \frac{1}{\cos \theta}
+\end{align*}
+
 \subsection{Series definitions}
 
 
@@ -58,6 +66,31 @@ This document using typesetting systems \LaTeX{} \cite{wiki:latex}.
 
 \section{Identites}
 
+\subparagraph{Pythagorean identity}
+\begin{align*}
+  \sin^2 \theta +   \cos^2 \theta = 1\\
+  \implies 1 + \tan^2 \theta = \sec^2 \theta\\
+  \implies 1 + \cot^2 \theta = \csc^2 \theta
+\end{align*}
+
+\subparagraph{Symmetry, shifts, and periodicity}
+\textbf{Symmetry}
+
+
+\subparagraph{Angle sum and difference identities}
+
+\begin{align*}
+  \sin(\alpha \pm \beta) = \sin\alpha \cos\beta \pm \cos\alpha \sin\beta\\
+  \cos(\alpha \pm \beta) = \cos\alpha \cos\beta \mp \sin\alpha \sin\beta
+\end{align*}
+
+\subparagraph{Product-to-sum and sum-to-product identities}
+\begin{align*}
+   2 \cos \alpha \cos \beta = \cos(\alpha - \beta) + \cos(\alpha + \beta)\\
+   2 \sin \alpha \sin \beta = \cos(\alpha - \beta) - \cos(\alpha + \beta)\\
+   2 \sin \alpha \cos \beta = \sin(\alpha + \beta) + \sin(\alpha + \beta)\\
+   2 \cos \alpha \sin \beta = \sin(\alpha + \beta) - \sin(\alpha + \beta)
+\end{align*}
 
 \bibliography{math}
 \end{document}
