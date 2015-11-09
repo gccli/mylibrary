@@ -86,3 +86,8 @@ int main(int argc, char *argv[])
     return 0;
 
 }
+
+
+// decrypt file
+// openssl bf -d -in iname -K hexstring -iv hexstring
+// openssl enc -bf-ecb -nopad -d -in test1.enc -K hexstring -iv hexstring
