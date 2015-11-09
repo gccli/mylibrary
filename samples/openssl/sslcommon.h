@@ -10,7 +10,6 @@
 #include <openssl/x509v3.h>
 
 #include <pthread.h>
-#include "globaldefines.h"
 
 
 #define SSL_FAILURE 0
@@ -38,5 +37,3 @@ void SSLinit();
 void SSLseeding(int size, const char *filename);
 int  SSLpasswd_cb(char *buf, int size, int rwflag, void *password);
 SSL_CTX *SSLnew_ctx(const char *certificate);
-
-

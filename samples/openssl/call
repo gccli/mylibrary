@@ -14,6 +14,6 @@ CLIENT="./client -h $HOST -p $PORT "
 
 while true
 do
-  $CLIENT < server.c 
-  usleep 100000
+  $CLIENT < server.c
+  sleep 1
 done

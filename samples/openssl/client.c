@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'i':
 			flags = 1;
-			break;			
+			break;
 		case 0:
 			break;
 		default:
@@ -166,4 +166,3 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
-
