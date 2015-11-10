@@ -121,8 +121,6 @@ int main(int argc, char *argv[])
     crypt_encrypt_file(&ctx, argv[optind], argv[optind+1]);
     printf("  timecost: %.3f\n", timing_cost(start));
 
-    dump_cipher_ctx(&ctx);
-
     crypt_destroy(&ctx);
     return 0;
 }
