@@ -2,7 +2,7 @@ MYLIBRARY=$(shell pwd |sed 's/\(.*mylibrary\).*/\1/')
 
 LIB=$(MYLIBRARY)/lib
 INC=$(MYLIBRARY)/utils
-UTILEXT=$(MYLIBRARY)/utils
+UTILS=$(MYLIBRARY)/utils
 
 prefix = /usr/local
 bindir = ${exec_prefix}/bin

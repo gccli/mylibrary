@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -11,6 +12,9 @@
 extern "C" {
 #endif
 
+/**
+ * Get file length in bytes
+ */
 static inline size_t get_file_size(const char *file)
 {
     struct stat st;
@@ -21,6 +25,11 @@ static inline size_t get_file_size(const char *file)
 
     return st.st_size;
 }
+
+/**
+ * Return the human-readable file size (e.g., 1.24 K 24.52 M 2.0 G)
+ */
+const char *file_size(const char *file);
 
 static inline char *get_file_buffer(const char *file, size_t *r)
 {

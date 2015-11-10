@@ -1,7 +1,5 @@
 include ../../Makefile.common
 
-
-
 TARGET=client server mailclient crypt
 
 SRCS=$(wildcard *.c)
@@ -11,7 +9,7 @@ COBJS=client.o infrastucture.o
 SOBJS=server.o infrastucture.o
 MOBJS=mailclient.o infrastucture.o
 
-CRYPTOBJS=crypt.o cipher.o hexdump.o
+CRYPTOBJS=crypt.o cipher.o hexdump.o utilfile.o
 
 CFLAGS=-g -Wall -I$(INC)
 LDFLAGS=-lssl -lcrypto -lpthread -lm
@@ -32,6 +30,9 @@ crypt:$(CRYPTOBJS)
 
 %.o:%.cpp
 	$(CXX) $(CFLAGS) -I$(HOME)/tmp/openssl/include -c $^ -o $@
+
+%.o:$(UTILS)/%.c
+	$(CC) $(CFLAGS) -c $^ -o $@
 
 clean:
 	@$(RM) $(OBJS) $(TARGET)
