@@ -181,34 +181,43 @@ int decrypt_encrypt(EVP_PKEY *pk, int enc, unsigned char *in, size_t inlen,
             CRYPT_LOGERR("EVP_PKEY_CTX_new");
             break;
         }
-        if (EVP_PKEY_encrypt_init(ctx) <= 0) {
-            CRYPT_LOGERR("EVP_PKEY_encrypt_init");
-            break;
-        }
-        if (EVP_PKEY_CTX_set_rsa_padding(ctx, pad) <= 0) {
-            CRYPT_LOGERR("EVP_PKEY_CTX_set_rsa_padding");
-            break;
-        }
 
         // Determine buffer length
         if (enc) {
-            if (EVP_PKEY_decrypt(ctx, NULL, &outlen, in, inlen) <= 0) {
-                CRYPT_LOGERR("EVP_PKEY_CTX_decrypt(NULL)");
+            if (EVP_PKEY_encrypt_init(ctx) <= 0) {
+                CRYPT_LOGERR("EVP_PKEY_encrypt_init");
+                break;
+            }
+            if (EVP_PKEY_CTX_set_rsa_padding(ctx, pad) <= 0) {
+                CRYPT_LOGERR("EVP_PKEY_CTX_set_rsa_padding");
+                break;
+            }
+
+            if (EVP_PKEY_encrypt(ctx, NULL, &outlen, in, inlen) <= 0) {
+                CRYPT_LOGERR("EVP_PKEY_encrypt(NULL)");
                 break;
             }
             out = (unsigned char *)malloc(outlen);
-            if (EVP_PKEY_decrypt(ctx, out, &outlen, in, inlen) <= 0) {
-                CRYPT_LOGERR("EVP_PKEY_CTX_decrypt");
+            if (EVP_PKEY_encrypt(ctx, out, &outlen, in, inlen) <= 0) {
+                CRYPT_LOGERR("EVP_PKEY_encrypt");
                 break;
             }
         } else {
+            if (EVP_PKEY_decrypt_init(ctx) <= 0) {
+                CRYPT_LOGERR("EVP_PKEY_encrypt_init");
+                break;
+            }
+            if (EVP_PKEY_CTX_set_rsa_padding(ctx, pad) <= 0) {
+                CRYPT_LOGERR("EVP_PKEY_CTX_set_rsa_padding");
+                break;
+            }
             if (EVP_PKEY_decrypt(ctx, NULL, &outlen, in, inlen) <= 0) {
-                CRYPT_LOGERR("EVP_PKEY_CTX_decrypt(NULL)");
+                CRYPT_LOGERR("EVP_PKEY_decrypt(NULL)");
                 break;
             }
             out = (unsigned char *)malloc(outlen);
             if (EVP_PKEY_decrypt(ctx, out, &outlen, in, inlen) <= 0) {
-                CRYPT_LOGERR("EVP_PKEY_CTX_decrypt");
+                CRYPT_LOGERR("EVP_PKEY_decrypt");
                 OPENSSL_free(out);
                 break;
             }
@@ -249,13 +258,13 @@ int main(int argc, char *argv[])
 
     FILE *fp = NULL, *out = NULL;
     const char *keyfile = "passwd";
-    const char *algo = "aes_256_cbc";
+    const char *algo = "aes-256-cbc";
     int ret;
     int index = 0;
     int decrypt = 0;
     int use_pubkey = 0;
 
-    unsigned char buffer[256], *pout;
+    unsigned char buffer[512], *pout;
     size_t len, outlen;
 
     static struct option long_options[] = {
@@ -302,7 +311,7 @@ int main(int argc, char *argv[])
     get_rsa_key();
 
     // encrypt/decrypt file
-    if (optind < 2) {
+    if (optind < 1) {
         printf("%s [-vpd] in out\n", argv[0]);
         return EINVAL;
     }
@@ -315,26 +324,26 @@ int main(int argc, char *argv[])
     if (decrypt) {
         fread(buffer, 1, 4, fp);
         memcpy(&len, buffer, 2);
-        fread(buffer, 1, len, fp);
-        ret = decrypt_encrypt(pk, 0, buffer, len, &pout, &outlen);
-        if (memcmp(pout, secret, outlen) != 0) {
-            printf("pass not match\n");
-            return EINVAL;
-        }
+        len = len & 0xffff;
+        fread(buffer, 1, len-4, fp);
+        ret = decrypt_encrypt(pk, 0, buffer, len-4, &pout, &outlen);
+        assert(outlen == sizeof(secret));
+        assert(memcmp(pout, secret, outlen) == 0);
         free(pout);
 
         // write encrypt file
         ret = crypt_init_ex(&ctx, secret, sizeof(secret), algo, decrypt);
         assert(ret == 0);
-        ret = dec_enc_file_to_buffer(&ctx, fp, (char **)&pout,
-                                     (int *)&outlen);
+
+        ret = dec_enc_f2b(&ctx, fp, (char **)&pout, (int *)&outlen);
         assert(ret == 0);
         fwrite(pout, 1, outlen, out);
         free(pout);
+
+        printf("OK. decrypted file %s\n", argv[optind+1]);
     } else {
         ret = decrypt_encrypt(pk, 1, secret, sizeof(secret), &pout, &outlen);
         assert(ret == 0);
-        printf("outlen %zu\n", outlen);
 
         // write file header
         len = outlen + 4;                // header length
@@ -347,11 +356,12 @@ int main(int argc, char *argv[])
         // write encrypt file
         ret = crypt_init_ex(&ctx, secret, sizeof(secret), algo, decrypt);
         assert(ret == 0);
-        ret = dec_enc_file_to_buffer(&ctx, fp, (char **)&pout,
-                                     (int *)&outlen);
+        ret = dec_enc_f2b(&ctx, fp, (char **)&pout, (int *)&outlen);
         assert(ret == 0);
         fwrite(pout, 1, outlen, out);
         free(pout);
+
+        printf("OK. encrypted file %s\n", argv[optind+1]);
     }
 
     fclose(fp);

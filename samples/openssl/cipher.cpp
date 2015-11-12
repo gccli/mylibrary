@@ -222,7 +222,11 @@ int dec_enc_buffer(void *c, unsigned char *in, size_t inlen,
     int ret;
     EVP_CIPHER_CTX *ctx = (EVP_CIPHER_CTX *) c;
     BIO *mem = BIO_new(BIO_s_mem());
-
+/*
+    BUF_MEM *bptr;
+    BIO_get_mem_ptr(mem, &bptr);
+    BIO_set_mem_buf(mem, bptr, BIO_NOCLOSE);
+*/
     ret = crypt_buffer(ctx, in, inlen, mem);
     if (ret != 0) {
         BIO_free(mem);
@@ -235,26 +239,40 @@ int dec_enc_buffer(void *c, unsigned char *in, size_t inlen,
     return 0;
 }
 
-int dec_enc_file_to_buffer(void *cipher_ctx, FILE *inf, char **outp, int *outl)
+int dec_enc_f2b(void *cipher_ctx, FILE *inf, char **outp, int *outl)
 {
     int ret;
     BIO *in, *mem;
     EVP_CIPHER_CTX *ctx = (EVP_CIPHER_CTX *)cipher_ctx;
+    int offs = 0;
 
     do {
         in = NULL;
         mem = NULL;
-        if ((in = BIO_new_fd(fileno(inf), BIO_NOCLOSE)) == NULL) {
+
+        if ((in = BIO_new(BIO_s_fd())) == NULL) {
             CRYPT_LOGERR("BIO_new");
             ret = ENOMEM;
+        }
+        if (BIO_set_fd(in, fileno(inf), BIO_NOCLOSE) <= 0) {
+            CRYPT_LOGERR("BIO_set_fd");
             break;
         }
+
+        offs = (int) ftell(inf);
+        if (offs != 0) BIO_seek(in, offs);
 
         if ((mem = BIO_new(BIO_s_mem())) == NULL) {
             CRYPT_LOGERR("BIO_new");
             ret = ENOMEM;
             break;
         }
+
+        printf("file current position %d\n", BIO_tell(in));
+
+        //BUF_MEM *bptr = NULL;
+        //BIO_get_mem_ptr(mem, &bptr);
+        //BIO_set_mem_buf(mem, bptr, BIO_NOCLOSE);
 
         ret = crypt_internal(ctx, in, mem);
         if (ret) {
@@ -265,7 +283,7 @@ int dec_enc_file_to_buffer(void *cipher_ctx, FILE *inf, char **outp, int *outl)
     } while(0);
 
     if (in) BIO_free(in);
-    if (mem) BIO_free(mem);
+    //if (mem) BIO_free(mem);
 
     return ret;
 }

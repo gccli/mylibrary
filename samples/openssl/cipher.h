@@ -53,7 +53,7 @@ int crypt_decrypt_init(void *ctx, unsigned char *key, int key_len,
 int dec_enc_file(void *cipher_ctx, char *ifile, char *ofile);
 int dec_enc_buffer(void *c, unsigned char *in, size_t inlen,
                    char **outp, int *outl);
-int dec_enc_file_to_buffer(void *ctx, FILE *in, char **out, int *outl);
+int dec_enc_f2b(void *ctx, FILE *in, char **out, int *outl);
 
 
 /**
