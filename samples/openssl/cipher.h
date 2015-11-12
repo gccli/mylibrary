@@ -1,6 +1,18 @@
 #ifndef CRYTPO_H__
 #define CRYTPO_H__
 
+#define CRYPT_LOGERR(str) do {                                    \
+        char tmp_errstr[256];                                     \
+        unsigned long tmp_errno;                                  \
+        while((tmp_errno = ERR_get_error())) {                    \
+            printf("%s %s\n", str,                                \
+                   ERR_error_string(tmp_errno, tmp_errstr));      \
+	}                                                         \
+    } while(0)
+
+// AES_256 key length in bytes
+#define AES_KEY_LEN 32
+
 
 typedef enum {
     FLAG_DECRYPT    = 0x01, // the context for encryption default
@@ -37,10 +49,17 @@ int crypt_decrypt_init(void *ctx, unsigned char *key, int key_len,
 /**
  * Utility function for encrypt/decrypt file or buffer
  */
-int crypt_encrypt_file(void *ctx, char *in, char *out);
-int crypt_decrypt_file(void *ctx, char *in, char *out);
 
-int crypt_encrypt_buffer(void *ctx, unsigned char *in, char **out, int *outlen);
-int crypt_decrypt_buffer(void *ctx, unsigned char *in, char **out, int *outlen);
+int dec_enc_file(void *cipher_ctx, char *ifile, char *ofile);
+int dec_enc_buffer(void *c, unsigned char *in, size_t inlen,
+                   char **outp, int *outl);
+int dec_enc_file_to_buffer(void *ctx, FILE *in, char **out, int *outl);
+
+
+/**
+ * Generate @len bytes random secret key specified by @key
+ */
+int crypt_gen_key(void *key, size_t len);
+
 
 #endif

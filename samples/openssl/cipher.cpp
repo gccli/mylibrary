@@ -3,18 +3,9 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
-
+#include <openssl/rand.h>
 #include "cipher.h"
 
-
-#define CRYPT_LOGERR(str) do {                                    \
-        char tmp_errstr[256];                                     \
-        unsigned long tmp_errno;                                  \
-        while((tmp_errno = ERR_get_error())) {                    \
-            printf("%s %s\n", str,                                \
-                   ERR_error_string(tmp_errno, tmp_errstr));      \
-	}                                                         \
-    } while(0)
 
 /**
  * The initialize vector, max size 16 bytes, just hardcode it
@@ -139,7 +130,51 @@ static int crypt_internal(EVP_CIPHER_CTX *ctx, BIO *in, BIO *out)
     return ret;
 }
 
-int crypt_encrypt_file(void *cipher_ctx, char *ifile, char *ofile)
+static int crypt_buffer(EVP_CIPHER_CTX *ctx, unsigned char *in, size_t inlen,
+                        BIO *out)
+{
+    int ret;
+
+    unsigned char inbuf[1024];
+    unsigned char outbuf[1024+EVP_MAX_BLOCK_LENGTH];
+    int outlen;
+
+    size_t total, len;
+    ret = 0;
+    total = 0;
+    while(inlen > 0) {
+        len = inlen > sizeof(inbuf) ? sizeof(inbuf) : inlen;
+        memcpy(inbuf, in + total, len);
+        inlen -= len;
+        total += len;
+
+        if(!EVP_CipherUpdate(ctx, outbuf, &outlen, inbuf, inlen)) {
+            CRYPT_LOGERR("CipherUpdate");
+            return EINVAL;
+        }
+        if (BIO_write(out, outbuf, outlen) != outlen) {
+            CRYPT_LOGERR("BIO write");
+            ret = EIO;
+        }
+    }
+    if (ret) {
+        return ret;
+    }
+
+    if(!EVP_CipherFinal_ex(ctx, outbuf, &outlen)) {
+        CRYPT_LOGERR("CipherFinal");
+        return EINVAL;
+    }
+
+    if (BIO_write(out, outbuf, outlen) != outlen) {
+        CRYPT_LOGERR("BIO final write");
+        ret = EIO;
+    }
+
+    return ret;
+}
+
+int dec_enc_file(void *cipher_ctx, char *ifile, char *ofile)
 {
     int ret;
     BIO *in, *out;
@@ -148,7 +183,7 @@ int crypt_encrypt_file(void *cipher_ctx, char *ifile, char *ofile)
     do {
         in = NULL;
         out = NULL;
-        if ((in =  BIO_new(BIO_s_file())) == NULL) {
+        if ((in = BIO_new(BIO_s_file())) == NULL) {
             CRYPT_LOGERR("BIO_new");
             ret = ENOMEM;
             break;
@@ -171,9 +206,9 @@ int crypt_encrypt_file(void *cipher_ctx, char *ifile, char *ofile)
             ret = EIO;
             break;
         }
-    } while(0);
 
-    ret = crypt_internal(ctx, in, out);
+        ret = crypt_internal(ctx, in, out);
+    } while(0);
 
     if (in) BIO_free(in);
     if (out) BIO_free(out);
@@ -181,19 +216,73 @@ int crypt_encrypt_file(void *cipher_ctx, char *ifile, char *ofile)
     return ret;
 }
 
-int crypt_decrypt_file(void *cipher_ctx, char *ifile, char *ofile)
+int dec_enc_buffer(void *c, unsigned char *in, size_t inlen,
+                   char **outp, int *outl)
 {
-    return crypt_encrypt_file(cipher_ctx, ifile, ofile);
+    int ret;
+    EVP_CIPHER_CTX *ctx = (EVP_CIPHER_CTX *) c;
+    BIO *mem = BIO_new(BIO_s_mem());
+
+    ret = crypt_buffer(ctx, in, inlen, mem);
+    if (ret != 0) {
+        BIO_free(mem);
+        return ret;
+    }
+
+    *outl = BIO_get_mem_data(mem, outp);
+    BIO_free(mem);
+
+    return 0;
 }
 
-int crypt_encrypt_buffer(void *ctx, unsigned char *in, char **out, int *outlen)
+int dec_enc_file_to_buffer(void *cipher_ctx, FILE *inf, char **outp, int *outl)
 {
-    int ret = 0;
+    int ret;
+    BIO *in, *mem;
+    EVP_CIPHER_CTX *ctx = (EVP_CIPHER_CTX *)cipher_ctx;
+
+    do {
+        in = NULL;
+        mem = NULL;
+        if ((in = BIO_new_fd(fileno(inf), BIO_NOCLOSE)) == NULL) {
+            CRYPT_LOGERR("BIO_new");
+            ret = ENOMEM;
+            break;
+        }
+
+        if ((mem = BIO_new(BIO_s_mem())) == NULL) {
+            CRYPT_LOGERR("BIO_new");
+            ret = ENOMEM;
+            break;
+        }
+
+        ret = crypt_internal(ctx, in, mem);
+        if (ret) {
+            break;
+        }
+
+        *outl = BIO_get_mem_data(mem, outp);
+    } while(0);
+
+    if (in) BIO_free(in);
+    if (mem) BIO_free(mem);
 
     return ret;
 }
 
-int crypt_decrypt_buffer(void *ctx, unsigned char *in, char **out, int *outlen)
+int crypt_gen_key(void *key, size_t len)
 {
-    return crypt_encrypt_buffer(ctx, in, out, outlen);
+    FILE *fp;
+
+    if (RAND_bytes((unsigned char *)key, len) <= 0) {
+        CRYPT_LOGERR("RAND_bytes");
+        if ((fp = fopen("/dev/random", "rb")) == NULL) {
+            printf("failed to open '/dev/random': %s\n", strerror(errno));
+            return errno;
+        }
+        fread(key, 1, len, fp);
+        fclose(fp);
+    }
+
+    return 0;
 }

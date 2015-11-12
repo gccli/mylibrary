@@ -44,4 +44,7 @@ if __name__ == "__main__":
     print gcd(a,b)
     print gcd_revised(a,b)
     d,x,y=gcd_extended(a,b)
-    print d,'= gcd(a,b) = a*x + b*y  =>', x*a+y*b == d
+    if (x*a+y*b != d):
+        print 'failed'
+    else:
+        print d,'= gcd(a,b) = a*x + b*y (x=%d,y=%d)' % (x, y)

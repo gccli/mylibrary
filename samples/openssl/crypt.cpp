@@ -6,9 +6,10 @@
 #include <openssl/evp.h>
 
 #include "cipher.h"
+
+#include <utiltime.h>
 extern "C" {
-#include "hexdump.h"
-#include "utiltime.h"
+#include <hexdump.h>
 #include "utilfile.h"
 }
 
@@ -22,18 +23,14 @@ static void init_key()
     FILE *fp;
     const char *keyfile = "passwd";
     if ((fp = fopen(keyfile, "rb")) == NULL) {
-        fp = fopen("/dev/random", "rb");
-        if (fp) {
-            fread(key, 1, sizeof(key), fp);
-            fclose(fp);
-            fp = fopen(keyfile, "wb");
-            fwrite(key, 1, sizeof(key), fp);
-            fclose(fp);
-        }
+        fp = fopen(keyfile, "wb");
+        crypt_gen_key(key, sizeof(key));
+
+        fwrite(key, 1, sizeof(key), fp);
     } else {
         fread(key, 1, sizeof(key), fp);
-        fclose(fp);
     }
+    if (fp) fclose(fp);
 }
 
 static const char *cipher_mode(int mode)
@@ -118,7 +115,7 @@ int main(int argc, char *argv[])
     }
     dump_cipher_ctx(&ctx);
     start = timing_start();
-    crypt_encrypt_file(&ctx, argv[optind], argv[optind+1]);
+    dec_enc_file(&ctx, argv[optind], argv[optind+1]);
     printf("  timecost: %.3f\n", timing_cost(start));
 
     crypt_destroy(&ctx);
