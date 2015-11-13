@@ -339,7 +339,7 @@ int main(int argc, char *argv[])
         fwrite(pout, 1, outlen, out);
         free(pout);
 
-        printf("OK. decrypted file %s\n", argv[optind+1]);
+        printf("OK. decrypted file %s -> %s\n", argv[optind], argv[optind+1]);
     } else {
         ret = decrypt_encrypt(pk, 1, secret, sizeof(secret), &pout, &outlen);
         assert(ret == 0);
@@ -360,7 +360,7 @@ int main(int argc, char *argv[])
         fwrite(pout, 1, outlen, out);
         free(pout);
 
-        printf("OK. encrypted file %s\n", argv[optind+1]);
+        printf("OK. encrypted file %s -> %s\n",  argv[optind], argv[optind+1]);
     }
 
     fclose(fp);

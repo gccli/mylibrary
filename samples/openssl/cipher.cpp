@@ -268,8 +268,6 @@ int dec_enc_f2b(void *cipher_ctx, FILE *inf, char **outp, int *outl)
             break;
         }
 
-        printf("file current position %d\n", BIO_tell(in));
-
         //BUF_MEM *bptr = NULL;
         //BIO_get_mem_ptr(mem, &bptr);
         //BIO_set_mem_buf(mem, bptr, BIO_NOCLOSE);

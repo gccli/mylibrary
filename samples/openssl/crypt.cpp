@@ -64,7 +64,7 @@ static void dump_cipher_ctx(EVP_CIPHER_CTX *ctx)
     mode = EVP_CIPHER_CTX_mode(ctx);
     printf("  mode: %d(%s), block-size:%d\n", mode, cipher_mode(mode),
            EVP_CIPHER_CTX_block_size(ctx));
-    printf("  key(%d): %s", key_len, hexdumpex(key, key_len, 1, tmpstr));
+    printf("  key(%d): %s", key_len, hexdump("/1 \"%02x\"", key, key_len, tmpstr));
 }
 
 int main(int argc, char *argv[])

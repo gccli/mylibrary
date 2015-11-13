@@ -47,3 +47,4 @@ function asymenc()
 }
 
 asymenc
+#symenc
