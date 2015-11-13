@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
         case 0:
             break;
         default:
-            printf("usage: %s [-i in] [-o out]\n", argv[0]);
+            printf("usage: %s -[dkc] in out\n", argv[0]);
             exit(0);
         }
     }

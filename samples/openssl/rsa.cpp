@@ -182,7 +182,6 @@ int decrypt_encrypt(EVP_PKEY *pk, int enc, unsigned char *in, size_t inlen,
             break;
         }
 
-        // Determine buffer length
         if (enc) {
             if (EVP_PKEY_encrypt_init(ctx) <= 0) {
                 CRYPT_LOGERR("EVP_PKEY_encrypt_init");
@@ -271,7 +270,7 @@ int main(int argc, char *argv[])
         {0, 0, 0, 0}
     };
 
-    const char* optlist = "vdpc:";
+    const char* optlist = "vdp";
     while (1){
         int c = getopt_long(argc, argv, optlist, long_options, &index);
         if (c == EOF) break;
@@ -288,7 +287,7 @@ int main(int argc, char *argv[])
         case 0:
             break;
         default:
-            printf("usage: %s [-i in] [-o out]\n", argv[0]);
+            printf("usage: %s [-vdp ] in out\n", argv[0]);
             exit(0);
         }
     }

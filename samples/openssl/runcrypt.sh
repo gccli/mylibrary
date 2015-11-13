@@ -28,7 +28,7 @@ done
 
 function asymenc()
 {
-    for inf in $(find sample -type f)
+    for inf in $(find ./ -type f)
     do
         rm -f $enc $dec
         ./rsa $inf $enc -p #using public key encrypt
