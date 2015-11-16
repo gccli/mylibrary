@@ -1,5 +1,6 @@
 #! /bin/bash
 
+verbose=1
 enc=/tmp/enc
 dec=/tmp/dec
 
@@ -31,10 +32,14 @@ function asymenc()
     for inf in $(find ./ -type f)
     do
         rm -f $enc $dec
-        ./rsa $inf $enc -p #using public key encrypt
+        #using public key encrypt
+        echo -e "./rsa $inf $enc -p"
+        ./rsa $inf $enc -p
         [ $? -ne 0 ] && exit 1
 
-        ./rsa $enc $dec -d #using private key decrypt
+        #using private key decrytp
+        echo -e "./rsa $enc $dec -d"
+        ./rsa $enc $dec -d
         [ $? -ne 0 ] && exit 1
 
         s1=$(stat -c%s $inf)

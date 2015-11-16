@@ -217,32 +217,42 @@ int dec_enc_file(void *cipher_ctx, char *ifile, char *ofile)
 }
 
 int dec_enc_buffer(void *c, unsigned char *in, size_t inlen,
-                   char **outp, int *outl)
+                   char **outp, size_t *outl)
 {
     int ret;
     EVP_CIPHER_CTX *ctx = (EVP_CIPHER_CTX *) c;
+    BUF_MEM *bptr = NULL;
     BIO *mem = BIO_new(BIO_s_mem());
-/*
-    BUF_MEM *bptr;
-    BIO_get_mem_ptr(mem, &bptr);
-    BIO_set_mem_buf(mem, bptr, BIO_NOCLOSE);
-*/
+    if (mem == NULL) {
+        CRYPT_LOGERR("BIO_new");
+        return ENOMEM;
+    }
+
     ret = crypt_buffer(ctx, in, inlen, mem);
     if (ret != 0) {
         BIO_free(mem);
         return ret;
     }
 
-    *outl = BIO_get_mem_data(mem, outp);
+    BIO_get_mem_ptr(mem, &bptr);
+    *outp = (char *)calloc(1, bptr->length);
+    if (! *outp) {
+        ret = ENOMEM;
+    } else {
+        memcpy(*outp, bptr->data, bptr->length);
+        *outl = bptr->length;
+    }
+
     BIO_free(mem);
 
     return 0;
 }
 
-int dec_enc_f2b(void *cipher_ctx, FILE *inf, char **outp, int *outl)
+int dec_enc_f2b(void *cipher_ctx, FILE *inf, char **outp, size_t *outl)
 {
     int ret;
     BIO *in, *mem;
+    BUF_MEM *bptr = NULL;
     EVP_CIPHER_CTX *ctx = (EVP_CIPHER_CTX *)cipher_ctx;
     int offs = 0;
 
@@ -260,7 +270,11 @@ int dec_enc_f2b(void *cipher_ctx, FILE *inf, char **outp, int *outl)
         }
 
         offs = (int) ftell(inf);
-        if (offs != 0) BIO_seek(in, offs);
+        if (offs != 0) {
+            if (offs != BIO_seek(in, offs)) {
+                printf("BIO_seek failed\n");
+            }
+        }
 
         if ((mem = BIO_new(BIO_s_mem())) == NULL) {
             CRYPT_LOGERR("BIO_new");
@@ -268,35 +282,43 @@ int dec_enc_f2b(void *cipher_ctx, FILE *inf, char **outp, int *outl)
             break;
         }
 
-        //BUF_MEM *bptr = NULL;
-        //BIO_get_mem_ptr(mem, &bptr);
-        //BIO_set_mem_buf(mem, bptr, BIO_NOCLOSE);
-
         ret = crypt_internal(ctx, in, mem);
         if (ret) {
             break;
         }
 
-        *outl = BIO_get_mem_data(mem, outp);
+        BIO_get_mem_ptr(mem, &bptr);
+        *outp = (char *)calloc(1, bptr->length);
+        if (! *outp) {
+            ret = ENOMEM;
+        } else {
+            memcpy(*outp, bptr->data, bptr->length);
+            *outl = bptr->length;
+        }
     } while(0);
 
     if (in) BIO_free(in);
-    //if (mem) BIO_free(mem);
+    if (mem) BIO_free(mem);
 
     return ret;
 }
 
 int crypt_gen_key(void *key, size_t len)
 {
+    const char *randdev = "/dev/random";
     FILE *fp;
 
     if (RAND_bytes((unsigned char *)key, len) <= 0) {
         CRYPT_LOGERR("RAND_bytes");
-        if ((fp = fopen("/dev/random", "rb")) == NULL) {
-            printf("failed to open '/dev/random': %s\n", strerror(errno));
+        if ((fp = fopen(randdev, "rb")) == NULL) {
+            printf("failed to open '%s': %s\n", randdev, strerror(errno));
             return errno;
         }
-        fread(key, 1, len, fp);
+        if (len != fread(key, 1, len, fp)) {
+            printf("can not read %zu bytes from '%s'", len, randdev);
+            fclose(fp);
+            return EINVAL;
+        }
         fclose(fp);
     }
 

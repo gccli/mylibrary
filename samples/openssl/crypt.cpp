@@ -9,8 +9,8 @@
 
 #include <utiltime.h>
 extern "C" {
-#include <hexdump.h>
 #include "utilfile.h"
+#include <hexdump.h>
 }
 
 static const char    *algo = "DES3";

@@ -1,29 +1,3 @@
-/* ==========================================================================
- * hexdump.c - hexdump.c
- * --------------------------------------------------------------------------
- * Copyright (c) 2013  William Ahern
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to permit
- * persons to whom the Software is furnished to do so, subject to the
- * following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
- * NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
- * USE OR OTHER DEALINGS IN THE SOFTWARE.
- * ==========================================================================
- */
-
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -33,6 +7,7 @@
 #include <errno.h>
 #include <setjmp.h>
 #include "hexdump.h"
+
 #ifndef MIN
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #endif
@@ -59,8 +34,7 @@ static const char *tooctal(char buf[3], unsigned char chr)
     if (chr > 0x1f && chr < 0x7f) {
         buf[0] = chr;
         buf[1] = '\0';
-    }
-    else {
+    } else {
         switch (chr) {
             case '\0':
                 buf[0] = '\\';
@@ -110,7 +84,7 @@ static const char *tooctal(char buf[3], unsigned char chr)
         }
     }
     return buf;
-}                                /* tooctal() */
+}
 static const char *toshort(char buf[3], unsigned char chr)
 {
     static const char map[][3] = {
@@ -1136,10 +1110,11 @@ char *hexdump(const char *fmt, void *data, size_t size, char *str)
 #include "utilfile.h"
 int main(int argc, char **argv)
 {
-    char *fmt;
     size_t len;
     char buffer[4096] = {0};
+    char *fmt;
     char *fbuf = get_file_buffer(argv[1], &len);
+
     printf("File buffer length: %zu\n", len);
 
     fmt = HEXDUMP_x;

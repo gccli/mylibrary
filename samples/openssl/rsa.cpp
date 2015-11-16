@@ -11,7 +11,6 @@
 #include <openssl/pem.h>
 #include "cipher.h"
 
-
 #include <hexdump.h>
 #include <utiltime.h>
 #include <utilfile.h>
@@ -19,14 +18,25 @@
 int verbose = 0;
 const char *pri_key = "key";
 const char *pub_key = "key.pub";
-static char pass[] = "123456";
+
 
 static unsigned char secret[AES_KEY_LEN];
 static EVP_PKEY *rsa_prikey;
 static EVP_PKEY *rsa_pubkey;
 
-EVP_PKEY *gen_key(int type = EVP_PKEY_RSA)
+/*
+static unsigned char rsa_pass[] = {
+    0x7b,0xfe,0x9f,0x3d,0x9e,0xc6,0x06,0x7e,
+    0x70,0x35,0xe9,0x6a,0x1b,0x6e,0x94,0xbe
+    };*/
+
+static unsigned char rsa_pass[] = {
+    '1','2','3','4','5','6'
+};
+
+EVP_PKEY *rsa_gen_key()
 {
+    int type = EVP_PKEY_RSA;
     EVP_PKEY_CTX *ctx;
     EVP_PKEY *pkey = NULL;
 
@@ -36,6 +46,7 @@ EVP_PKEY *gen_key(int type = EVP_PKEY_RSA)
             CRYPT_LOGERR("EVP_PKEY_CTX_new_id");
             break;
         }
+
         if (EVP_PKEY_keygen_init(ctx) <= 0) {
             CRYPT_LOGERR("EVP_PKEY_keygen_init");
             break;
@@ -50,11 +61,13 @@ EVP_PKEY *gen_key(int type = EVP_PKEY_RSA)
             CRYPT_LOGERR("EVP_PKEY_keygen");
     } while(0);
 
-
     return pkey;
 }
 
-EVP_PKEY *load_key(const char *ifile, char *pass)
+/**
+ * Load RSA private key
+ */
+EVP_PKEY *rsa_load_key(const char *ifile, unsigned char *pass)
 {
     int ret = 0;
     EVP_PKEY *pk = NULL;
@@ -62,18 +75,27 @@ EVP_PKEY *load_key(const char *ifile, char *pass)
 
     do {
         in = BIO_new(BIO_s_file());
-        BIO_read_filename(in, ifile);
+        if (!in) {
+            CRYPT_LOGERR("BIO_new: failed to create BIO");
+            ret = ENOMEM;
+            break;
+        }
+        if (BIO_read_filename(in, ifile) <= 0) {
+            CRYPT_LOGERR("BIO_read_filename");
+            ret = EPERM;
+            break;
+        }
 
         if (!(pk = PEM_read_bio_PrivateKey(in, NULL, NULL, pass))) {
             CRYPT_LOGERR("PEM_read_bio_PrivateKey");
             ret = ENOKEY;
             break;
         }
+
         if (pk->type != EVP_PKEY_RSA) {
             printf("Private key type not RSA\n");
             ret = EKEYREJECTED;
         }
-
     } while(0);
 
     if (in) {
@@ -90,7 +112,10 @@ EVP_PKEY *load_key(const char *ifile, char *pass)
     return pk;
 }
 
-EVP_PKEY *load_pubkey(const char *ifile, char *pass)
+/**
+ * Load RSA public key
+ */
+EVP_PKEY *rsa_load_pubkey(const char *ifile)
 {
     int ret = 0;
     EVP_PKEY *pk = NULL;
@@ -98,9 +123,18 @@ EVP_PKEY *load_pubkey(const char *ifile, char *pass)
 
     do {
         in = BIO_new(BIO_s_file());
-        BIO_read_filename(in, ifile);
+        if (!in) {
+            CRYPT_LOGERR("BIO_new: failed to create BIO");
+            ret = ENOMEM;
+            break;
+        }
+        if (BIO_read_filename(in, ifile) <= 0) {
+            CRYPT_LOGERR("BIO_read_filename");
+            ret = EPERM;
+            break;
+        }
 
-        if (!(pk = PEM_read_bio_PUBKEY(in, NULL, NULL, pass))) {
+        if (!(pk = PEM_read_bio_PUBKEY(in, NULL, NULL, NULL))) {
             CRYPT_LOGERR("PEM_read_bio_PUBKEY");
             ret = ENOKEY;
             break;
@@ -109,7 +143,6 @@ EVP_PKEY *load_pubkey(const char *ifile, char *pass)
             printf("Public key type not RSA\n");
             ret = EKEYREJECTED;
         }
-
     } while(0);
 
     if (in) {
@@ -126,17 +159,50 @@ EVP_PKEY *load_pubkey(const char *ifile, char *pass)
     return pk;
 }
 
-int export_key(EVP_PKEY *pk, char *prikey, char *pubkey, char *pass)
+/**
+ * Export RSA public key to file @pubkey
+ */
+int export_pubkey(EVP_PKEY *pk, const char *pubkey)
+{
+    BIO *out = NULL;
+
+    out = BIO_new_file(pubkey, "w");
+    if (!out) {
+        CRYPT_LOGERR("BIO_new_file");
+        return EPERM;
+    }
+
+    if (PEM_write_bio_PUBKEY(out, pk) <= 0) {
+        CRYPT_LOGERR("PEM_write_bio_PUBKEY");
+        BIO_free(out);
+        return EINVAL;
+    }
+    BIO_free(out);
+
+    return 0;
+}
+
+/**
+ * Export RSA private key to file @prikey
+ * using passphrase @pass for unpack private key
+ */
+int export_key(EVP_PKEY *pk, const char *prikey, unsigned char *pass)
 {
     int ret, len;
-    BIO *out;
     const EVP_CIPHER *cipher;
+    BIO *out = NULL;
 
     // export private key
-    out = NULL;
-    out = BIO_new(BIO_s_file());
-    assert(1 == BIO_write_filename(out, prikey));
-    if (pass) len = strlen(pass);
+    out = BIO_new_file(prikey, "w");
+    if (!out) {
+        CRYPT_LOGERR("BIO_new_file");
+        return EPERM;
+    }
+
+    len = 0;
+    if (pass) {
+        len = strlen((char *)pass);
+    }
     if (len > 0) {
         cipher = EVP_aes_128_cbc();
     } else {
@@ -146,21 +212,14 @@ int export_key(EVP_PKEY *pk, char *prikey, char *pubkey, char *pass)
     ret = PEM_write_bio_PrivateKey(out, pk, cipher, NULL, 0, NULL, pass);
     if (ret <= 0) {
         CRYPT_LOGERR("PEM_write_bio_PrivateKey");
+        BIO_free(out);
+        return EINVAL;
     }
     BIO_free(out);
 
-    // export public key
-    out = NULL;
-    out = BIO_new(BIO_s_file());
-    assert(1 == BIO_write_filename(out, pubkey));
-
-    RSA *rsa = EVP_PKEY_get1_RSA(pk);
-    if (PEM_write_bio_RSA_PUBKEY(out, rsa) <= 0) {
-        CRYPT_LOGERR("PEM_write_bio_RSA_PUBKEY");
-    }
-
     return 0;
 }
+
 
 int decrypt_encrypt(EVP_PKEY *pk, int enc, unsigned char *in, size_t inlen,
                     unsigned char **outp, size_t *outl)
@@ -214,7 +273,8 @@ int decrypt_encrypt(EVP_PKEY *pk, int enc, unsigned char *in, size_t inlen,
                 CRYPT_LOGERR("EVP_PKEY_decrypt(NULL)");
                 break;
             }
-            out = (unsigned char *)malloc(outlen);
+            out = (unsigned char *)OPENSSL_malloc(outlen+8);
+
             if (EVP_PKEY_decrypt(ctx, out, &outlen, in, inlen) <= 0) {
                 CRYPT_LOGERR("EVP_PKEY_decrypt");
                 OPENSSL_free(out);
@@ -233,21 +293,27 @@ int decrypt_encrypt(EVP_PKEY *pk, int enc, unsigned char *in, size_t inlen,
 
 static int get_rsa_key()
 {
+    int ret = 0;
     if (access(pri_key, R_OK) == 0) {
-        rsa_prikey = load_key(pri_key, pass);
-        rsa_pubkey = load_pubkey(pub_key, NULL);
-        if (verbose) {
-            RSA_print_fp(stdout, EVP_PKEY_get1_RSA(rsa_pubkey), 0);
-        }
-
+        rsa_prikey = rsa_load_key(pri_key, rsa_pass);
+        rsa_pubkey = rsa_load_pubkey(pub_key);
     } else {
-        rsa_prikey = gen_key();
+        rsa_prikey = rsa_gen_key();
         if (rsa_prikey) {
-            export_key(rsa_prikey, (char *)pri_key, (char *)pub_key, pass);
+            ret = export_key(rsa_prikey, pri_key, rsa_pass);
+            if (ret == 0) {
+                export_pubkey(rsa_prikey, pub_key);
+                rsa_pubkey = rsa_load_pubkey(pub_key);
+            }
         }
     }
 
-    return 0;
+    if (verbose && rsa_prikey && rsa_pubkey) {
+        RSA_print_fp(stdout, EVP_PKEY_get1_RSA(rsa_prikey), 0);
+        RSA_print_fp(stdout, EVP_PKEY_get1_RSA(rsa_pubkey), 0);
+    }
+
+    return ret;
 }
 
 int main(int argc, char *argv[])
@@ -334,12 +400,13 @@ int main(int argc, char *argv[])
         ret = crypt_init_ex(&ctx, secret, sizeof(secret), algo, decrypt);
         assert(ret == 0);
 
-        ret = dec_enc_f2b(&ctx, fp, (char **)&pout, (int *)&outlen);
+        ret = dec_enc_f2b(&ctx, fp, (char **)&pout, &outlen);
         assert(ret == 0);
         fwrite(pout, 1, outlen, out);
         free(pout);
 
-        printf("OK. decrypted file %s -> %s\n", argv[optind], argv[optind+1]);
+        printf("%s: decrypted file %s -> %s\n", use_pubkey?"PUB":"PRI",
+               argv[optind], argv[optind+1]);
     } else {
         ret = decrypt_encrypt(pk, 1, secret, sizeof(secret), &pout, &outlen);
         assert(ret == 0);
@@ -355,16 +422,28 @@ int main(int argc, char *argv[])
         // write encrypt file
         ret = crypt_init_ex(&ctx, secret, sizeof(secret), algo, decrypt);
         assert(ret == 0);
-        ret = dec_enc_f2b(&ctx, fp, (char **)&pout, (int *)&outlen);
+        ret = dec_enc_f2b(&ctx, fp, (char **)&pout, &outlen);
         assert(ret == 0);
         fwrite(pout, 1, outlen, out);
         free(pout);
-
-        printf("OK. encrypted file %s -> %s\n",  argv[optind], argv[optind+1]);
+        printf("%s: encrypted file %s -> %s\n", use_pubkey?"PUB":"PRI",
+               argv[optind], argv[optind+1]);
     }
 
+    crypt_destroy(&ctx);
     fclose(fp);
     fclose(out);
 
     return 0;
 }
+
+/*
+ * private key encrypt
+ openssl rsautl -in passwd -out /tmp/enc -inkey key -encrypt -passin pass:123456
+ * public key decrypt
+ openssl rsautl -in /tmp/enc -out /tmp/dec -inkey key.pub -pubin -decrypt
+ * public key encrypt
+ openssl rsautl -in passwd -out /tmp/enc -inkey key.pub -encrypt -pubin
+ * private key decrypt
+ openssl rsautl -in /tmp/enc -out /tmp/dec -inkey key -decrypt -passin pass:123456
+*/
