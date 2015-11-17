@@ -6,10 +6,11 @@
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
-#include <openssl/evp.h>
+
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include "cipher.h"
+#include "rsa.h"
 
 #include <hexdump.h>
 #include <utiltime.h>
@@ -182,10 +183,6 @@ int export_pubkey(EVP_PKEY *pk, const char *pubkey)
     return 0;
 }
 
-/**
- * Export RSA private key to file @prikey
- * using passphrase @pass for unpack private key
- */
 int export_key(EVP_PKEY *pk, const char *prikey, unsigned char *pass)
 {
     int ret, len;
@@ -220,9 +217,8 @@ int export_key(EVP_PKEY *pk, const char *prikey, unsigned char *pass)
     return 0;
 }
 
-
-int decrypt_encrypt(EVP_PKEY *pk, int enc, unsigned char *in, size_t inlen,
-                    unsigned char **outp, size_t *outl)
+int rsa_dec_enc(EVP_PKEY *pk, int enc, unsigned char *in, size_t inlen,
+                unsigned char **outp, size_t *outl)
 {
     int ret;
 
@@ -391,7 +387,7 @@ int main(int argc, char *argv[])
         memcpy(&len, buffer, 2);
         len = len & 0xffff;
         fread(buffer, 1, len-4, fp);
-        ret = decrypt_encrypt(pk, 0, buffer, len-4, &pout, &outlen);
+        ret = rsa_dec_enc(pk, 0, buffer, len-4, &pout, &outlen);
         assert(outlen == sizeof(secret));
         assert(memcmp(pout, secret, outlen) == 0);
         free(pout);
@@ -408,7 +404,7 @@ int main(int argc, char *argv[])
         printf("%s: decrypted file %s -> %s\n", use_pubkey?"PUB":"PRI",
                argv[optind], argv[optind+1]);
     } else {
-        ret = decrypt_encrypt(pk, 1, secret, sizeof(secret), &pout, &outlen);
+        ret = rsa_dec_enc(pk, 1, secret, sizeof(secret), &pout, &outlen);
         assert(ret == 0);
 
         // write file header
