@@ -34,7 +34,7 @@ function asymenc()
         rm -f $enc $dec
         #using public key encrypt
         echo -e "./crypt $inf $enc"
-        ./crypt $inf $enc -p
+        ./crypt $inf $enc
         [ $? -ne 0 ] && exit 1
 
         #using private key decrytp

@@ -15,7 +15,7 @@ extern "C" {
 #include <hexdump.h>
 }
 
-static uint32_t magic_number = 0xfeeefeee;
+static uint64_t magic_number = 0xfeeeeeeffeeeeeef;
 typedef struct _crypt_ctx {
     cipher *ciph;
     rsakey *rsa;
@@ -31,6 +31,30 @@ static unsigned char rsa_pass[] = {
     0x7b,0xfe,0x9f,0x3d,0x9e,0xc6,0x06,0x7e,
     0x70,0x35,0xe9,0x6a,0x1b,0x6e,0x94,0xbe
 };
+
+void long2buff(uint64_t n, unsigned char *p)
+{
+    *p++ = (n >> 56) & 0xFF;
+    *p++ = (n >> 48) & 0xFF;
+    *p++ = (n >> 40) & 0xFF;
+    *p++ = (n >> 32) & 0xFF;
+    *p++ = (n >> 24) & 0xFF;
+    *p++ = (n >> 16) & 0xFF;
+    *p++ = (n >> 8) & 0xFF;
+    *p++ = n & 0xFF;
+}
+
+uint64_t buff2long(const unsigned char *p)
+{
+    return  (((uint64_t)(*p)) << 56) |          \
+        (((uint64_t)(*(p+1))) << 48) |          \
+        (((uint64_t)(*(p+2))) << 40) |          \
+        (((uint64_t)(*(p+3))) << 32) |          \
+        (((uint64_t)(*(p+4))) << 24) |          \
+        (((uint64_t)(*(p+5))) << 16) |          \
+        (((uint64_t)(*(p+6))) << 8)  |          \
+        ((uint64_t)(*(p+7)));
+}
 
 int create_ctx(const char *private_key)
 {
@@ -76,6 +100,10 @@ int encrypt(const char *ifile, const char *ofile)
 
     do {
         ret = EINVAL;
+        fpi = NULL;
+        fpo = NULL;
+
+
         if ((fpi = fopen(ifile, "rb")) == NULL)
             break;
         if ((fpo = fopen(ofile, "wb")) == NULL)
@@ -91,7 +119,7 @@ int encrypt(const char *ifile, const char *ofile)
         len = sizeof(magic_number) + 4 + outl;
 
         // construct header
-        memcpy(buffer, &magic_number, sizeof(magic_number));
+        long2buff(magic_number, buffer);
         memcpy(buffer+sizeof(magic_number), &len, 2);
         memcpy(buffer+sizeof(magic_number)+4, pout, outl);
         free(pout);
@@ -101,6 +129,9 @@ int encrypt(const char *ifile, const char *ofile)
         ret = ctx.ciph->enc_dec_file(secret, sizeof(secret), fpi, fpo);
         if (ret) break;
     } while(0);
+
+    if (fpi) fclose(fpi);
+    if (fpo) fclose(fpo);
 
     return ret;
 }
@@ -115,13 +146,16 @@ int decrypt(const char *ifile, const char *ofile)
 
     do {
         ret = EINVAL;
+        fpi = NULL;
+        fpo = NULL;
+
         if ((fpi = fopen(ifile, "rb")) == NULL)
             break;
         if ((fpo = fopen(ofile, "wb")) == NULL)
             break;
 
         fread(buffer, 1, sizeof(magic_number), fpi);
-        if (memcmp(buffer, &magic_number, sizeof(magic_number)) != 0) {
+        if (buff2long(buffer) != magic_number) {
             printf("magic number mismatch\n");
             break;
         }
@@ -143,6 +177,9 @@ int decrypt(const char *ifile, const char *ofile)
         ret = ctx.ciph->enc_dec_file(pout, outl, fpi, fpo, 1);
     } while(0);
 
+    if (fpi) fclose(fpi);
+    if (fpo) fclose(fpo);
+
     return ret;
 }
 
@@ -154,7 +191,7 @@ int main(int argc, char *argv[])
         {0, 0, 0, 0}
     };
 
-    const char* optlist = "d:";
+    const char* optlist = "d";
     while (1){
         int c = getopt_long(argc, argv, optlist, long_options, &index);
         if (c == EOF) break;

@@ -69,7 +69,7 @@ int cipher::init(unsigned char *key, int key_len, const char *name, int flags)
     EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc);
     EVP_CIPHER_CTX_set_key_length(ctx, key_len);
     EVP_CipherInit_ex(ctx, NULL, NULL, key, default_iv, enc);
-    EVP_CIPHER_CTX_set_padding(ctx, nopadding);
+
 
     return 0;
 }
@@ -87,6 +87,10 @@ int cipher::encrypt_decrypt(BIO *in, BIO *out)
     unsigned char inbuf[1024];
     unsigned char outbuf[1024+EVP_MAX_BLOCK_LENGTH];
     EVP_CIPHER_CTX *ctx = &cipher_ctx;
+
+    if (nopadding) {
+        EVP_CIPHER_CTX_set_padding(ctx, 0);
+    }
 
     ret = 0;
     while(!BIO_eof(in)) {
@@ -134,6 +138,10 @@ int cipher::encrypt_decrypt(unsigned char *in, size_t inlen, BIO *out)
     unsigned char outbuf[1024+EVP_MAX_BLOCK_LENGTH];
     size_t total, len;
     EVP_CIPHER_CTX *ctx = &cipher_ctx;
+
+    if (nopadding) {
+        EVP_CIPHER_CTX_set_padding(ctx, 0);
+    }
 
     ret = 0;
     total = 0;
@@ -215,46 +223,29 @@ int cipher::dec_enc_file(FILE *inf, FILE *outf)
 {
     int ret;
     BIO *in, *out;
-    int offs = 0;
 
     do {
         ret = EINVAL;
         in = NULL;
         out = NULL;
 
-        if ((in = BIO_new(BIO_s_fd())) == NULL) {
+        if ((in = BIO_new(BIO_s_file())) == NULL) {
             CRYPT_LOGERR("BIO_new");
             ret = ENOMEM;
         }
-        if (BIO_set_fd(in, fileno(inf), BIO_NOCLOSE) <= 0) {
-            CRYPT_LOGERR("BIO_set_fd(in)");
+        if (BIO_set_fp(in, inf, BIO_NOCLOSE) <= 0) {
+            CRYPT_LOGERR("BIO_set_fp(in)");
             break;
         }
 
-        offs = (int) ftell(inf);
-        if (offs != 0) {
-            if (offs != BIO_seek(in, offs)) {
-                printf("BIO_seek(in) failed\n");
-                break;
-            }
-        }
 
-
-        if ((out = BIO_new(BIO_s_fd())) == NULL) {
+        if ((out = BIO_new(BIO_s_file())) == NULL) {
             CRYPT_LOGERR("BIO_new");
             ret = ENOMEM;
         }
-        if (BIO_set_fd(out, fileno(outf), BIO_NOCLOSE) <= 0) {
-            CRYPT_LOGERR("BIO_set_fd(out)");
+        if (BIO_set_fp(out, outf, BIO_NOCLOSE) <= 0) {
+            CRYPT_LOGERR("BIO_set_fp(out)");
             break;
-        }
-
-        offs = (int) ftell(outf);
-        if (offs != 0) {
-            if (offs != BIO_seek(out, offs)) {
-                printf("BIO_seek(out) failed\n");
-                break;
-            }
         }
 
         ret = encrypt_decrypt(in, out);
@@ -274,28 +265,29 @@ int cipher::dec_enc_file(FILE *inf, char **outp, size_t *outl)
     int ret;
     BIO *in, *mem;
     BUF_MEM *bptr = NULL;
-    int offs = 0;
 
     do {
         in = NULL;
         mem = NULL;
 
-        if ((in = BIO_new(BIO_s_fd())) == NULL) {
+        if ((in = BIO_new(BIO_s_file())) == NULL) {
             CRYPT_LOGERR("BIO_new");
             ret = ENOMEM;
         }
-        if (BIO_set_fd(in, fileno(inf), BIO_NOCLOSE) <= 0) {
-            CRYPT_LOGERR("BIO_set_fd");
+        if (BIO_set_fp(in, inf, BIO_NOCLOSE) <= 0) {
+            CRYPT_LOGERR("BIO_set_fp");
             break;
         }
 
-        offs = (int) ftell(inf);
+
+/*
+        int offs = (int) ftell(inf);
         if (offs != 0) {
             if (offs != BIO_seek(in, offs)) {
                 printf("BIO_seek failed\n");
             }
         }
-
+*/
         if ((mem = BIO_new(BIO_s_mem())) == NULL) {
             CRYPT_LOGERR("BIO_new");
             ret = ENOMEM;
