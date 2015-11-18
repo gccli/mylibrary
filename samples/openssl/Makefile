@@ -5,10 +5,10 @@ OSSLLIB=$(OPENSSL)/lib
 OSSLINC=$(OPENSSL)/include
 
 
-TARGET=client server mailclient crypt rsa
+TARGET=client server mailclient crypt
 
 # common file defined in mylibrary/utils
-COMMOBJ=hexdump.o utilfile.o
+COMMOBJ=hexdump.o utilfile.o crypt_common.o
 
 
 SRCS=$(wildcard *.c)
@@ -18,8 +18,8 @@ COBJS=client.o infrastucture.o
 SOBJS=server.o infrastucture.o
 MOBJS=mailclient.o infrastucture.o
 
-CRYPTOBJS=$(COMMOBJ) cipher.o crypt.o
-RSAOBJ=$(COMMOBJ) cipher.o rsa.o
+CRYPTOBJS=$(COMMOBJ) cipher.o crypt.o rsa.o
+#RSAOBJ=$(COMMOBJ) cipher.o
 
 CFLAGS=-g -Wall -I$(INC) -I$(OSSLINC)
 LDFLAGS=-L$(OSSLLIB) -lssl -lcrypto -lpthread -lm -ldl
@@ -35,8 +35,8 @@ server:$(SOBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 mailclient:$(MOBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
-rsa:$(RSAOBJ)
-	$(CXX) -o $@ $^ $(LDFLAGS)
+#rsa:$(RSAOBJ)
+#	$(CXX) -o $@ $^ $(LDFLAGS)
 crypt:$(CRYPTOBJS)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 %.o:%.cpp

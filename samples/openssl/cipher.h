@@ -1,65 +1,63 @@
-#ifndef CRYTPO_H__
-#define CRYTPO_H__
+#ifndef CIPHER_H__
+#define CIPHER_H__
 
-#define CRYPT_LOGERR(str) do {                                    \
-        char tmp_errstr[256];                                     \
-        unsigned long tmp_errno;                                  \
-        while((tmp_errno = ERR_get_error())) {                    \
-            printf("%s %s\n", str,                                \
-                   ERR_error_string(tmp_errno, tmp_errstr));      \
-	}                                                         \
-    } while(0)
+#include "crypt_common.h"
 
 // AES_256 key length in bytes
 #define AES_KEY_LEN 32
-
-
 typedef enum {
     FLAG_DECRYPT    = 0x01, // the context for encryption default
     FLAG_NO_PADDING = 0x02  // the padding is enabled by default
 } crypt_flags_t;
 
-/**
- * Initialize the Symmetric-key cryptography module
- * Call this function before any crypt operation
- */
-void crypt_init_module();
 
-/**
- * Initialize symmetric-key cryptography context @ctx for encrypt or decrypt.
- * The context @ctx type is openssl EVP_CIPHER_CTX. The secret key specified by
- * @key, and the key length is @key_len. The encrypt/decrypt algorithm is given
- * by @name, e.g. "DES3" or "AES-128-CBC", case insensitive; if @name is NULL,
- * the default algorithm "RC4" is given.
- * The context flags specified by @flags
- */
-int crypt_init_ex(void *cipher_ctx, unsigned char *key, int key_len,
-                  const char *name, int flags);
-void crypt_destroy(void *ctx);
+class cipher {
+public:
+    cipher();
+    cipher(const char *name, int pad);
+    virtual ~cipher();
 
-/**
- * Utility function for init encrypt/decrypt, use default setting
- */
-int crypt_encrypt_init(void *ctx, unsigned char *key, int key_len,
-                       const char *name);
-int crypt_decrypt_init(void *ctx, unsigned char *key, int key_len,
-                       const char *name);
+    int enc_dec_file(unsigned char *key, int key_len, const char *ifile,
+                     const char *ofile, int dec=0);
+    int enc_dec_file(unsigned char *key, int key_len, FILE *inf,
+                     FILE *out, int dec=0);
+    int enc_dec_file(unsigned char *key, int key_len, FILE *inf,
+                     char **outp, size_t *outl, int dec=0);
+    int enc_dec_buffer(unsigned char *key, int key_len, unsigned char *in,
+                       size_t inlen, char **outp, size_t *outl, int dec=0);
 
+
+
+    void dump_ctx();
+protected:
+/**
+ * Initialize symmetric-key cryptography context for encrypt or decrypt.
+ * The secret key specified by @key, and the key length is @key_len.
+ * The encrypt/decrypt algorithm is given by @name, e.g. "rc4" or
+ * "AES-128-CBC", case insensitive; if @name is NULL, the default algorithm
+ * "aes-256-cbc" is given. The context flags specified by @flags
+ */
+    int init(unsigned char *key, int key_len, const char *name, int flags);
+    void destroy();
+
+    int encrypt_decrypt(BIO *in, BIO *out);
+    int encrypt_decrypt(unsigned char *in, size_t inlen, BIO *out);
 
 /**
  * Utility function for encrypt/decrypt file or buffer
+ * These functions should init context before call
  */
+    int dec_enc_file(const char *ifile, const char *ofile);
+    int dec_enc_file(FILE *inf, FILE *out);
+    int dec_enc_file(FILE *inf, char **outp, size_t *outl);
+    int dec_enc_buffer(unsigned char *in, size_t inlen,
+                       char **outp, size_t *outl);
 
-int dec_enc_file(void *cipher_ctx, char *ifile, char *ofile);
-int dec_enc_buffer(void *c, unsigned char *in, size_t inlen,
-                   char **outp, size_t *outl);
-int dec_enc_f2b(void *ctx, FILE *in, char **out, size_t *outl);
-
-
-/**
- * Generate @len bytes random secret key specified by @key
- */
-int crypt_gen_key(void *key, size_t len);
+private:
+    int nopadding;
+    char cipher_name[32];
+    EVP_CIPHER_CTX cipher_ctx;
+};
 
 
 #endif

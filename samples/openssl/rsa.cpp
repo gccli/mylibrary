@@ -16,33 +16,25 @@
 #include <utiltime.h>
 #include <utilfile.h>
 
-int verbose = 0;
-const char *pri_key = "key";
-const char *pub_key = "key.pub";
 
-
-static unsigned char secret[AES_KEY_LEN];
-static EVP_PKEY *rsa_prikey;
-static EVP_PKEY *rsa_pubkey;
-
-/*
-static unsigned char rsa_pass[] = {
-    0x7b,0xfe,0x9f,0x3d,0x9e,0xc6,0x06,0x7e,
-    0x70,0x35,0xe9,0x6a,0x1b,0x6e,0x94,0xbe
-    };*/
-
-static unsigned char rsa_pass[] = {
-    '1','2','3','4','5','6'
-};
-
-EVP_PKEY *rsa_gen_key()
+rsakey::rsakey()
+    :pk_pri(NULL)
+    ,pk_pub(NULL)
 {
-    int type = EVP_PKEY_RSA;
+}
+
+rsakey::~rsakey()
+{
+}
+
+int rsakey::generate(EVP_PKEY **pk)
+{
+    int ret;
     EVP_PKEY_CTX *ctx;
-    EVP_PKEY *pkey = NULL;
 
     do {
-        ctx = EVP_PKEY_CTX_new_id(type, NULL);
+        ret = EINVAL;
+        ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
         if (!ctx) {
             CRYPT_LOGERR("EVP_PKEY_CTX_new_id");
             break;
@@ -58,112 +50,17 @@ EVP_PKEY *rsa_gen_key()
             break;
         }
 
-        if (EVP_PKEY_keygen(ctx, &pkey) <= 0)
+        if (EVP_PKEY_keygen(ctx, pk) <= 0) {
             CRYPT_LOGERR("EVP_PKEY_keygen");
+            break;
+        }
+        ret = 0;
     } while(0);
 
-    return pkey;
+    return ret;
 }
 
-/**
- * Load RSA private key
- */
-EVP_PKEY *rsa_load_key(const char *ifile, unsigned char *pass)
-{
-    int ret = 0;
-    EVP_PKEY *pk = NULL;
-    BIO *in = NULL;
-
-    do {
-        in = BIO_new(BIO_s_file());
-        if (!in) {
-            CRYPT_LOGERR("BIO_new: failed to create BIO");
-            ret = ENOMEM;
-            break;
-        }
-        if (BIO_read_filename(in, ifile) <= 0) {
-            CRYPT_LOGERR("BIO_read_filename");
-            ret = EPERM;
-            break;
-        }
-
-        if (!(pk = PEM_read_bio_PrivateKey(in, NULL, NULL, pass))) {
-            CRYPT_LOGERR("PEM_read_bio_PrivateKey");
-            ret = ENOKEY;
-            break;
-        }
-
-        if (pk->type != EVP_PKEY_RSA) {
-            printf("Private key type not RSA\n");
-            ret = EKEYREJECTED;
-        }
-    } while(0);
-
-    if (in) {
-        BIO_free(in);
-    }
-
-    if (ret) {
-        if (pk) {
-            EVP_PKEY_free(pk);
-            pk = NULL;
-        }
-    }
-
-    return pk;
-}
-
-/**
- * Load RSA public key
- */
-EVP_PKEY *rsa_load_pubkey(const char *ifile)
-{
-    int ret = 0;
-    EVP_PKEY *pk = NULL;
-    BIO *in = NULL;
-
-    do {
-        in = BIO_new(BIO_s_file());
-        if (!in) {
-            CRYPT_LOGERR("BIO_new: failed to create BIO");
-            ret = ENOMEM;
-            break;
-        }
-        if (BIO_read_filename(in, ifile) <= 0) {
-            CRYPT_LOGERR("BIO_read_filename");
-            ret = EPERM;
-            break;
-        }
-
-        if (!(pk = PEM_read_bio_PUBKEY(in, NULL, NULL, NULL))) {
-            CRYPT_LOGERR("PEM_read_bio_PUBKEY");
-            ret = ENOKEY;
-            break;
-        }
-        if (pk->type != EVP_PKEY_RSA) {
-            printf("Public key type not RSA\n");
-            ret = EKEYREJECTED;
-        }
-    } while(0);
-
-    if (in) {
-        BIO_free(in);
-    }
-
-    if (ret) {
-        if (pk) {
-            EVP_PKEY_free(pk);
-            pk = NULL;
-        }
-    }
-
-    return pk;
-}
-
-/**
- * Export RSA public key to file @pubkey
- */
-int export_pubkey(EVP_PKEY *pk, const char *pubkey)
+int rsakey::export_pubkey(EVP_PKEY *pk, const char *pubkey)
 {
     BIO *out = NULL;
 
@@ -183,7 +80,7 @@ int export_pubkey(EVP_PKEY *pk, const char *pubkey)
     return 0;
 }
 
-int export_key(EVP_PKEY *pk, const char *prikey, unsigned char *pass)
+int rsakey::export_key(EVP_PKEY *pk, const char *prikey, unsigned char *pass)
 {
     int ret, len;
     const EVP_CIPHER *cipher;
@@ -217,8 +114,117 @@ int export_key(EVP_PKEY *pk, const char *prikey, unsigned char *pass)
     return 0;
 }
 
-int rsa_dec_enc(EVP_PKEY *pk, int enc, unsigned char *in, size_t inlen,
-                unsigned char **outp, size_t *outl)
+int rsakey::export_key(const char *ofile, int pub, unsigned char *pass)
+{
+    int ret;
+    if (!pk_pri) {
+        return EINVAL;
+    }
+    if (pub) {
+        ret = export_pubkey(pk_pri, ofile);
+    } else {
+        ret = export_key(pk_pri, ofile, pass);
+    }
+
+    return ret;
+}
+
+int rsakey::load_key(const char *ifile, unsigned char *pass)
+{
+    int ret = 0;
+    EVP_PKEY *pk = NULL;
+    BIO *in = NULL;
+
+    do {
+        in = BIO_new(BIO_s_file());
+        if (!in) {
+            CRYPT_LOGERR("BIO_new: failed to create BIO");
+            ret = ENOMEM;
+            break;
+        }
+        if (BIO_read_filename(in, ifile) <= 0) {
+            CRYPT_LOGERR("BIO_read_filename");
+            ret = EPERM;
+            break;
+        }
+
+        if (!(pk = PEM_read_bio_PrivateKey(in, NULL, NULL, pass))) {
+            CRYPT_LOGERR("PEM_read_bio_PrivateKey");
+            ret = ENOKEY;
+            break;
+        }
+
+        if (pk->type != EVP_PKEY_RSA) {
+            printf("Private key type not RSA\n");
+            ret = EKEYREJECTED;
+            break;
+        }
+
+        pk_pri = pk;
+
+    } while(0);
+
+    if (in) {
+        BIO_free(in);
+    }
+
+    if (ret) {
+        if (pk) {
+            EVP_PKEY_free(pk);
+        }
+    }
+
+    return ret;
+}
+
+int rsakey::load_pubkey(const char *ifile)
+{
+    int ret = 0;
+    EVP_PKEY *pk = NULL;
+    BIO *in = NULL;
+
+    do {
+        in = BIO_new(BIO_s_file());
+        if (!in) {
+            CRYPT_LOGERR("BIO_new: failed to create BIO");
+            ret = ENOMEM;
+            break;
+        }
+        if (BIO_read_filename(in, ifile) <= 0) {
+            CRYPT_LOGERR("BIO_read_filename");
+            ret = EPERM;
+            break;
+        }
+
+        if (!(pk = PEM_read_bio_PUBKEY(in, NULL, NULL, NULL))) {
+            CRYPT_LOGERR("PEM_read_bio_PUBKEY");
+            ret = ENOKEY;
+            break;
+        }
+        if (pk->type != EVP_PKEY_RSA) {
+            printf("Public key type not RSA\n");
+            ret = EKEYREJECTED;
+            break;
+        }
+
+        pk_pub = pk;
+    } while(0);
+
+    if (in) {
+        BIO_free(in);
+    }
+
+    if (ret) {
+        if (pk) {
+            EVP_PKEY_free(pk);
+        }
+    }
+
+    return ret;
+}
+
+int rsakey::enc_dec(unsigned char *in, size_t inlen, unsigned char **outp,
+                    size_t *outl, int dec)
 {
     int ret;
 
@@ -226,6 +232,9 @@ int rsa_dec_enc(EVP_PKEY *pk, int enc, unsigned char *in, size_t inlen,
     unsigned char *out = NULL;
     size_t outlen;
     int pad = RSA_PKCS1_OAEP_PADDING;
+
+    EVP_PKEY *pk = dec ? pk_pri : pk_pub;
+
 
     do {
         ret = EINVAL;
@@ -237,26 +246,7 @@ int rsa_dec_enc(EVP_PKEY *pk, int enc, unsigned char *in, size_t inlen,
             break;
         }
 
-        if (enc) {
-            if (EVP_PKEY_encrypt_init(ctx) <= 0) {
-                CRYPT_LOGERR("EVP_PKEY_encrypt_init");
-                break;
-            }
-            if (EVP_PKEY_CTX_set_rsa_padding(ctx, pad) <= 0) {
-                CRYPT_LOGERR("EVP_PKEY_CTX_set_rsa_padding");
-                break;
-            }
-
-            if (EVP_PKEY_encrypt(ctx, NULL, &outlen, in, inlen) <= 0) {
-                CRYPT_LOGERR("EVP_PKEY_encrypt(NULL)");
-                break;
-            }
-            out = (unsigned char *)malloc(outlen);
-            if (EVP_PKEY_encrypt(ctx, out, &outlen, in, inlen) <= 0) {
-                CRYPT_LOGERR("EVP_PKEY_encrypt");
-                break;
-            }
-        } else {
+        if (dec) {
             if (EVP_PKEY_decrypt_init(ctx) <= 0) {
                 CRYPT_LOGERR("EVP_PKEY_encrypt_init");
                 break;
@@ -276,6 +266,25 @@ int rsa_dec_enc(EVP_PKEY *pk, int enc, unsigned char *in, size_t inlen,
                 OPENSSL_free(out);
                 break;
             }
+        } else {
+            if (EVP_PKEY_encrypt_init(ctx) <= 0) {
+                CRYPT_LOGERR("EVP_PKEY_encrypt_init");
+                break;
+            }
+            if (EVP_PKEY_CTX_set_rsa_padding(ctx, pad) <= 0) {
+                CRYPT_LOGERR("EVP_PKEY_CTX_set_rsa_padding");
+                break;
+            }
+
+            if (EVP_PKEY_encrypt(ctx, NULL, &outlen, in, inlen) <= 0) {
+                CRYPT_LOGERR("EVP_PKEY_encrypt(NULL)");
+                break;
+            }
+            out = (unsigned char *)malloc(outlen);
+            if (EVP_PKEY_encrypt(ctx, out, &outlen, in, inlen) <= 0) {
+                CRYPT_LOGERR("EVP_PKEY_encrypt");
+                break;
+            }
         }
         ret = 0;
         *outp = out;
@@ -287,6 +296,15 @@ int rsa_dec_enc(EVP_PKEY *pk, int enc, unsigned char *in, size_t inlen,
     return ret;
 }
 
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+
+/*(
 static int get_rsa_key()
 {
     int ret = 0;
@@ -310,8 +328,9 @@ static int get_rsa_key()
     }
 
     return ret;
-}
+    }*/
 
+/*
 int main(int argc, char *argv[])
 {
     static EVP_PKEY *pk;
@@ -355,7 +374,9 @@ int main(int argc, char *argv[])
     }
 
     // Init openssl library
-    crypt_init_module();
+    crypt_init();
+
+
 
     // Init or load secret key
     if ((fp = fopen(keyfile, "rb")) == NULL) {
@@ -429,9 +450,9 @@ int main(int argc, char *argv[])
     crypt_destroy(&ctx);
     fclose(fp);
     fclose(out);
-
-    return 0;
-}
+*/
+//    return 0;
+//}
 
 /*
  * private key encrypt

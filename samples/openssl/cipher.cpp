@@ -1,9 +1,6 @@
 #include <stdio.h>
 #include <errno.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
-#include <openssl/rand.h>
+
 #include "cipher.h"
 
 
@@ -13,21 +10,33 @@
  * dd if=/dev/random of=/tmp/x bs=16 count=1
  * hexdump -v -e '/1 "0x%02x,"' < /tmp/x ; echo
  */
-static unsigned char default_iv[16] = {
+static const unsigned char default_iv[EVP_MAX_IV_LENGTH] = {
     0xa9,0x1c,0xda,0x32,0x14,0x8f,0x16,0xa0,
     0x45,0xf3,0x06,0xfa,0xe2,0x85,0x8c,0xfb
 };
 
-void crypt_init_module()
+
+cipher::cipher()
+    :nopadding(0)
 {
-    SSL_load_error_strings();
-    ERR_load_crypto_strings();
-    OpenSSL_add_all_algorithms();
-    OpenSSL_add_all_ciphers();
+    memset(&cipher_ctx, 0, sizeof(cipher_ctx));
+    sprintf(cipher_name, "aes-256-cbc");
 }
 
-int crypt_init_ex(void *cipher_ctx, unsigned char *key, int key_len,
-                  const char *name, int flags)
+cipher::cipher(const char *name, int pad)
+    :nopadding(pad)
+{
+    memset(&cipher_ctx, 0, sizeof(cipher_ctx));
+    sprintf(cipher_name, "aes-256-cbc");
+}
+
+cipher::~cipher()
+{
+    destroy();
+    nopadding = 0;
+}
+
+int cipher::init(unsigned char *key, int key_len, const char *name, int flags)
 {
     int enc;
     const EVP_CIPHER *cipher;
@@ -36,62 +45,48 @@ int crypt_init_ex(void *cipher_ctx, unsigned char *key, int key_len,
         printf("invalid key\n");
         return EINVAL;
     }
-    if (name == NULL) {
-        cipher = EVP_rc4();
-    } else {
-        cipher = EVP_get_cipherbyname(name);
-        if (cipher == NULL) {
-            CRYPT_LOGERR("get cipher");
-        }
+    if (name != NULL) {
+        strncpy(cipher_name, name, sizeof(cipher_name));
     }
 
+    cipher = EVP_get_cipherbyname(cipher_name);
     if (cipher == NULL) {
+        printf("can not get cipher by name:%s", cipher_name);
         return EINVAL;
     }
+
     enc = 1;
-    ctx = (EVP_CIPHER_CTX *)cipher_ctx;
+    ctx = &cipher_ctx;
 
     EVP_CIPHER_CTX_init(ctx);
     if (flags & FLAG_DECRYPT) {
         enc = 0;
     }
+    if (flags & FLAG_NO_PADDING) {
+        nopadding = 1;
+    }
 
     EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc);
     EVP_CIPHER_CTX_set_key_length(ctx, key_len);
     EVP_CipherInit_ex(ctx, NULL, NULL, key, default_iv, enc);
-
-    if (flags & FLAG_NO_PADDING) {
-        EVP_CIPHER_CTX_set_padding(ctx, 0);
-    }
+    EVP_CIPHER_CTX_set_padding(ctx, nopadding);
 
     return 0;
 }
 
-int crypt_encrypt_init(void *ctx, unsigned char *key, int key_len,
-                       const char *name)
+void cipher::destroy()
 {
-    return crypt_init_ex(ctx, key, key_len, name, 0);
+    EVP_CIPHER_CTX_cleanup(&cipher_ctx);
+    memset(&cipher_ctx, 0, sizeof(cipher_ctx));
 }
 
-int crypt_decrypt_init(void *ctx, unsigned char *key, int key_len,
-                       const char *name)
-{
-    return crypt_init_ex(ctx, key, key_len, name, FLAG_DECRYPT);
-}
-
-void crypt_destroy(void *cipher_ctx)
-{
-    EVP_CIPHER_CTX *ctx = (EVP_CIPHER_CTX *)cipher_ctx;
-    EVP_CIPHER_CTX_cleanup(ctx);
-}
-
-static int crypt_internal(EVP_CIPHER_CTX *ctx, BIO *in, BIO *out)
+int cipher::encrypt_decrypt(BIO *in, BIO *out)
 {
     int ret;
-
+    int inlen, outlen;
     unsigned char inbuf[1024];
     unsigned char outbuf[1024+EVP_MAX_BLOCK_LENGTH];
-    int inlen, outlen;
+    EVP_CIPHER_CTX *ctx = &cipher_ctx;
 
     ret = 0;
     while(!BIO_eof(in)) {
@@ -130,16 +125,16 @@ static int crypt_internal(EVP_CIPHER_CTX *ctx, BIO *in, BIO *out)
     return ret;
 }
 
-static int crypt_buffer(EVP_CIPHER_CTX *ctx, unsigned char *in, size_t inlen,
-                        BIO *out)
+
+int cipher::encrypt_decrypt(unsigned char *in, size_t inlen, BIO *out)
 {
     int ret;
-
+    int outlen;
     unsigned char inbuf[1024];
     unsigned char outbuf[1024+EVP_MAX_BLOCK_LENGTH];
-    int outlen;
-
     size_t total, len;
+    EVP_CIPHER_CTX *ctx = &cipher_ctx;
+
     ret = 0;
     total = 0;
     while(inlen > 0) {
@@ -174,13 +169,13 @@ static int crypt_buffer(EVP_CIPHER_CTX *ctx, unsigned char *in, size_t inlen,
     return ret;
 }
 
-int dec_enc_file(void *cipher_ctx, char *ifile, char *ofile)
+int cipher::dec_enc_file(const char *ifile, const char *ofile)
 {
     int ret;
     BIO *in, *out;
-    EVP_CIPHER_CTX *ctx = (EVP_CIPHER_CTX *)cipher_ctx;
 
     do {
+        ret = EINVAL;
         in = NULL;
         out = NULL;
         if ((in = BIO_new(BIO_s_file())) == NULL) {
@@ -201,13 +196,13 @@ int dec_enc_file(void *cipher_ctx, char *ifile, char *ofile)
             break;
         }
 
-        if(!BIO_write_filename(out, ofile)) {
+        if(!BIO_write_filename(out, (void *)ofile)) {
             CRYPT_LOGERR("BIO_write_filename");
             ret = EIO;
             break;
         }
 
-        ret = crypt_internal(ctx, in, out);
+        ret = encrypt_decrypt(in, out);
     } while(0);
 
     if (in) BIO_free(in);
@@ -216,44 +211,69 @@ int dec_enc_file(void *cipher_ctx, char *ifile, char *ofile)
     return ret;
 }
 
-int dec_enc_buffer(void *c, unsigned char *in, size_t inlen,
-                   char **outp, size_t *outl)
+int cipher::dec_enc_file(FILE *inf, FILE *outf)
 {
     int ret;
-    EVP_CIPHER_CTX *ctx = (EVP_CIPHER_CTX *) c;
-    BUF_MEM *bptr = NULL;
-    BIO *mem = BIO_new(BIO_s_mem());
-    if (mem == NULL) {
-        CRYPT_LOGERR("BIO_new");
-        return ENOMEM;
-    }
+    BIO *in, *out;
+    int offs = 0;
 
-    ret = crypt_buffer(ctx, in, inlen, mem);
-    if (ret != 0) {
-        BIO_free(mem);
-        return ret;
-    }
+    do {
+        ret = EINVAL;
+        in = NULL;
+        out = NULL;
 
-    BIO_get_mem_ptr(mem, &bptr);
-    *outp = (char *)calloc(1, bptr->length);
-    if (! *outp) {
-        ret = ENOMEM;
-    } else {
-        memcpy(*outp, bptr->data, bptr->length);
-        *outl = bptr->length;
-    }
+        if ((in = BIO_new(BIO_s_fd())) == NULL) {
+            CRYPT_LOGERR("BIO_new");
+            ret = ENOMEM;
+        }
+        if (BIO_set_fd(in, fileno(inf), BIO_NOCLOSE) <= 0) {
+            CRYPT_LOGERR("BIO_set_fd(in)");
+            break;
+        }
 
-    BIO_free(mem);
+        offs = (int) ftell(inf);
+        if (offs != 0) {
+            if (offs != BIO_seek(in, offs)) {
+                printf("BIO_seek(in) failed\n");
+                break;
+            }
+        }
 
-    return 0;
+
+        if ((out = BIO_new(BIO_s_fd())) == NULL) {
+            CRYPT_LOGERR("BIO_new");
+            ret = ENOMEM;
+        }
+        if (BIO_set_fd(out, fileno(outf), BIO_NOCLOSE) <= 0) {
+            CRYPT_LOGERR("BIO_set_fd(out)");
+            break;
+        }
+
+        offs = (int) ftell(outf);
+        if (offs != 0) {
+            if (offs != BIO_seek(out, offs)) {
+                printf("BIO_seek(out) failed\n");
+                break;
+            }
+        }
+
+        ret = encrypt_decrypt(in, out);
+        if (ret) {
+            break;
+        }
+    } while(0);
+
+    if (in) BIO_free(in);
+    if (out) BIO_free(out);
+
+    return ret;
 }
 
-int dec_enc_f2b(void *cipher_ctx, FILE *inf, char **outp, size_t *outl)
+int cipher::dec_enc_file(FILE *inf, char **outp, size_t *outl)
 {
     int ret;
     BIO *in, *mem;
     BUF_MEM *bptr = NULL;
-    EVP_CIPHER_CTX *ctx = (EVP_CIPHER_CTX *)cipher_ctx;
     int offs = 0;
 
     do {
@@ -282,7 +302,7 @@ int dec_enc_f2b(void *cipher_ctx, FILE *inf, char **outp, size_t *outl)
             break;
         }
 
-        ret = crypt_internal(ctx, in, mem);
+        ret = encrypt_decrypt(in, mem);
         if (ret) {
             break;
         }
@@ -303,24 +323,126 @@ int dec_enc_f2b(void *cipher_ctx, FILE *inf, char **outp, size_t *outl)
     return ret;
 }
 
-int crypt_gen_key(void *key, size_t len)
+int cipher::dec_enc_buffer(unsigned char *in, size_t inlen, char **outp,
+                           size_t *outl)
 {
-    const char *randdev = "/dev/random";
-    FILE *fp;
+    int ret;
 
-    if (RAND_bytes((unsigned char *)key, len) <= 0) {
-        CRYPT_LOGERR("RAND_bytes");
-        if ((fp = fopen(randdev, "rb")) == NULL) {
-            printf("failed to open '%s': %s\n", randdev, strerror(errno));
-            return errno;
-        }
-        if (len != fread(key, 1, len, fp)) {
-            printf("can not read %zu bytes from '%s'", len, randdev);
-            fclose(fp);
-            return EINVAL;
-        }
-        fclose(fp);
+    BUF_MEM *bptr = NULL;
+    BIO *mem = BIO_new(BIO_s_mem());
+    if (mem == NULL) {
+        CRYPT_LOGERR("BIO_new");
+        return ENOMEM;
     }
 
+    ret = encrypt_decrypt(in, inlen, mem);
+    if (ret != 0) {
+        BIO_free(mem);
+        return ret;
+    }
+
+    BIO_get_mem_ptr(mem, &bptr);
+    *outp = (char *)calloc(1, bptr->length);
+    if (! *outp) {
+        ret = ENOMEM;
+    } else {
+        memcpy(*outp, bptr->data, bptr->length);
+        *outl = bptr->length;
+    }
+
+    BIO_free(mem);
+
     return 0;
+}
+
+int cipher::enc_dec_file(unsigned char *key, int key_len, const char *ifile,
+                     const char *ofile, int dec)
+{
+    int ret;
+    if (dec) dec = FLAG_DECRYPT;
+    if ((ret = init(key, key_len, NULL, dec))) {
+        destroy();
+        return ret;
+    }
+
+    ret = dec_enc_file(ifile, ofile);
+    destroy();
+    return ret;
+}
+
+int cipher::enc_dec_file(unsigned char *key, int key_len, FILE *inf,
+                     FILE *out, int dec)
+{
+    int ret;
+    if (dec) dec = FLAG_DECRYPT;
+    if ((ret = init(key, key_len, NULL, dec))) {
+        destroy();
+        return ret;
+    }
+
+    ret = dec_enc_file(inf, out);
+    destroy();
+    return ret;
+}
+
+int cipher::enc_dec_file(unsigned char *key, int key_len, FILE *inf,
+                         char **outp, size_t *outl, int dec)
+{
+    int ret;
+    if (dec) dec = FLAG_DECRYPT;
+    if ((ret = init(key, key_len, NULL, dec))) {
+        destroy();
+        return ret;
+    }
+
+    ret = dec_enc_file(inf, outp, outl);
+    destroy();
+    return ret;
+}
+
+
+int cipher::enc_dec_buffer(unsigned char *key, int key_len, unsigned char *in,
+                       size_t inlen, char **outp, size_t *outl, int dec)
+{
+    int ret;
+    if (dec) dec = FLAG_DECRYPT;
+    if ((ret = init(key, key_len, NULL, dec))) {
+        destroy();
+        return ret;
+    }
+
+    ret = dec_enc_buffer(in, inlen, outp, outl);
+    destroy();
+    return ret;
+}
+
+void cipher::dump_ctx()
+{
+    const char *mode;
+    int i, m, offs;
+    char tmpstr[128] = {0};
+    EVP_CIPHER_CTX *ctx = &cipher_ctx;
+
+    m = EVP_CIPHER_CTX_mode(ctx);
+    switch(m) {
+    case EVP_CIPH_STREAM_CIPHER:
+        mode = "stream";
+    case EVP_CIPH_ECB_MODE:
+        mode = "ECB";
+    case EVP_CIPH_CBC_MODE:
+        mode = "CBC";
+    case EVP_CIPH_CFB_MODE:
+        mode = "CFB";
+    case EVP_CIPH_OFB_MODE:
+        mode = "OFB";
+    default:
+        mode = "Unknown";
+    }
+
+    if (EVP_CIPHER_CTX_iv_length(ctx) > 0) {
+        for(i=0,offs=0; i<EVP_CIPHER_CTX_iv_length(ctx); ++i)
+            offs += sprintf(tmpstr+offs, "%.2x", ctx->iv[i]);
+        printf("  iv: %s(%d)", tmpstr, EVP_CIPHER_CTX_iv_length(ctx));
+    }
+    printf("  mode: %d(%s), block-size:%d\n", m, mode, EVP_CIPHER_CTX_block_size(ctx));
 }

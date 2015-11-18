@@ -2,10 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #include <openssl/evp.h>
 
 #include "cipher.h"
+#include "rsa.h"
 
 #include <utiltime.h>
 extern "C" {
@@ -13,113 +15,183 @@ extern "C" {
 #include <hexdump.h>
 }
 
-static const char    *algo = "DES3";
-static EVP_CIPHER_CTX ctx;
-static unsigned char  key[32];
-static unsigned int   key_len = 8;
+static uint32_t magic_number = 0xfeeefeee;
+typedef struct _crypt_ctx {
+    cipher *ciph;
+    rsakey *rsa;
+} crypt_ctx_t;
 
-static void init_key()
+crypt_ctx_t ctx = {NULL, NULL};
+
+/**
+ * RSA default passphrase, used for encrypt private key
+ * when export and load
+ */
+static unsigned char rsa_pass[] = {
+    0x7b,0xfe,0x9f,0x3d,0x9e,0xc6,0x06,0x7e,
+    0x70,0x35,0xe9,0x6a,0x1b,0x6e,0x94,0xbe
+};
+
+int create_ctx(const char *private_key)
 {
-    FILE *fp;
-    const char *keyfile = "passwd";
-    if ((fp = fopen(keyfile, "rb")) == NULL) {
-        fp = fopen(keyfile, "wb");
-        crypt_gen_key(key, sizeof(key));
+    int ret;
+    const char *pubkey = "/tmp/key.pub";
 
-        fwrite(key, 1, sizeof(key), fp);
-    } else {
-        fread(key, 1, sizeof(key), fp);
+    if (ctx.ciph == NULL) {
+        ctx.ciph = new cipher();
+        if (!ctx.ciph) {
+            return ENOMEM;
+        }
     }
-    if (fp) fclose(fp);
+
+    if (ctx.rsa == NULL) {
+        ctx.rsa = new rsakey();
+        if (!ctx.rsa) {
+            return ENOMEM;
+        }
+        if ((ret = ctx.rsa->load_key(private_key, rsa_pass))) {
+            return ret;
+        }
+
+        if ((ret = ctx.rsa->export_key(pubkey))) {
+            return ret;
+        }
+        if ((ret = ctx.rsa->load_pubkey(pubkey))) {
+            return ret;
+        }
+    }
+
+    return 0;
 }
 
-static const char *cipher_mode(int mode)
+int encrypt(const char *ifile, const char *ofile)
 {
-    switch(mode) {
-    case EVP_CIPH_STREAM_CIPHER:
-        return "stream";
-    case EVP_CIPH_ECB_MODE:
-        return "ECB";
-    case EVP_CIPH_CBC_MODE:
-        return "CBC";
-    case EVP_CIPH_CFB_MODE:
-        return "CFB";
-    case EVP_CIPH_OFB_MODE:
-        return "OFB";
-    default:
-        return "Unknown";
-    }
+    int ret;
+    FILE *fpi, *fpo;
+
+    unsigned char secret[AES_KEY_LEN];
+    unsigned char buffer[512], *pout;
+
+    size_t len, outl = 0;
+
+    do {
+        ret = EINVAL;
+        if ((fpi = fopen(ifile, "rb")) == NULL)
+            break;
+        if ((fpo = fopen(ofile, "wb")) == NULL)
+            break;
+
+        if (crypt_gen_key(secret, sizeof(secret)))
+            break;
+
+        ret = ctx.rsa->enc_dec(secret, sizeof(secret), &pout, &outl);
+        if (ret) break;
+
+        // header length
+        len = sizeof(magic_number) + 4 + outl;
+
+        // construct header
+        memcpy(buffer, &magic_number, sizeof(magic_number));
+        memcpy(buffer+sizeof(magic_number), &len, 2);
+        memcpy(buffer+sizeof(magic_number)+4, pout, outl);
+        free(pout);
+
+        fwrite(buffer, 1, len, fpo);
+
+        ret = ctx.ciph->enc_dec_file(secret, sizeof(secret), fpi, fpo);
+        if (ret) break;
+    } while(0);
+
+    return ret;
 }
 
-static void dump_cipher_ctx(EVP_CIPHER_CTX *ctx)
+int decrypt(const char *ifile, const char *ofile)
 {
-    int i, mode, offs;
-    char tmpstr[128] = {0};
+    int ret;
 
-    if (EVP_CIPHER_CTX_iv_length(ctx) > 0) {
-        for(i=0,offs=0; i<EVP_CIPHER_CTX_iv_length(ctx); ++i)
-            offs += sprintf(tmpstr+offs, "%.2x", ctx->iv[i]);
-        printf("  iv: %s(%d)", tmpstr, EVP_CIPHER_CTX_iv_length(ctx));
-    }
-    mode = EVP_CIPHER_CTX_mode(ctx);
-    printf("  mode: %d(%s), block-size:%d\n", mode, cipher_mode(mode),
-           EVP_CIPHER_CTX_block_size(ctx));
-    printf("  key(%d): %s", key_len, hexdump("/1 \"%02x\"", key, key_len, tmpstr));
+    FILE *fpi, *fpo;
+    unsigned char buffer[512], *pout;
+    size_t len, outl = 0;
+
+    do {
+        ret = EINVAL;
+        if ((fpi = fopen(ifile, "rb")) == NULL)
+            break;
+        if ((fpo = fopen(ofile, "wb")) == NULL)
+            break;
+
+        fread(buffer, 1, sizeof(magic_number), fpi);
+        if (memcmp(buffer, &magic_number, sizeof(magic_number)) != 0) {
+            printf("magic number mismatch\n");
+            break;
+        }
+
+        fread(buffer, 1, 4, fpi);
+        memcpy(&len, buffer, 2);
+        len = len & 0xffff;
+        len = len - sizeof(magic_number) - 4;
+
+        fread(buffer, 1, len, fpi);
+
+        ret = ctx.rsa->enc_dec(buffer, len,  &pout, &outl, 1);
+        if (ret) break;
+        if (outl != AES_KEY_LEN) {
+            printf("key length mismatch\n");
+            break;
+        }
+
+        ret = ctx.ciph->enc_dec_file(pout, outl, fpi, fpo, 1);
+    } while(0);
+
+    return ret;
 }
 
 int main(int argc, char *argv[])
 {
-    int index = 0;
-    int flags = 0;
-    double start;
+    int ret, index;
+    int dec = 0;
     static struct option long_options[] = {
         {0, 0, 0, 0}
     };
 
-    const char* optlist = "dk:c:";
+    const char* optlist = "d:";
     while (1){
         int c = getopt_long(argc, argv, optlist, long_options, &index);
         if (c == EOF) break;
         switch (c) {
         case 'd':
-            flags |= FLAG_DECRYPT;
-            break;
-        case 'k':
-            key_len = strlen(optarg);
-            memcpy(key, optarg, key_len);
-            break;
-        case 'c':
-            algo = strdup(optarg);
+            dec = 1;
             break;
         case 0:
             break;
         default:
-            printf("usage: %s -[dkc] in out\n", argv[0]);
+            printf("usage: %s [-d] in out\n", argv[0]);
             exit(0);
         }
     }
-    if (key[0] == 0) init_key();
-    crypt_init_module();
 
-    if (getenv("cipher")) {
-        algo = getenv("cipher");
+    crypt_init();
+
+    // Generate
+    if (access("key", R_OK) != 0) {
+        EVP_PKEY *pk = NULL;
+        rsakey::generate(&pk);
+        if (pk == NULL) return 1;
+        if (rsakey::export_key(pk, "key", rsa_pass))
+            return ENOENT;
     }
 
-    printf("%s \"%s\" with '%s' algorithm, write to \"%s\":\n",
-           (flags & FLAG_DECRYPT) ?"Decrypt":"Encrypt", argv[optind], algo,
-           argv[optind+1]);
-    printf("  size: %s\n", file_size(argv[optind]));
-
-    if (crypt_init_ex(&ctx, key, key_len, algo, flags)) {
+    if (create_ctx("key")) {
+        printf("failed to create context\n");
         return 1;
     }
-    dump_cipher_ctx(&ctx);
-    start = timing_start();
-    dec_enc_file(&ctx, argv[optind], argv[optind+1]);
-    printf("  timecost: %.3f\n", timing_cost(start));
+    if (dec) {
+        ret = decrypt(argv[optind],argv[optind+1]);
+    } else {
+        ret = encrypt(argv[optind],argv[optind+1]);
+    }
 
-    crypt_destroy(&ctx);
-    return 0;
+    return ret;
 }
 // Verify
 // in=cipher.h; ./crypt $in /tmp/enc; ll $in /tmp/enc;./crypt /tmp/enc /tmp/dec -d; diff $in /tmp/dec

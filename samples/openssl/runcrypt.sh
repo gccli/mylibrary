@@ -33,13 +33,13 @@ function asymenc()
     do
         rm -f $enc $dec
         #using public key encrypt
-        echo -e "./rsa $inf $enc -p"
-        ./rsa $inf $enc -p
+        echo -e "./crypt $inf $enc"
+        ./crypt $inf $enc -p
         [ $? -ne 0 ] && exit 1
 
         #using private key decrytp
-        echo -e "./rsa $enc $dec -d"
-        ./rsa $enc $dec -d
+        echo -e "./crypt $enc $dec -d"
+        ./crypt $enc $dec -d
         [ $? -ne 0 ] && exit 1
 
         s1=$(stat -c%s $inf)
@@ -52,4 +52,3 @@ function asymenc()
 }
 
 asymenc
-#symenc
