@@ -1,21 +1,11 @@
-#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
-
-#include <openssl/err.h>
-#include <openssl/ssl.h>
 
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include "cipher.h"
-#include "rsa.h"
-
-#include <hexdump.h>
-#include <utiltime.h>
-#include <utilfile.h>
-
+#include "rsakey.h"
 
 rsakey::rsakey()
     :pk_pri(NULL)
@@ -227,14 +217,12 @@ int rsakey::enc_dec(unsigned char *in, size_t inlen, unsigned char **outp,
                     size_t *outl, int dec)
 {
     int ret;
-
-    EVP_PKEY_CTX *ctx = NULL;
     unsigned char *out = NULL;
     size_t outlen;
-    int pad = RSA_PKCS1_OAEP_PADDING;
+    const int pad = RSA_PKCS1_OAEP_PADDING;
 
+    EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pk = dec ? pk_pri : pk_pub;
-
 
     do {
         ret = EINVAL;
@@ -295,164 +283,6 @@ int rsakey::enc_dec(unsigned char *in, size_t inlen, unsigned char **outp,
 
     return ret;
 }
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-
-
-/*(
-static int get_rsa_key()
-{
-    int ret = 0;
-    if (access(pri_key, R_OK) == 0) {
-        rsa_prikey = rsa_load_key(pri_key, rsa_pass);
-        rsa_pubkey = rsa_load_pubkey(pub_key);
-    } else {
-        rsa_prikey = rsa_gen_key();
-        if (rsa_prikey) {
-            ret = export_key(rsa_prikey, pri_key, rsa_pass);
-            if (ret == 0) {
-                export_pubkey(rsa_prikey, pub_key);
-                rsa_pubkey = rsa_load_pubkey(pub_key);
-            }
-        }
-    }
-
-    if (verbose && rsa_prikey && rsa_pubkey) {
-        RSA_print_fp(stdout, EVP_PKEY_get1_RSA(rsa_prikey), 0);
-        RSA_print_fp(stdout, EVP_PKEY_get1_RSA(rsa_pubkey), 0);
-    }
-
-    return ret;
-    }*/
-
-/*
-int main(int argc, char *argv[])
-{
-    static EVP_PKEY *pk;
-    EVP_CIPHER_CTX ctx;
-
-    FILE *fp = NULL, *out = NULL;
-    const char *keyfile = "passwd";
-    const char *algo = "aes-256-cbc";
-    int ret;
-    int index = 0;
-    int decrypt = 0;
-    int use_pubkey = 0;
-
-    unsigned char buffer[512], *pout;
-    size_t len, outlen;
-
-    static struct option long_options[] = {
-        {0, 0, 0, 0}
-    };
-
-    const char* optlist = "vdp";
-    while (1){
-        int c = getopt_long(argc, argv, optlist, long_options, &index);
-        if (c == EOF) break;
-        switch (c) {
-        case 'v':
-            verbose++;
-            break;
-        case 'd':
-            decrypt = FLAG_DECRYPT;
-            break;
-        case 'p':
-            use_pubkey = 1;
-            break;
-        case 0:
-            break;
-        default:
-            printf("usage: %s [-vdp ] in out\n", argv[0]);
-            exit(0);
-        }
-    }
-
-    // Init openssl library
-    crypt_init();
-
-
-
-    // Init or load secret key
-    if ((fp = fopen(keyfile, "rb")) == NULL) {
-        if ((fp = fopen(keyfile, "wb"))) {
-            crypt_gen_key(secret, sizeof(secret));
-            fwrite(secret, 1, sizeof(secret), fp);
-        }
-    } else {
-        fread(secret, 1, sizeof(secret), fp);
-    }
-    if (fp) fclose(fp);
-
-    // Generate RSA key pair if not exists
-    get_rsa_key();
-
-    // encrypt/decrypt file
-    if (optind < 1) {
-        printf("%s [-vpd] in out\n", argv[0]);
-        return EINVAL;
-    }
-    fp = fopen(argv[optind], "rb");
-    assert(fp != NULL);
-    out = fopen(argv[optind+1], "wb");
-    assert(out != NULL);
-
-    pk = use_pubkey ? rsa_pubkey : rsa_prikey;
-    if (decrypt) {
-        fread(buffer, 1, 4, fp);
-        memcpy(&len, buffer, 2);
-        len = len & 0xffff;
-        fread(buffer, 1, len-4, fp);
-        ret = rsa_dec_enc(pk, 0, buffer, len-4, &pout, &outlen);
-        assert(outlen == sizeof(secret));
-        assert(memcmp(pout, secret, outlen) == 0);
-        free(pout);
-
-        // write encrypt file
-        ret = crypt_init_ex(&ctx, secret, sizeof(secret), algo, decrypt);
-        assert(ret == 0);
-
-        ret = dec_enc_f2b(&ctx, fp, (char **)&pout, &outlen);
-        assert(ret == 0);
-        fwrite(pout, 1, outlen, out);
-        free(pout);
-
-        printf("%s: decrypted file %s -> %s\n", use_pubkey?"PUB":"PRI",
-               argv[optind], argv[optind+1]);
-    } else {
-        ret = rsa_dec_enc(pk, 1, secret, sizeof(secret), &pout, &outlen);
-        assert(ret == 0);
-
-        // write file header
-        len = outlen + 4;                // header length
-        *(unsigned short *)buffer = len;
-        crypt_gen_key(buffer+2, 2);      // random reserved bytes
-        memcpy(buffer+4, pout, outlen);
-        free(pout);
-        fwrite(buffer, 1, len, out);
-
-        // write encrypt file
-        ret = crypt_init_ex(&ctx, secret, sizeof(secret), algo, decrypt);
-        assert(ret == 0);
-        ret = dec_enc_f2b(&ctx, fp, (char **)&pout, &outlen);
-        assert(ret == 0);
-        fwrite(pout, 1, outlen, out);
-        free(pout);
-        printf("%s: encrypted file %s -> %s\n", use_pubkey?"PUB":"PRI",
-               argv[optind], argv[optind+1]);
-    }
-
-    crypt_destroy(&ctx);
-    fclose(fp);
-    fclose(out);
-*/
-//    return 0;
-//}
 
 /*
  * private key encrypt

@@ -1,15 +1,26 @@
 #ifndef CIPHER_H__
 #define CIPHER_H__
 
-#include "crypt_common.h"
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+
+#define CRYPT_LOGERR(str) do {                                    \
+        char tmp_errstr[256];                                     \
+        unsigned long tmp_errno;                                  \
+        while((tmp_errno = ERR_get_error())) {                    \
+            printf("%s %s\n", str,                                \
+                   ERR_error_string(tmp_errno, tmp_errstr));      \
+	}                                                         \
+    } while(0)
 
 // AES_256 key length in bytes
 #define AES_KEY_LEN 32
+
 typedef enum {
     FLAG_DECRYPT    = 0x01, // the context for encryption default
     FLAG_NO_PADDING = 0x02  // the padding is enabled by default
 } crypt_flags_t;
-
 
 class cipher {
 public:
@@ -26,9 +37,8 @@ public:
     int enc_dec_buffer(unsigned char *key, int key_len, unsigned char *in,
                        size_t inlen, char **outp, size_t *outl, int dec=0);
 
-
-
     void dump_ctx();
+
 protected:
 /**
  * Initialize symmetric-key cryptography context for encrypt or decrypt.

@@ -2,18 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
 
-#include <openssl/evp.h>
+#include <openssl/rand.h>
 
 #include "cipher.h"
-#include "rsa.h"
-
-#include <utiltime.h>
-extern "C" {
-#include "utilfile.h"
-#include <hexdump.h>
-}
+#include "rsakey.h"
+#include "crypt_common.h"
+#include "crypt.h"
 
 static uint64_t magic_number = 0xfeeeeeeffeeeeeef;
 typedef struct _crypt_ctx {
@@ -32,29 +27,50 @@ static unsigned char rsa_pass[] = {
     0x70,0x35,0xe9,0x6a,0x1b,0x6e,0x94,0xbe
 };
 
-void long2buff(uint64_t n, unsigned char *p)
+
+int crypt_init()
 {
-    *p++ = (n >> 56) & 0xFF;
-    *p++ = (n >> 48) & 0xFF;
-    *p++ = (n >> 40) & 0xFF;
-    *p++ = (n >> 32) & 0xFF;
-    *p++ = (n >> 24) & 0xFF;
-    *p++ = (n >> 16) & 0xFF;
-    *p++ = (n >> 8) & 0xFF;
-    *p++ = n & 0xFF;
+    SSL_load_error_strings();
+    ERR_load_crypto_strings();
+    OpenSSL_add_all_algorithms();
+    OpenSSL_add_all_ciphers();
+
+    return 0;
 }
 
-uint64_t buff2long(const unsigned char *p)
+int crypt_destroy()
 {
-    return  (((uint64_t)(*p)) << 56) |          \
-        (((uint64_t)(*(p+1))) << 48) |          \
-        (((uint64_t)(*(p+2))) << 40) |          \
-        (((uint64_t)(*(p+3))) << 32) |          \
-        (((uint64_t)(*(p+4))) << 24) |          \
-        (((uint64_t)(*(p+5))) << 16) |          \
-        (((uint64_t)(*(p+6))) << 8)  |          \
-        ((uint64_t)(*(p+7)));
+    ERR_free_strings();
+    EVP_cleanup();
+
+    return 0;
 }
+
+int crypt_gen_key(void *key, size_t len)
+{
+    FILE *fp;
+    const char *dev = "/dev/random";
+
+    if (RAND_bytes((unsigned char *)key, len) <= 0) {
+        CRYPT_LOGERR("RAND_bytes");
+        if ((fp = fopen(dev, "rb")) == NULL) {
+            printf("failed to open '%s': %s\n", dev, strerror(errno));
+            return errno;
+        }
+        if (len != fread(key, 1, len, fp)) {
+            printf("can not read %zu bytes from '%s'", len, dev);
+            fclose(fp);
+            return EINVAL;
+        }
+        fclose(fp);
+    }
+
+    return 0;
+}
+
+
+
+
 
 int create_ctx(const char *private_key)
 {
@@ -103,7 +119,6 @@ int encrypt(const char *ifile, const char *ofile)
         fpi = NULL;
         fpo = NULL;
 
-
         if ((fpi = fopen(ifile, "rb")) == NULL)
             break;
         if ((fpo = fopen(ofile, "wb")) == NULL)
@@ -119,7 +134,7 @@ int encrypt(const char *ifile, const char *ofile)
         len = sizeof(magic_number) + 4 + outl;
 
         // construct header
-        long2buff(magic_number, buffer);
+        ul2buf(magic_number, buffer);
         memcpy(buffer+sizeof(magic_number), &len, 2);
         memcpy(buffer+sizeof(magic_number)+4, pout, outl);
         free(pout);
@@ -127,7 +142,6 @@ int encrypt(const char *ifile, const char *ofile)
         fwrite(buffer, 1, len, fpo);
 
         ret = ctx.ciph->enc_dec_file(secret, sizeof(secret), fpi, fpo);
-        if (ret) break;
     } while(0);
 
     if (fpi) fclose(fpi);
@@ -155,7 +169,7 @@ int decrypt(const char *ifile, const char *ofile)
             break;
 
         fread(buffer, 1, sizeof(magic_number), fpi);
-        if (buff2long(buffer) != magic_number) {
+        if (buf2ul(buffer) != magic_number) {
             printf("magic number mismatch\n");
             break;
         }
@@ -182,6 +196,12 @@ int decrypt(const char *ifile, const char *ofile)
 
     return ret;
 }
+
+#ifdef _CRYPT_MAIN
+
+#include <utiltime.h>
+#include <hexdump.h>
+#include <utilfile.h>
 
 int main(int argc, char *argv[])
 {
@@ -230,6 +250,8 @@ int main(int argc, char *argv[])
 
     return ret;
 }
+
+#endif
 // Verify
 // in=cipher.h; ./crypt $in /tmp/enc; ll $in /tmp/enc;./crypt /tmp/enc /tmp/dec -d; diff $in /tmp/dec
 //

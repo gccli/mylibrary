@@ -1,44 +1,38 @@
 #include "crypt_common.h"
 
-#include <openssl/rand.h>
-
-
-int crypt_init()
+void ui2buf(uint32_t n, unsigned char *p)
 {
-    SSL_load_error_strings();
-    ERR_load_crypto_strings();
-    OpenSSL_add_all_algorithms();
-    OpenSSL_add_all_ciphers();
-
-    return 0;
+    *p++ = (n >> 24) & 0xFF;
+    *p++ = (n >> 16) & 0xFF;
+    *p++ = (n >> 8) & 0xFF;
+    *p++ = n & 0xFF;
 }
 
-int crypt_destroy()
+uint32_t buf2ui(const unsigned char *p)
 {
-    ERR_free_strings();
-    EVP_cleanup();
-
-    return 0;
+    return (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
 }
 
-int crypt_gen_key(void *key, size_t len)
+void ul2buf(uint64_t n, unsigned char *p)
 {
-    FILE *fp;
-    const char *dev = "/dev/random";
+    *p++ = (n >> 56) & 0xFF;
+    *p++ = (n >> 48) & 0xFF;
+    *p++ = (n >> 40) & 0xFF;
+    *p++ = (n >> 32) & 0xFF;
+    *p++ = (n >> 24) & 0xFF;
+    *p++ = (n >> 16) & 0xFF;
+    *p++ = (n >> 8) & 0xFF;
+    *p++ = n & 0xFF;
+}
 
-    if (RAND_bytes((unsigned char *)key, len) <= 0) {
-        CRYPT_LOGERR("RAND_bytes");
-        if ((fp = fopen(dev, "rb")) == NULL) {
-            printf("failed to open '%s': %s\n", dev, strerror(errno));
-            return errno;
-        }
-        if (len != fread(key, 1, len, fp)) {
-            printf("can not read %zu bytes from '%s'", len, dev);
-            fclose(fp);
-            return EINVAL;
-        }
-        fclose(fp);
-    }
-
-    return 0;
+uint64_t buf2ul(const unsigned char *p)
+{
+    return  (((uint64_t)(*p)) << 56) |          \
+        (((uint64_t)(*(p+1))) << 48) |          \
+        (((uint64_t)(*(p+2))) << 40) |          \
+        (((uint64_t)(*(p+3))) << 32) |          \
+        (((uint64_t)(*(p+4))) << 24) |          \
+        (((uint64_t)(*(p+5))) << 16) |          \
+        (((uint64_t)(*(p+6))) << 8)  |          \
+        ((uint64_t)(*(p+7)));
 }
