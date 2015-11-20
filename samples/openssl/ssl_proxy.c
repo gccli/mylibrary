@@ -35,17 +35,8 @@ typedef struct {
     // Client side
     SSL *cs_ssl;
     BIO *cs_bio;
-
-// Server side write buffer
-    char *csbuf, *csbuf_b, *csbuf_e;
-
-// Client side write buffer
-    char *scbuf, *scbuf_b, *scbuf_e;
 } Conn;
 Conn *conn=NULL;
-
-void conn_close_client(Conn *conn);
-void conn_close_server(Conn *conn);
 
 void debug(char *format,...)
 {
@@ -67,43 +58,6 @@ void plog(int level, const char *format,...)
     syslog(level, "%s\n", str);
     debug("LOG: %.256s", str);
 }
-
-void plog_ssl_error(SSL *ssl_conn, int ret, char *cls, int sock)
-{
-    int err=SSL_get_error(ssl_conn, ret);
-    switch (err) {
-	case SSL_ERROR_NONE:
-	case SSL_ERROR_WANT_READ:
-	case SSL_ERROR_WANT_WRITE:
-	case SSL_ERROR_WANT_CONNECT:
-	case SSL_ERROR_WANT_ACCEPT:
-	    break;
-	case SSL_ERROR_SSL:
-	    plog(LOG_ERR, "ERROR @%d %s: %s", sock, cls,
-		    ERR_error_string(ERR_get_error(), NULL));
-	    break;
-	case SSL_ERROR_SYSCALL:
-	    if (!ret) {
-		plog(LOG_ERR, "ERROR @%d %s: Unexpected EOF", sock, cls);
-	    } else {
-		plog(LOG_ERR, "ERROR @%d %s: %s (errno=%d)", sock, cls, strerror(errno), errno);
-	    }
-	    break;
-	case SSL_ERROR_ZERO_RETURN:
-//	    plog(LOG_ERR, "ERROR @%d %s: Zero return", sock, cls);
-	    break;
-	default:
-	    plog(LOG_ERR, "ERROR @%d %s: Unknown SSL error (SSL_get_error()=%d)", sock, cls, err);
-	    break;
-    }
-}
-
-void _sleep()
-{
-    struct timeval tv={0, SLEEP_US};
-    select(0, NULL, NULL, NULL, &tv);
-}
-
 
 int serverside_init(int port)
 {
@@ -182,56 +136,24 @@ void sighandler(int signum)
 void *threadfunc(void *param)
 {
     Conn *conn = (Conn *) param;
-    int err, total;
-    char buffer[819200];
-    char csbuf[8192];
+    int err;
 
     if (BIO_do_handshake(conn->ss_client) <= 0) {
         SSL_LOGERR("thread handshake");
         goto error;
     }
 
-    BIO_set_nbio(conn->ss_client, 1);
-    BIO_set_nbio(conn->cs_bio, 1);
+    // Encrypt data
+    err = encrypt_s(enc_ctx, conn->ss_client, conn->cs_bio);
+    if (err != 0) {
+        printf("encrypt stream fail\n");
+    }
 
-    do
-    {
-        // Read server greeting
-        err = BIO_nb_read(conn->cs_bio, csbuf, sizeof(csbuf));
-        if (err > 0){
-            err = BIO_nb_write(conn->ss_client, csbuf, err);
-        }
-
-        err = encrypt_s(enc_ctx, conn->ss_client, conn->cs_bio);
-        if (err != 0) {
-            printf("encrypt stream fail\n");
-        }
-
-        /*
-        // Read from client
-        if ((err = BIO_nb_read(conn->ss_client, buffer, sizeof(buffer))) < 0) {
-            printf("client close\n");
-            break ;
-        }
-
-        if (err > 0) {
-            err = BIO_nb_write(conn->cs_bio, buffer, err);
-            if (err < 0) {
-                printf("failed to read\n");
-            } else {
-                printf("proxy write %d\n", err);
-            }
-            }*/
-
-
-
-        total += err;
-    } while(err >= 0);
-
-    fprintf(stderr, "Connection closed, %d bytes received.\n", total);
+    fprintf(stderr, "Connection closed\n");
 
 error:
     BIO_free_all(conn->ss_client);
+    BIO_free_all(conn->cs_bio);
     return NULL;
 }
 
@@ -273,7 +195,6 @@ int main(int argc, char **argv)
     SSLinit();
 
     crypt_rsa_genkey("key");
-
     ret = crypt_create(&enc_ctx, "key");
     if (ret != 0) {
         printf("failed to create context\n");
@@ -290,123 +211,3 @@ int main(int argc, char **argv)
     }
     return 0;
 }
-/*
-
-    while (1) {
-	int event=0, ci;
-	// Check for incoming connections
-	if ((i=conn_accept())>0) {
-	    debug("Client connected");
-	    event=1;
-	}
-	for (ci=0; ci<max_conn; ci++) {
-	    Conn *cn=&conn[ci];
-	    int l;
-	    switch (cn->stat) {
-            case cs_accept:
-                i=conn_ssl_accept(cn);
-                event|=(i==0);
-                break;
-            case cs_connecting: {
-                struct sockaddr_in client_addr;
-                unsigned int client_addr_len=sizeof(client_addr);
-                X509 *cert;
-                X509_NAME *xn=NULL;
-                char peer_cn[256]="";
-                getpeername(cn->server_sock,
-                            (struct sockaddr *)&client_addr,
-                            &client_addr_len);
-                cert=SSL_get_peer_certificate(cn->ssl_conn);
-                if (cert) {
-                    xn=X509_get_subject_name(cert);
-                    X509_NAME_get_text_by_NID(xn, NID_commonName, peer_cn, 256);
-                }
-
-                cn->csbuf_e+=snprintf(cn->csbuf_b, cs_buflen,
-                                      "#@ip=%s port=%d%s%s%s\r\n",
-                                      inet_ntoa(client_addr.sin_addr),
-                                      htons(client_addr.sin_port), xn?" cn='":"", peer_cn, xn?"'":"");
-                debug("INFO: %p %d %s", cn, cn->server_sock, cn->csbuf);
-
-                plog(LOG_INFO, "CONNECT @%d %s:%d%s%s%s",
-                     cn->server_sock, inet_ntoa(client_addr.sin_addr), htons(client_addr.sin_port),
-                     xn?" cn='":"", peer_cn, xn?"'":"");
-                cn->stat=cs_connected;
-            }
-                break;
-            case cs_connected:
-                if ((l=cs_buflen-(cn->csbuf_e-cn->csbuf))) {
-                    i=SSL_read(cn->ssl_conn, cn->csbuf_e, l);
-                    if (i<=0) { // Error, or shutdown
-                        if (errno!=EAGAIN) {
-                            plog_ssl_error(cn->ssl_conn, i, "SSL_read()",
-                                           conn->server_sock);
-                            cn->stat=cs_closing; event=1;
-                        }
-                    } else cn->csbuf_e+=i;
-                }
-            case cs_closing:
-                // Send buffered data to server
-                if ((l=cn->csbuf_e-cn->csbuf_b)>0) {
-                    i=write(cn->client_sock, cn->csbuf_b, l); event=1;
-                    //write(2, cn->csbuf_b, l);
-                    if (i>=0) {
-                        cn->csbuf_b+=i;
-                    } else {
-			    if (errno!=EAGAIN) {
-				plog(LOG_ERR, "ERROR @%d write(): %s",
-					conn->server_sock, strerror(errno));
-				cn->csbuf_b=cn->csbuf_e=cn->csbuf;
-				cn->stat=cs_closing;
-			    }
-			}
-			if (cn->csbuf_b==cn->csbuf_e) {
-			    cn->csbuf_b=cn->csbuf_e=cn->csbuf;
-//			    if (cn->c_end_req) conn_close(cn);
-			}
-		    }
-		    if (cn->stat==cs_closing && cn->csbuf_e==cn->csbuf_b) conn_close_client(cn);
-		default:;
-	    }
-	    if (cn->stat==cs_connected || cn->stat==cs_closing) {
-		// Check if data is available on server side
-		if ((l=sc_buflen-(cn->scbuf_e-cn->scbuf)) && cn->client_sock>=0) {
-		    i=read(cn->client_sock, cn->scbuf_e, l);
-		    if (!i) { // End of connection
-			cn->stat=cs_closing; event=1;
-//			cn->s_end_req=1;
-		    } else if (i<0) { // Error
-			if (errno!=EAGAIN) {
-			    plog(LOG_ERR, "ERROR @%d read(): %s",
-				    conn->server_sock, strerror(errno));
-			    cn->stat=cs_closing; event=1;
-//			    cn->s_end_req=1;
-			}
-		    } else cn->scbuf_e+=i;
-		}
-		// Send buffered data to client
-		if ((l=cn->scbuf_e-cn->scbuf_b)>0 && cn->server_sock>=0) {
-		    i=SSL_write(cn->ssl_conn, cn->scbuf_b, l);
-		    if (i>0) debug("transfer: buf=%d, b=%d, l=%d, i=%d", cn->scbuf,
-			    cn->scbuf_b, l, i);
-		    if (i>=0) {
-			cn->scbuf_b+=i; event=1;
-		    } else if (errno!=EAGAIN) {
-			plog_ssl_error(cn->ssl_conn, i, "SSL_write()",
-				conn->server_sock);
-			cn->scbuf_b=cn->scbuf_e=cn->scbuf;
-			event=1;
-		    }
-		    if (cn->scbuf_b==cn->scbuf_e) {
-			cn->scbuf_b=cn->scbuf_e=cn->scbuf;
-//			if (cn->s_end_req) conn_close(cn);
-		    }
-		}
-		if (cn->stat==cs_closing && cn->scbuf_e==cn->scbuf_b) conn_close_server(cn);
-	    }
-	}
-	if (!event) _sleep();
-    }
-    return 0;
-}
-*/

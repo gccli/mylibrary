@@ -8,9 +8,13 @@
 #include <getopt.h>
 #include <signal.h>
 
-#include "sslcommon.h"
-#include "utilfile.h"
+#include <utilfile.h>
+#include <hexdump.h>
 
+#include "sslcommon.h"
+#include "crypt.h"
+
+struct crypt_ctx *enc_ctx;
 int port;
 void *threadfunc(void *param)
 {
@@ -20,25 +24,18 @@ void *threadfunc(void *param)
         BIO_free_all(client);
         return NULL;
     }
-    int sock = 0;
-    BIO_get_fd(client, &sock);
+    int fd, len, err, total = 0;
+    char tmp[128] = {0}, str[256] = {0}, buffer[819200];
+    BIO_get_fd(client, &fd);
 
     struct sockaddr_in peer;
     socklen_t solen = sizeof(peer);
     memset(&peer, 0, solen);
-    getpeername(sock, (struct sockaddr *) &peer, &solen);
-    fprintf(stderr, "Connection opened from %s:%d\n",
-            inet_ntoa(peer.sin_addr), ntohs(peer.sin_port));
+    getpeername(fd, (struct sockaddr *) &peer, &solen);
+    fd = get_tmpfile(tmp);
+    printf("Connection opened from %s:%d write to %s\n",
+           inet_ntoa(peer.sin_addr), ntohs(peer.sin_port), tmp);
 
-    char tmp[128] = {0};
-    char str[256] = {0};
-    int fd = get_tmpfile(tmp);
-    sprintf(str, "OK Server<%ld> greeting, write to:%s\r\n", thread_id(), tmp);
-    BIO_puts(client, str);
-    printf("%s", str);
-
-    int  err, total = 0;
-    char buffer[819200];
     do
     {
         if ((err = BIO_read(client, buffer, sizeof(buffer))) <= 0) {
@@ -47,20 +44,28 @@ void *threadfunc(void *param)
             }
             break ;
         }
+        len = err>32?32:err;
+        printf("read %d bytes:\n%s\n", err, hexdump(HXD_1, buffer, len, str));
+
         BIO_write(client, "OK\r\n", 4);
         write(fd, buffer, err);
         total += err;
     } while(err > 0);
-
     BIO_free_all(client);
 
-    fprintf(stderr, "Connection closed, %d bytes received.\n", total);
+    if (fd > 0) close(fd);
+    sprintf(str, "/tmp/dec.%ld", thread_id());
+    decrypt(enc_ctx, tmp, str);
+
+    fprintf(stderr, "Connection closed, %d bytes received, decrypt to %s.\n",
+            total, str);
 
     return NULL;
 }
 
 int main(int argc, char *argv[])
 {
+    int ret;
     static struct option long_options[] = {
         {0, 0, 0, 0}
     };
@@ -88,6 +93,12 @@ int main(int argc, char *argv[])
 
     SSLinit();
     SSLseeding(1024, "/tmp/sending");
+
+    ret = crypt_create(&enc_ctx, "key");
+    if (ret != 0) {
+        printf("failed to create context\n");
+        return 1;
+    }
 
     SSL_CTX *ctx = SSLnew_server_ctx("certs/server.pem", "lijing");
 

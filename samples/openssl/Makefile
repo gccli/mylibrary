@@ -30,7 +30,7 @@ libencrypt.so:
 client:$(COBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 server:$(SOBJS)
-	$(CC) -o $@ $^ $(LDFLAGS)
+	$(CC) -o $@ $^ $(LDFLAGS) -L. -lencrypt
 mailclient:$(MOBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 sslproxy:$(PROXYOBJS)

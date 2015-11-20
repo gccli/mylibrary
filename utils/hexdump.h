@@ -71,6 +71,7 @@ size_t hxd_read(struct hdx *, void *, size_t);
 #define HEXDUMP_i "\"  \" 12/1? \"0x%02x, \" \"\\n\""
 
 
+#define HXD_1 "/1 \"%02x\""
 char *hexdump(const char *fmt, void *data, size_t size, char *str);
 
 #endif
