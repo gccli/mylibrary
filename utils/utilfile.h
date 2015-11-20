@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifdef __cpluplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -26,39 +26,16 @@ static inline size_t get_file_size(const char *file)
     return st.st_size;
 }
 
+char *get_file_buffer(const char *file, size_t *r);
+
 /**
  * Return the human-readable file size (e.g., 1.24 K 24.52 M 2.0 G)
  */
 const char *file_size(const char *file);
 
-static inline char *get_file_buffer(const char *file, size_t *r)
-{
-    FILE *fp;
-    char *buff;
-    size_t len;
-    if ((len = get_file_size(file)) == 0) {
-        return NULL;
-    }
-    if ((fp = fopen(file, "rb")) == NULL) {
-        fprintf(stderr, "open file error - %s\n", strerror(errno));
-        return NULL;
-    }
+int get_tmpfile(char *);
 
-    buff = (char *)calloc(len, 1);
-    if (buff == NULL) {
-        fprintf(stderr, "failed allocate memory\n");
-        return NULL;
-    }
-    if ((*r = fread(buff, 1, len, fp)) != len) {
-        fprintf(stderr, "read file %zu bytes\n", *r);
-        free(buff);
-        return NULL;
-    }
-
-    return buff;
-}
-
-#ifdef __cpluplus
+#ifdef __cplusplus
 }
 #endif
 

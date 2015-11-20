@@ -1102,6 +1102,7 @@ char *hexdump(const char *fmt, void *data, size_t size, char *str)
         memcpy(str+doff, buf, len);
         doff += len;
     }
+    str[doff] = 0;
 
     return str;
 }

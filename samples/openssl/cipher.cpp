@@ -408,6 +408,22 @@ int cipher::enc_dec_buffer(unsigned char *key, int key_len, unsigned char *in,
     return ret;
 }
 
+int cipher::enc_dec_stream(unsigned char *key, int key_len, BIO *in, BIO *out,
+                           int dec)
+{
+    int ret;
+    if (dec) dec = FLAG_DECRYPT;
+    if ((ret = init(key, key_len, NULL, dec))) {
+        destroy();
+        return ret;
+    }
+
+    ret = encrypt_decrypt(in, out);
+    destroy();
+    return ret;
+}
+
+
 void cipher::dump_ctx()
 {
     const char *mode;

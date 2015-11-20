@@ -28,18 +28,6 @@ public:
     cipher(const char *name, int pad);
     virtual ~cipher();
 
-    int enc_dec_file(unsigned char *key, int key_len, const char *ifile,
-                     const char *ofile, int dec=0);
-    int enc_dec_file(unsigned char *key, int key_len, FILE *inf,
-                     FILE *out, int dec=0);
-    int enc_dec_file(unsigned char *key, int key_len, FILE *inf,
-                     char **outp, size_t *outl, int dec=0);
-    int enc_dec_buffer(unsigned char *key, int key_len, unsigned char *in,
-                       size_t inlen, char **outp, size_t *outl, int dec=0);
-
-    void dump_ctx();
-
-protected:
 /**
  * Initialize symmetric-key cryptography context for encrypt or decrypt.
  * The secret key specified by @key, and the key length is @key_len.
@@ -53,6 +41,24 @@ protected:
     int encrypt_decrypt(BIO *in, BIO *out);
     int encrypt_decrypt(unsigned char *in, size_t inlen, BIO *out);
 
+
+/**
+ * Utility function for encrypt/decrypt file or buffer
+ */
+    int enc_dec_file(unsigned char *key, int key_len, const char *ifile,
+                     const char *ofile, int dec=0);
+    int enc_dec_file(unsigned char *key, int key_len, FILE *inf,
+                     FILE *out, int dec=0);
+    int enc_dec_file(unsigned char *key, int key_len, FILE *inf,
+                     char **outp, size_t *outl, int dec=0);
+    int enc_dec_buffer(unsigned char *key, int key_len, unsigned char *in,
+                       size_t inlen, char **outp, size_t *outl, int dec=0);
+    int enc_dec_stream(unsigned char *key, int key_len, BIO *in, BIO *out,
+                       int dec=0);
+
+    void dump_ctx();
+
+protected:
 /**
  * Utility function for encrypt/decrypt file or buffer
  * These functions should init context before call

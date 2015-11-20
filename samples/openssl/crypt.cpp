@@ -10,23 +10,27 @@
 #include "crypt_common.h"
 #include "crypt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 static uint64_t magic_number = 0xfeeeeeeffeeeeeef;
-typedef struct _crypt_ctx {
+struct crypt_ctx {
     cipher *ciph;
     rsakey *rsa;
-} crypt_ctx_t;
+};
 
-crypt_ctx_t ctx = {NULL, NULL};
+typedef struct crypt_ctx crypt_ctx_t;
 
 /**
  * RSA default passphrase, used for encrypt private key
  * when export and load
  */
+
 static unsigned char rsa_pass[] = {
     0x7b,0xfe,0x9f,0x3d,0x9e,0xc6,0x06,0x7e,
     0x70,0x35,0xe9,0x6a,0x1b,0x6e,0x94,0xbe
 };
-
 
 int crypt_init()
 {
@@ -68,43 +72,105 @@ int crypt_gen_key(void *key, size_t len)
     return 0;
 }
 
-
-
-
-
-int create_ctx(const char *private_key)
+int crypt_create(crypt_ctx_t **ctxp, const char *private_key)
 {
     int ret;
+
+    crypt_ctx_t *ctx;
     const char *pubkey = "/tmp/key.pub";
 
-    if (ctx.ciph == NULL) {
-        ctx.ciph = new cipher();
-        if (!ctx.ciph) {
-            return ENOMEM;
+    do {
+        ret = ENOMEM;
+
+        ctx = (crypt_ctx_t *)calloc(1, sizeof(*ctx));
+        if (!ctx) break;
+
+        ctx->ciph = new cipher();
+        if (!ctx->ciph) {
+            break;
         }
+
+        ctx->rsa = new rsakey();
+        if (!ctx->rsa) {
+            break;
+        }
+        if ((ret = ctx->rsa->load_key(private_key, rsa_pass))) {
+            printf("failed to load rsa key\n");
+            break;
+        }
+
+        if ((ret = ctx->rsa->export_key(pubkey))) {
+            break;
+        }
+        if ((ret = ctx->rsa->load_pubkey(pubkey))) {
+            break;
+        }
+
+        *ctxp = ctx;
+        ret = 0;
+    } while(0);
+
+    if (ret) {
+        crypt_free(ctx);
+        ctx = NULL;
     }
 
-    if (ctx.rsa == NULL) {
-        ctx.rsa = new rsakey();
-        if (!ctx.rsa) {
-            return ENOMEM;
-        }
-        if ((ret = ctx.rsa->load_key(private_key, rsa_pass))) {
-            return ret;
-        }
-
-        if ((ret = ctx.rsa->export_key(pubkey))) {
-            return ret;
-        }
-        if ((ret = ctx.rsa->load_pubkey(pubkey))) {
-            return ret;
-        }
-    }
-
-    return 0;
+    return ret;
 }
 
-int encrypt(const char *ifile, const char *ofile)
+void crypt_free(crypt_ctx_t *ctx)
+{
+    if (ctx) {
+        if (ctx->rsa) delete ctx->rsa;
+        if (ctx->ciph) delete ctx->ciph;
+        ctx->rsa = NULL;
+        ctx->ciph = NULL;
+        free(ctx);
+    }
+}
+
+int encrypt_s(crypt_ctx_t *ctx, BIO *in, BIO *out)
+{
+    int ret;
+    unsigned char secret[AES_KEY_LEN];
+    unsigned char buffer[512], *pout;
+
+    size_t len, outl = 0;
+
+    do {
+        ret = EINVAL;
+        if (crypt_gen_key(secret, sizeof(secret)))
+            break;
+
+        ret = ctx->rsa->enc_dec(secret, sizeof(secret), &pout, &outl);
+        if (ret) break;
+
+        // header length
+        len = sizeof(magic_number) + 4 + outl;
+
+        // construct header
+        ul2buf(magic_number, buffer);
+        memcpy(buffer+sizeof(magic_number), &len, 2);
+        memcpy(buffer+sizeof(magic_number)+4, pout, outl);
+        free(pout);
+
+        if ((ret = BIO_write(out, buffer, len)) != (int)len) {
+            printf("BIO_write %d bytes, not equal %zu", ret, len);
+            if (ret == -1) {
+                CRYPT_LOGERR("BIO_write");
+            }
+            ret = EIO;
+            break;
+        }
+
+        ret = ctx->ciph->enc_dec_stream(secret, sizeof(secret), in, out);
+    } while(0);
+
+    return ret;
+}
+
+
+int encrypt(crypt_ctx_t *ctx, const char *ifile, const char *ofile)
 {
     int ret;
     FILE *fpi, *fpo;
@@ -127,7 +193,7 @@ int encrypt(const char *ifile, const char *ofile)
         if (crypt_gen_key(secret, sizeof(secret)))
             break;
 
-        ret = ctx.rsa->enc_dec(secret, sizeof(secret), &pout, &outl);
+        ret = ctx->rsa->enc_dec(secret, sizeof(secret), &pout, &outl);
         if (ret) break;
 
         // header length
@@ -141,7 +207,7 @@ int encrypt(const char *ifile, const char *ofile)
 
         fwrite(buffer, 1, len, fpo);
 
-        ret = ctx.ciph->enc_dec_file(secret, sizeof(secret), fpi, fpo);
+        ret = ctx->ciph->enc_dec_file(secret, sizeof(secret), fpi, fpo);
     } while(0);
 
     if (fpi) fclose(fpi);
@@ -150,7 +216,7 @@ int encrypt(const char *ifile, const char *ofile)
     return ret;
 }
 
-int decrypt(const char *ifile, const char *ofile)
+int decrypt(crypt_ctx_t *ctx, const char *ifile, const char *ofile)
 {
     int ret;
 
@@ -181,14 +247,14 @@ int decrypt(const char *ifile, const char *ofile)
 
         fread(buffer, 1, len, fpi);
 
-        ret = ctx.rsa->enc_dec(buffer, len,  &pout, &outl, 1);
+        ret = ctx->rsa->enc_dec(buffer, len,  &pout, &outl, 1);
         if (ret) break;
         if (outl != AES_KEY_LEN) {
             printf("key length mismatch\n");
             break;
         }
 
-        ret = ctx.ciph->enc_dec_file(pout, outl, fpi, fpo, 1);
+        ret = ctx->ciph->enc_dec_file(pout, outl, fpi, fpo, 1);
     } while(0);
 
     if (fpi) fclose(fpi);
@@ -197,11 +263,54 @@ int decrypt(const char *ifile, const char *ofile)
     return ret;
 }
 
-#ifdef _CRYPT_MAIN
+int crypt_rsa_genkey(const char *keypath)
+{
+    int ret;
+    EVP_PKEY *pk = NULL;
+    ret = rsakey::generate(&pk);
+    if (pk == NULL) {
+        return ret;
+    }
+    if (rsakey::export_key(pk, keypath, rsa_pass)) {
+        EVP_PKEY_free(pk);
+        return ENOENT;
+    }
 
+    EVP_PKEY_free(pk);
+    return 0;
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+
+
+/*------------------------------------------------------*
+ *               For Test                               *
+ *------------------------------------------------------*/
+#ifdef _CRYPT_MAIN
+extern "C" {
 #include <utiltime.h>
 #include <hexdump.h>
 #include <utilfile.h>
+}
+#include <assert.h>
+
+void test()
+{
+    uint32_t x = 0xf1f2f3f4;
+
+    unsigned char buffer[16];
+    char tmp[64];
+    const char *fmt = "/1 \"%02x\"";
+    ul2buf(magic_number, buffer);
+    printf("magic %s\n", hexdump(fmt, buffer, sizeof(uint64_t),tmp));
+    assert(buf2ul(buffer) == magic_number);
+    ui2buf(x, buffer);
+    printf("32 bits int %s\n", hexdump(fmt, buffer, sizeof(uint32_t),tmp));
+    assert(buf2ui(buffer) == x);
+}
 
 int main(int argc, char *argv[])
 {
@@ -238,15 +347,20 @@ int main(int argc, char *argv[])
             return ENOENT;
     }
 
-    if (create_ctx("key")) {
+    crypt_ctx_t *ctx;
+    ret = crypt_create(&ctx, "key");
+    if (ret != 0) {
         printf("failed to create context\n");
         return 1;
     }
     if (dec) {
-        ret = decrypt(argv[optind],argv[optind+1]);
+        ret = decrypt(ctx, argv[optind],argv[optind+1]);
     } else {
-        ret = encrypt(argv[optind],argv[optind+1]);
+        ret = encrypt(ctx, argv[optind],argv[optind+1]);
     }
+
+    crypt_free(ctx);
+    crypt_destroy();
 
     return ret;
 }

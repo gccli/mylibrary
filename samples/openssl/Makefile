@@ -1,11 +1,7 @@
 include ../../Makefile.common
+include openssl.mk
 
-OPENSSL=$(HOME)/tmp/openssl
-OSSLLIB=$(OPENSSL)/lib
-OSSLINC=$(OPENSSL)/include
-
-
-TARGET=client server mailclient crypt
+TARGET=libencrypt.so client server mailclient sslproxy
 
 # common file defined in mylibrary/utils
 COMMOBJ=hexdump.o utilfile.o
@@ -15,10 +11,10 @@ SRCS=$(wildcard *.c)
 OBJS=$(subst .c,.o,$(SRCS))
 
 COBJS=client.o infrastucture.o
-SOBJS=server.o infrastucture.o
+SOBJS=server.o infrastucture.o $(COMMOBJ)
 MOBJS=mailclient.o infrastucture.o
 
-CRYPTOBJS=$(COMMOBJ) crypt_common.o cipher.o crypt.o rsakey.o
+PROXYOBJS=ssl_proxy.o infrastucture.o
 
 CFLAGS=-g -Wall -I$(INC) -I$(OSSLINC)
 LDFLAGS=-L$(OSSLLIB) -lssl -lcrypto -lpthread -lm -ldl
@@ -28,18 +24,19 @@ all: $(OBJS) $(TARGET)
 %.o:%.c
 	$(CC) $(CFLAGS) -c $^ -o $@
 
+libencrypt.so:
+	$(MAKE) -f encrypt.mk
+
 client:$(COBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 server:$(SOBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 mailclient:$(MOBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
-#rsa:$(RSAOBJ)
-#	$(CXX) -o $@ $^ $(LDFLAGS)
-crypt:$(CRYPTOBJS)
-	$(CXX) -o $@ $^ $(LDFLAGS)
+sslproxy:$(PROXYOBJS)
+	$(CC) -o $@ $^ $(LDFLAGS) -L. -lencrypt
 %.o:%.cpp
-	$(CXX) $(CFLAGS) -D_CRYPT_MAIN -c $^ -o $@
+	$(CXX) $(CFLAGS) -c $^ -o $@
 
 %.o:$(UTILS)/%.c
 	$(CC) $(CFLAGS) -c $^ -o $@

@@ -9,6 +9,7 @@
 #include <signal.h>
 
 #include "sslcommon.h"
+#include "utilfile.h"
 
 int port;
 void *threadfunc(void *param)
@@ -26,27 +27,30 @@ void *threadfunc(void *param)
     socklen_t solen = sizeof(peer);
     memset(&peer, 0, solen);
     getpeername(sock, (struct sockaddr *) &peer, &solen);
-    fprintf(stderr, "Connection opened from %s:%d\n", inet_ntoa(peer.sin_addr), ntohs(peer.sin_port));
+    fprintf(stderr, "Connection opened from %s:%d\n",
+            inet_ntoa(peer.sin_addr), ntohs(peer.sin_port));
 
-    char greeting[32] = {0};
-    sprintf(greeting, "OK <%ld> served\r\n", thread_id());
-    BIO_puts(client, greeting);
+    char tmp[128] = {0};
+    char str[256] = {0};
+    int fd = get_tmpfile(tmp);
+    sprintf(str, "OK Server<%ld> greeting, write to:%s\r\n", thread_id(), tmp);
+    BIO_puts(client, str);
+    printf("%s", str);
 
-    int  total = 0;
-    int  err, nread;
+    int  err, total = 0;
     char buffer[819200];
     do
     {
-        for (nread = 0; nread < sizeof(buffer); nread += err)
-        {
-            if ((err = BIO_read(client, buffer + nread, sizeof(buffer) - nread)) <= 0)
-                break ;
-            BIO_write(client, "OK\r\n", 4);
+        if ((err = BIO_read(client, buffer, sizeof(buffer))) <= 0) {
+            if (err == -1) {
+                SSL_LOGERR("BIO_read");
+            }
+            break ;
         }
-        //fwrite(buffer, 1, nread, stdout);
-        total += nread;
-    }
-    while(err > 0);
+        BIO_write(client, "OK\r\n", 4);
+        write(fd, buffer, err);
+        total += err;
+    } while(err > 0);
 
     BIO_free_all(client);
 
@@ -85,7 +89,7 @@ int main(int argc, char *argv[])
     SSLinit();
     SSLseeding(1024, "/tmp/sending");
 
-    SSL_CTX *ctx = SSLnew_ctx("certs/server.pem");
+    SSL_CTX *ctx = SSLnew_server_ctx("certs/server.pem", "lijing");
 
     char strport[8];
     sprintf(strport, "%d", port);
@@ -103,6 +107,7 @@ int main(int argc, char *argv[])
     // acc is a source/sink BIO
     if ((acc = BIO_new_accept(strport)) == NULL)
         return 1;
+    BIO_set_bind_mode(acc, BIO_BIND_REUSEADDR);
 
     // when a new connection is acceptede on 'acc'
     // the 'client' will be 'dupilcated' and have the new socket BIO push into it.

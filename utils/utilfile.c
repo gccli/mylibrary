@@ -1,9 +1,35 @@
 #include "utilfile.h"
 
-#ifdef __cpluplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
+char *get_file_buffer(const char *file, size_t *r)
+{
+    FILE *fp;
+    char *buff;
+    size_t len;
+    if ((len = get_file_size(file)) == 0) {
+        return NULL;
+    }
+    if ((fp = fopen(file, "rb")) == NULL) {
+        fprintf(stderr, "open file error - %s\n", strerror(errno));
+        return NULL;
+    }
+
+    buff = (char *)calloc(len, 1);
+    if (buff == NULL) {
+        fprintf(stderr, "failed allocate memory\n");
+        return NULL;
+    }
+    if ((*r = fread(buff, 1, len, fp)) != len) {
+        fprintf(stderr, "read file %zu bytes\n", *r);
+        free(buff);
+        return NULL;
+    }
+
+    return buff;
+}
 
 const char *file_size(const char *file)
 {
@@ -25,6 +51,13 @@ const char *file_size(const char *file)
     return filesz;
 }
 
-#ifdef __cpluplus
+int get_tmpfile(char *s)
+{
+    sprintf(s, "/tmp/temp.XXXXXX");
+    return mkstemp(s);
+}
+
+
+#ifdef __cplusplus
 }
 #endif

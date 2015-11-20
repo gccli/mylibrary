@@ -12,7 +12,7 @@
 
 #define DATE_STR_SIZE 32
 
-#ifdef __cpluplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -101,7 +101,7 @@ static inline double timing_cost(double start)
     return end - start;
 }
 
-#ifdef __cpluplus
+#ifdef __cplusplus
 }
 #endif
 
