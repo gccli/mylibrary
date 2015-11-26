@@ -4,7 +4,7 @@
 #include <string.h>
 
 #ifdef __cplusplus
-#extern "C" {
+extern "C" {
 #endif
 
 // No need allocate memory
@@ -22,6 +22,9 @@ typedef struct url_parse {
     url_string_t query;
     url_string_t fragment;
 } urlparse_t;
+
+//https://tools.ietf.org/html/rfc3986
+
 
 int parse_url(const char *url, size_t urlsz, urlparse_t *u);
 
