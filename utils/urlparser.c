@@ -1,21 +1,12 @@
-#include "urlparser.h"
+#include "parser.h"
 
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 
-static char *strlchr(char *p, const char *last, char c)
-{
-    while (p < last) {
-        if (*p == c) {
-            return p;
-        }
-        p++;
-    }
 
-    return NULL;
-}
-
-int parse_url(const char *url, size_t urlsz, urlparse_t *u)
+//https://tools.ietf.org/html/rfc3986
+int parse_url(const char *url, size_t urlsz, urlparser_t *u)
 {
     int ret;
     const char *last;
@@ -183,7 +174,7 @@ int main(int argc, char *argv[])
     size_t len, size = 0;
     ssize_t rlen;
 
-    urlparse_t url;
+    urlparser_t url;
     fp = fopen(argv[1], "r");
     if (fp == NULL)
         exit(errno);
