@@ -70,13 +70,14 @@ typedef struct _url_parser {
     int valid;
 } urlparser_t;
 
-typedef struct _parser {
+typedef struct _http_ctx {
     urlparser_t *urlp;
     hdrparser_t *hdrp;
 
-    void *data; // point to user data, used for callback
-} parser_t;
+    void *user_data;
+} http_ctx_t;
 
+#define http_ctx_set_data(http, data) (http)->user_data = (data)
 
 // F U N C T I O N S
 static inline char *strlchr(char *p, const char *last, char c)
