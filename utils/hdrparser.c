@@ -1,4 +1,4 @@
-#include "parser.h"
+#include "http-data.h"
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
@@ -21,10 +21,13 @@ static const int parse_status_line(hdrparser_t *h, const char *body, size_t len,
         ret = EINVAL;
         p = (char *)body;
         *fields = NULL;
+        h->response = 1;
 
         if ((end = strstr(body, CRLF)) == NULL) {
             break;
         }
+        end = end + 2;
+
         h->http_version.data = p;
         if ((q = strlchr(p, end, SP)) == NULL) {
             break;
@@ -48,12 +51,12 @@ static const int parse_status_line(hdrparser_t *h, const char *body, size_t len,
             break;
         }
         h->u.rsp.reason.len = q-p;
-        if (q != end) {
+        if (q+2 != end) {
             break;
         }
 
         ret = 0;
-        *fields = (char *)end+2;
+        *fields = (char *)end;
     } while(0);
 
     return ret;
@@ -74,11 +77,16 @@ static const int parse_request_line(hdrparser_t *h, const char *body, size_t len
         if ((end = strstr(body, CRLF)) == NULL) {
             break;
         }
+        end = end + 2;
+
         h->u.req.method.data = p;
         if ((q = strlchr(p, end, SP)) == NULL) {
             break;
         }
         h->u.req.method.len = q-p;
+
+        debug_print("request method => %.*s\n", (int) h->u.req.method.len,
+               h->u.req.method.data);
         if ((p = q+1) == end) {
             break;
         }
@@ -87,7 +95,11 @@ static const int parse_request_line(hdrparser_t *h, const char *body, size_t len
         if ((q = strlchr(p, end, SP)) == NULL) {
             break;
         }
-        h->u.req.method.len = q-p;
+        h->u.req.uri.len = q-p;
+
+        debug_print("  request uri => %.*s\n", (int) h->u.req.uri.len,
+               h->u.req.uri.data);
+
         if ((p = q+1) == end) {
             break;
         }
@@ -97,18 +109,22 @@ static const int parse_request_line(hdrparser_t *h, const char *body, size_t len
             break;
         }
         h->http_version.len = q-p;
-        if (q != end) {
+
+        debug_print("  http version => %.*s\n", (int) h->http_version.len,
+               h->http_version.data);
+
+        if (q+2 != end) {
             break;
         }
 
         ret = 0;
-        *fields = (char *)end+2;
+        *fields = (char *)end;
     } while(0);
 
     return ret;
 }
 
-int parser_header(const char *hdr, size_t size, hdrparser_t *h)
+int parse_header(const char *hdr, size_t size, hdrparser_t *h)
 {
     int ret;
     char *p;
@@ -143,7 +159,7 @@ int parser_header(const char *hdr, size_t size, hdrparser_t *h)
         field->key.len = p - field->key.data;
         p++; // skip ':'
 
-        if (p < end || iscrlf(p)) {
+        if (p >= end || iscrlf(p)) {
             break;
         }
 
@@ -160,10 +176,8 @@ int parser_header(const char *hdr, size_t size, hdrparser_t *h)
             break;
         }
         p += 2;
-#ifdef _DEBUG
-        printf("  %.*s => %.*s\n", (int)field->key.len, field->key.data,
+        debug_print("  %.*s => %.*s\n", (int)field->key.len, field->key.data,
                (int)field->val.len, field->val.data );
-#endif
         ret = 0;
         if (iscrlf(p)) break;
     } while(p < end);

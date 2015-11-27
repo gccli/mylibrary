@@ -1,8 +1,33 @@
-#include "parser.h"
+#include "http-data.h"
 
 #include <errno.h>
-#include <stdio.h>
 #include <string.h>
+
+void dump_url(urlparser_t *u)
+{
+    int len;
+    if ((len = (int) u->url.len) > 0) {
+        debug_print("%.*s      [%s]\n", len, u->url.data, u->valid?"ok":"error");
+    }
+    if ((len = (int) u->schema.len) > 0) {
+        debug_print("  schema: %.*s\n", len, u->schema.data);
+    }
+    if ((len = (int) u->host.len) > 0) {
+        debug_print("  host:   %.*s\n", len, u->host.data);
+    }
+    if ((len = (int) u->port.len) > 0) {
+        debug_print("  port:   %.*s\n", len, u->port.data);
+    }
+    if ((len = (int) u->path.len) > 0) {
+        debug_print("  path:   %.*s\n", len, u->path.data);
+    }
+    if ((len = (int) u->query.len) > 0) {
+        debug_print("  query:  %.*s\n", len, u->query.data);
+    }
+    if ((len = (int) u->fragment.len) > 0) {
+        debug_print("  frag:   %.*s\n", len, u->fragment.data);
+    }
+}
 
 
 //https://tools.ietf.org/html/rfc3986
@@ -108,65 +133,21 @@ parse_host_port:
         }
     }
     u->host.len = hplen;
-
     ret = 0;
+    u->valid = 1;
 
 error:
-    if (ret) {
-        memset(u, 0, sizeof(*u));
-    }
-#ifdef _DEBUG
-    int len;
-    if (ret == 0) {
-        printf("%.*s      [ok]\n", (int)u->url.len, u->url.data);
-    } else {
-        printf("%.*s   [error]\n", (int)urlsz, url);
-    }
-
-    if ((len = (int) u->schema.len) > 0) {
-        printf("  schema: %.*s\n", len, u->schema.data);
-    }
-    if ((len = (int) u->host.len) > 0) {
-        printf("  host:   %.*s\n", len, u->host.data);
-    }
-    if ((len = (int) u->port.len) > 0) {
-        printf("  port:   %.*s\n", len, u->port.data);
-    }
-    if ((len = (int) u->path.len) > 0) {
-        printf("  path:   %.*s\n", len, u->path.data);
-    }
-    if ((len = (int) u->query.len) > 0) {
-        printf("  query:  %.*s\n", len, u->query.data);
-    }
-    if ((len = (int) u->fragment.len) > 0) {
-        printf("  frag:   %.*s\n", len, u->fragment.data);
-    }
-#endif
+    dump_url(u);
     return ret;
 }
 
-
-
+#ifdef _DEBUG
 #ifdef _URLPARSE_MAIN
 /*
  * Test case
  * gcc -g -Wall urlparser.c -D_URLPARSE_MAIN -D_DEBUG
  * ./a.out url.txt  # each line in url.txt is a url
 */
-#include <ctype.h>
-size_t trim(char *p, char *pend) {
-    for(; p<pend; ++p) {
-        if (isspace(*p)) *p = 0;
-        else break;
-    }
-    for(--pend; p<pend; --pend) {
-        if (isspace(*pend)) *pend = 0;
-        else break;
-    }
-
-    return pend - p + 1;
-}
-
 int main(int argc, char *argv[])
 {
     FILE *fp;
@@ -180,7 +161,7 @@ int main(int argc, char *argv[])
         exit(errno);
 
     while ((rlen = getline(&line, &size, fp)) != -1) {
-        len = trim(line, line+rlen);
+        len = strtrim(line, line+rlen);
         parse_url(line, len, &url);
     }
 
@@ -188,4 +169,5 @@ int main(int argc, char *argv[])
     fclose(fp);
     return 0;
 }
+#endif
 #endif
