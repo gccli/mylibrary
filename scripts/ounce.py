@@ -1,4 +1,4 @@
-#! /usr/bin/python 
+#! /usr/bin/python
 
 import re
 import sys
@@ -99,7 +99,7 @@ def main():
 
     exchange_rate()
     print usdcny
-    for i in xrange(1160, 1240+1):
+    for i in xrange(1000, 1100+1):
         print '| %d - %.3f' % (i, i*usdcny/ounce),' | ',
         if ((i+1)%5 == 0):
             print ''
@@ -107,4 +107,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
