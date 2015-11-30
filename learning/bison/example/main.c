@@ -53,7 +53,7 @@ int evaluate(SExpression *e)
 int main(void)
 {
     SExpression *e = NULL;
-    char test[]=" 4 + 2*10 + 3*( 5 + 1 )";
+    char test[]=" (4 + 2)*10 + 3*(2 + 1)";
     int result = 0;
 
     e = getAST(test);
