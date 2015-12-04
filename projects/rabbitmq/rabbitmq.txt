@@ -10,6 +10,7 @@ $ apt-get update
 $ apt-get install rabbitmq-server
 pip install pika
 
+
 * Get Start
 http://www.rabbitmq.com/getstarted.html
 
@@ -33,4 +34,3 @@ https://pika.readthedocs.org/en/0.9.14/index.html
 
 * AMQP Protocol
 http://www.rabbitmq.com/amqp-0-9-1-reference.html
-

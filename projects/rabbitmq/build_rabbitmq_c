@@ -1,0 +1,19 @@
+#! /bin/bash
+
+cwd=$(pwd)
+
+if [ ! -d rabbitmq-c ]; then
+    git clone git@github.com:alanxz/rabbitmq-c.git
+    [ $? -ne 0 ] && echo "download error" && exit 1
+fi
+
+cd rabbitmq-c
+mkdir -p build
+cd build && rm -rf *
+cmake -DCMAKE_INSTALL_PREFIX=$cwd -DCMAKE_INSTALL_LIBDIR=$cwd -DCMAKE_INSTALL_INCLUDEDIR=$cwd  ..
+[ $? -ne 0 ] && echo "cmake error" && exit 1
+make && make install
+[ $? -ne 0 ] && echo "make error" && exit 1
+
+cd $cwd
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:.

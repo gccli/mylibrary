@@ -7,7 +7,7 @@ def callback(ch, method, properties, body):
 
 connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
 channel = connection.channel()
-channel.exchange_declare(exchange='logs', type='fanout')
+channel.exchange_declare(exchange='logs', type='fanout', nowait=True)
 #channel.queue_declare(queue='hello')
 result = channel.queue_declare(exclusive=True)
 queue_name = result.method.queue
