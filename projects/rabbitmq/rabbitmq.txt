@@ -1,4 +1,68 @@
-* Install rabbitmq on Ubuntu
+AMQP Model [Concept](http://www.rabbitmq.com/tutorials/amqp-concepts.html)
+==========
+
+What is AMQP?
+-------------
+AMQP (Advanced Message Queuing Protocol) is a messaging protocol that enables conforming client applications to communicate with conforming messaging middleware brokers.
+
+Brokers and Their Role
+----------------------
+Messaging brokers receive messages from publishers (applications that publish them, also known as producers) and route them to consumers (applications that process them).
+
+messages are published to *exchanges*(mailboxes). Exchanges then distribute message copies to queues using rules called *bindings*. Then AMQP brokers either deliver messages to consumers subscribed to queues, or consumers fetch/pull messages from queues on demand.
+
+Exchanges and Exchange Types
+----------------------------
+
+Exchanges are AMQP entities where messages are sent. Exchanges take a message and route it into zero or more queues. The routing algorithm used depends on the exchange type and rules called *bindings*.
+Direct exchange 	(amq.direct)
+Fanout exchange 	(amq.fanout)
+Topic exchange 	    (amq.topic)
+Headers exchange 	(amq.match and amq.headers in RabbitMQ)
+
+**attributes**: Name, Durability, Auto-delete, Arguments
+
+Queues
+------
+
+Queues properities: Name, Durable(the queue will survive a broker restart), Exclusive, Auto-delete, Arguments
+
+Bindings
+--------
+
+Bindings are rules that exchanges use (among other things) to route messages to queues.
+
+Consumers
+---------
+
+### Message Acknowledgements ###
+when should the AMQP broker remove messages from queues?
+1. After broker sends a message to an application (basic.deliver or basic.get-ok)
+2. After the application sends back an acknowledgement(basic.ack)
+
+## Message Attributes and Payload ##
+
+Some attributes are optional and known as *headers*.
+AMQP messages also have a *payload*, which AMQP brokers treat as an *opaque* byte array.
+It is common to use serialisation formats like JSON, Thrift, Protocol Buffers and MessagePack to serialize structured data in order to publish it as the message payload. AMQP peers typically use the "content-type" and "content-encoding" fields to communicate this information, but this is by convention only.
+
+Connections, Channels and Virtual Hosts
+---------------------------------------
+AMQP connections are typically long-lived. uses TCP for reliable delivery
+
+**Channels**
+Some applications need multiple connections to an AMQP broker. AMQP connections are multiplexed with *channels* that can be thought of as "lightweight connections that share a single TCP connection".
+
+For applications that use multiple threads/processes for processing, it is very common to open a new channel per thread/process and not share channels between them.
+
+Communication on a particular channel is completely separate from communication on another channel, therefore every AMQP method also carries a channel number that clients use to figure out which channel the method is for (and thus, which event handler needs to be invoked, for example).
+
+**Virtual Hosts**
+To make it possible for a single broker to host multiple isolated "environments", AMQP includes the concept of *virtual hosts (vhosts)*
+
+Install rabbitmq on Ubuntu
+==========================
+
 Add the following line to your /etc/apt/sources.list:
   deb http://www.rabbitmq.com/debian/ testing main
 
