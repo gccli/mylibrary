@@ -1,14 +1,17 @@
 TARGET=producer consumer
 
-CFLAGS=-g -Wall -I.
+CFLAGS=-g -Wall -I. -Irabbitmq-c/librabbitmq
 LDFLAGS=-L. -lrabbitmq
 
 
+ALL_SRCS=$(wildcard *.c)
+COMMON_SRCS=$(filter-out consumer.c producer.c, $(ALL_SRCS))
+
 all:$(TARGET)
 
-producer:amqp_producer.c utils.c amqpclient.c
+producer:producer.c $(COMMON_SRCS)
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
-consumer:amqp_consumer.c utils.c
+consumer:consumer.c $(COMMON_SRCS)
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 clean:
 	$(RM) *.o $(TARGET)
