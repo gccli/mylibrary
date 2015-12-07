@@ -423,6 +423,9 @@ int amq_recv_one(amqp_connection_state_t conn, process_func callback)
             }
         }
     } else {
+        printf("exchange:%.*s routing_key:%.*s ",
+               (int)envelope.exchange.len, (char *)envelope.exchange.bytes,
+               (int)envelope.routing_key.len,(char *)envelope.routing_key.bytes);
         callback(envelope.message.body.bytes, envelope.message.body.len);
         amqp_destroy_envelope(&envelope);
     }
