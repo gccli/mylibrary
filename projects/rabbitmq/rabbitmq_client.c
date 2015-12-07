@@ -14,9 +14,8 @@
 #include "http_data.h"
 
 #define DEFAULT_VHOST             "/"
-#define DEFAULT_QUEUE             "log.queue"
-#define DEFAULT_EXCHANGE          "log.direct"
-#define DEFAULT_BINDING           "log.binding"
+#define DEFAULT_EXCHANGE          "amq.direct"
+#define DEFAULT_BINDING           "log"
 #define DEFAULT_EXCHTYPE          "direct"
 
 #define DEFAULT_RABBITMQ_HOST       "localhost"
@@ -36,7 +35,7 @@ typedef struct amq_client {
 
     int port;                      // rabbitmq port, default 5672
     char host[MAX_HOSTNAME_LEN];   // rabbitmq hostname, default localhost
-    char vhost[MAX_NAME_LEN];      // vhost name
+    char vhost[MAX_NAME_LEN];
     char queue[MAX_NAME_LEN];      // queue name
     char binding[MAX_NAME_LEN];    // binding name
     char exchange[MAX_NAME_LEN];   // exchange name
@@ -163,9 +162,6 @@ static int amq_set_handle_params(amq_client_t *handle, const urlparser_t *u)
         }
     }
 
-    if (handle->queue[0] == 0) {
-        snprintf(handle->queue, MAX_NAME_LEN, "%s", DEFAULT_QUEUE);
-    }
     if (handle->exchange[0] == 0) {
         snprintf(handle->exchange, MAX_NAME_LEN, "%s", DEFAULT_EXCHANGE);
     }
@@ -183,14 +179,12 @@ static amq_client_t *amq_open_channel(const char *url, uint16_t channel)
     int status, err;
     size_t len;
     amq_client_t *handle;
+    char user[MAX_NAME_LEN];
+    char passwd[MAX_NAME_LEN];
 
     urlparser_t urlp;
-    amqp_rpc_reply_t x;
     struct timeval tv;
-
-    char user[MAX_NAME_LEN]    = {0};
-    char passwd[MAX_NAME_LEN]  = {0};
-
+    amqp_rpc_reply_t x;
     amqp_socket_t *socket = NULL;
 
     err = EINVAL;
@@ -209,8 +203,8 @@ static amq_client_t *amq_open_channel(const char *url, uint16_t channel)
         goto error;
     }
 
-    handle->conn = amqp_new_connection();
     handle->channel = channel;
+    handle->conn = amqp_new_connection();
 
     // Create Socket to connect RabbitMQ host:port
     tv.tv_sec = DEFAULT_TIMEOUT;
@@ -225,7 +219,6 @@ static amq_client_t *amq_open_channel(const char *url, uint16_t channel)
 
     // Login
     // Set username, password, vhost
-
     if ((len = urlp.username.len) > 0) {
         if (len > sizeof(user)) {
             printf("username %.*s too long\n", (int)len, urlp.username.data);
@@ -244,18 +237,14 @@ static amq_client_t *amq_open_channel(const char *url, uint16_t channel)
     } else {
         strcpy(passwd, DEFAULT_RABBITMQ_PASSWD);
     }
-
     x = amqp_login(handle->conn, handle->vhost, 0, 131072, 0,
                    AMQP_SASL_METHOD_PLAIN,
                    user, passwd);
-
     CHECK_REPLY(x, "Login");
 
     // Open Channel
     amqp_channel_open(handle->conn, handle->channel);
     CHECK_REPLY(amqp_get_rpc_reply(handle->conn), "Opening channel");
-
-
 
     err = 0;
     printf("open channel success\n");
@@ -288,16 +277,18 @@ void *amq_create_consumer(const char *url, uint16_t channel)
     }
 
     // Declare Exchange
-    amqp_exchange_declare(handle->conn, handle->channel,
-                          amqp_cstring_bytes(handle->exchange),
-                          amqp_cstring_bytes(DEFAULT_EXCHTYPE),
-                          0, // passsive
-                          0, // durable
-                          0, // auto_delete
-                          0, // intenal
-                          amqp_empty_table);
-    CHECK_REPLY(amqp_get_rpc_reply(handle->conn), "Declaring exchange");
 
+    if (strcmp(handle->exchange, DEFAULT_EXCHANGE) != 0) {
+        amqp_exchange_declare(handle->conn, handle->channel,
+                              amqp_cstring_bytes(handle->exchange),
+                              amqp_cstring_bytes(DEFAULT_EXCHTYPE),
+                              0, // passsive
+                              0, // durable
+                              1, // auto_delete
+                              0, // intenal
+                              amqp_empty_table);
+        CHECK_REPLY(amqp_get_rpc_reply(handle->conn), "Declaring exchange");
+    }
     // Declare Queue
     r = amqp_queue_declare(handle->conn, handle->channel,
                            amqp_cstring_bytes(handle->queue),
@@ -342,7 +333,6 @@ void *amq_create_producer(const char *url, uint16_t channel)
     return amq_open_channel(url, channel);
 }
 
-
 int amq_send(void *hp, void *data, size_t len)
 {
     int err;
@@ -355,7 +345,7 @@ int amq_send(void *hp, void *data, size_t len)
     err = amqp_basic_publish(handle->conn,
                              handle->channel,
                              amqp_cstring_bytes(handle->exchange),
-                             amqp_cstring_bytes(handle->queue),
+                             amqp_cstring_bytes(handle->binding),
                              0,    // mandatory
                              0,    // immediate
                              NULL, // properties, e.g. content-type
@@ -370,7 +360,6 @@ int amq_send(void *hp, void *data, size_t len)
     return 0;
 }
 
-
 int amq_recv_one(amqp_connection_state_t conn, process_func callback)
 {
     amqp_rpc_reply_t ret;
@@ -378,6 +367,7 @@ int amq_recv_one(amqp_connection_state_t conn, process_func callback)
     amqp_frame_t frame;
 
     amqp_maybe_release_buffers(conn);
+
     ret = amqp_consume_message(conn, &envelope, NULL, 0);
 
     if (AMQP_RESPONSE_NORMAL != ret.reply_type) {
@@ -404,9 +394,6 @@ int amq_recv_one(amqp_connection_state_t conn, process_func callback)
                     if (AMQP_RESPONSE_NORMAL != ret.reply_type) {
                         return EINVAL;
                     }
-
-                    printf("read\n");
-                    callback(message.body.bytes, message.body.len);
 
                     amqp_destroy_message(&message);
                 }
@@ -436,6 +423,7 @@ int amq_recv_one(amqp_connection_state_t conn, process_func callback)
             }
         }
     } else {
+        callback(envelope.message.body.bytes, envelope.message.body.len);
         amqp_destroy_envelope(&envelope);
     }
 
@@ -446,7 +434,11 @@ int amq_recv_loop(void *hp, process_func callback)
 {
     amq_client_t *handle = (amq_client_t *) hp;
     while(1) {
-        printf("receive\n");
-        amq_recv_one(handle->conn, callback);
+        if (amq_recv_one(handle->conn, callback) != 0) {
+            printf("error in receive one message\n");
+            break;
+        }
     }
+
+    return 0;
 }

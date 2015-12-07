@@ -1,6 +1,6 @@
 TARGET=producer consumer
 
-CFLAGS=-g -Wall -I. -Irabbitmq-c/librabbitmq
+CFLAGS=-g -Wall -I. -Irabbitmq-c/librabbitmq -I$(HOME)/mylibrary/utils
 LDFLAGS=-L. -lrabbitmq
 
 

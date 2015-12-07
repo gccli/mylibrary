@@ -22,5 +22,6 @@ fi
 
 cd $cwd
 ln -f ~/tmp/depot/AppID/urlparser.c urlparser.c
+ln -f ~/mylibrary/utils/hexdump.c hexdump.c
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:.

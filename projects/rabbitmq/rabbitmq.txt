@@ -7,9 +7,9 @@ AMQP (Advanced Message Queuing Protocol) is a messaging protocol that enables co
 
 Brokers and Their Role
 ----------------------
-Messaging brokers receive messages from publishers (applications that publish them, also known as producers) and route them to consumers (applications that process them).
+Messaging brokers receive messages from *publishers*(also known as *producers*) and route them to *consumers*.
 
-messages are published to *exchanges*(mailboxes). Exchanges then distribute message copies to queues using rules called *bindings*. Then AMQP brokers either deliver messages to consumers subscribed to queues, or consumers fetch/pull messages from queues on demand.
+Messages are published to *exchanges*(mailboxes), exchanges then distribute message copies to queues using rules called *bindings*. Then AMQP brokers either deliver messages to consumers subscribed to queues, or consumers fetch/pull messages from queues on demand.
 
 Exchanges and Exchange Types
 ----------------------------
@@ -82,8 +82,10 @@ rabbitmqctl list_queues
 rabbitmqctl list_consumers
 rabbitmq-plugins list
 
-# enable management plugin
-+ # rabbitmq-plugins enable rabbitmq_management
+enable management plugin
+------------------------
+
+ # rabbitmq-plugins enable rabbitmq_management
   The following plugins have been enabled:
     mochiweb
     webmachine
@@ -93,8 +95,8 @@ rabbitmq-plugins list
     rabbitmq_management
   Plugin configuration has changed. Restart RabbitMQ for changes to take effect.
 
-* Python AMQP API
-https://pika.readthedocs.org/en/0.9.14/index.html
 
-* AMQP Protocol
+AMQP Protocol
+=============
+
 http://www.rabbitmq.com/amqp-0-9-1-reference.html
