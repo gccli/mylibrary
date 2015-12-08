@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+#include <unistd.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -5,7 +7,7 @@
 #include <errno.h>
 
 #include <sys/time.h>
-
+#include <sys/syscall.h>
 #include <amqp_tcp_socket.h>
 #include <amqp.h>
 #include <amqp_framing.h>
@@ -203,6 +205,9 @@ static amq_client_t *amq_open_channel(const char *url, uint16_t channel)
         goto error;
     }
 
+    if (channel == 0) {
+        channel = syscall(__NR_gettid);
+    }
     handle->channel = channel;
     handle->conn = amqp_new_connection();
 

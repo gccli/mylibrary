@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
              binding? binding : "",
              queue ? queue : "");
 
-    void *handle = amq_create_consumer(url, 1);
+    void *handle = amq_create_consumer(url, 0);
     if (!handle) {
         return 1;
     }
