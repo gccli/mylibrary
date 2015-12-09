@@ -1,0 +1,7 @@
+# Log-in
+# docker login
+
+
+# Push the image
+# Format: docker push <user-name>/<repository>
+# docker push lijing/mongo
