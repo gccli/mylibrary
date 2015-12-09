@@ -1,20 +1,21 @@
 #
-# ElasticSearch Dockerfile
+# Elasticsearch Dockerfile
 #
 # https://github.com/dockerfile/elasticsearch
 #
 
 # Pull base image.
-FROM dockerfile/java:oracle-java7
+FROM dockerfile/java:oracle-java8
 
-# Install ElasticSearch.
+ENV ES_PKG_NAME elasticsearch-2.1.0
+
+# Install Elasticsearch.
 RUN \
   cd /tmp && \
-  wget https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.4.0.Beta1.tar.gz && \
-  tar xvzf elasticsearch-1.4.0.Beta1.tar.gz && \
-  rm -f elasticsearch-1.4.0.Beta1.tar.gz && \
-  mv /tmp/elasticsearch-1.4.0.Beta1 /elasticsearch && \
-  /elasticsearch/bin/plugin -url http://download.elasticsearch.org/kibana/kibana/kibana-latest.zip -i elasticsearch/kibana
+  wget https://download.elasticsearch.org/elasticsearch/elasticsearch/$ES_PKG_NAME.tar.gz && \
+  tar xvzf $ES_PKG_NAME.tar.gz && \
+  rm -f $ES_PKG_NAME.tar.gz && \
+  mv /$ES_PKG_NAME /elasticsearch
 
 # Define mountable directories.
 VOLUME ["/data"]
