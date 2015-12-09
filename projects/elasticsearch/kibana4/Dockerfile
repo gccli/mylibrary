@@ -5,16 +5,19 @@
 #
 
 # Pull base image.
-FROM dockerfile/java:oracle-java7
+FROM dockerfile/java:oracle-java8
+
+ENV KIBANA_VERSION=4.3.0-linux-x64
+
+https://download.elastic.co/kibana/kibana/kibana-4.3.0-linux-x64.tar.gz
 
 # Install Kibana4
 RUN \
   cd /tmp && \
-  wget https://download.elasticsearch.org/kibana/kibana/kibana-4.0.0-BETA1.1.tar.gz && \
-  tar xvzf kibana-4.0.0-BETA1.1.tar.gz && \
-  rm -f kibana-4.0.0-BETA1.1.tar.gz && \
-  mv /tmp/kibana-4.0.0-BETA1.1 /kibana && \
-  sed -i 's/^kibanaIndex.*/kibanaIndex: "kibana4"/' /kibana/config/kibana.yml
+  wget https://download.elasticsearch.org/kibana/kibana/kibana-$KIBANA_VERSION.tar.gz && \
+  tar xvzf kibana-$KIBANA_VERSION.tar.gz && \
+  rm -f kibana-$KIBANA_VERSION.tar.gz && \
+  mv /tmp/kibana-$KIBANA_VERSION /kibana
 
 # Define mountable directories.
 VOLUME ["/data"]

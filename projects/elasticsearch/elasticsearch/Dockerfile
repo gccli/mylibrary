@@ -7,15 +7,15 @@
 # Pull base image.
 FROM dockerfile/java:oracle-java8
 
-ENV ES_PKG_NAME elasticsearch-2.1.0
+ENV ES_VERSION=2.1.0
 
 # Install Elasticsearch.
 RUN \
   cd /tmp && \
-  wget https://download.elasticsearch.org/elasticsearch/elasticsearch/$ES_PKG_NAME.tar.gz && \
-  tar xvzf $ES_PKG_NAME.tar.gz && \
-  rm -f $ES_PKG_NAME.tar.gz && \
-  mv /$ES_PKG_NAME /elasticsearch
+  wget https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-$ES_VERSION.tar.gz && \
+  tar xvzf elasticsearch-$ES_VERSION.tar.gz && \
+  rm -f elasticsearch-$ES_VERSION.tar.gz && \
+  mv /tmp/elasticsearch-$ES_VERSION /elasticsearch
 
 # Define mountable directories.
 VOLUME ["/data"]

@@ -1,45 +1,55 @@
-* Docker
+Introduce
+=========
+
 Docker is a platform for developers and sysadmins to develop, ship, and run applications.
 Docker consists of:
     The Docker Engine - our lightweight and powerful open source container virtualization technology combined with a work flow for building and containerizing your applications.
     Docker Hub - our SaaS service for sharing and managing your application stacks
 
-* [[https://docs.docker.com/articles/dockerfile_best-practices/][Dockerfile]]
+[Dockerfile] (https://docs.docker.com/articles/dockerfile_best-practices/)
 Docker can build images automatically by reading the instructions from a Dockerfile
 
+Command line
+============
 
-* command line
-** Container
+Container
+---------
+
    docker run
    -p flag will bind the specified port to all interfaces on the host machine. But you can also specify a binding to a specific interface
-   --name flag, name your container by using the 
+   --name flag, name your container by using the
 
-   docker ps -l 
+   docker ps -l
  + An Interactive Container
    docker run -t -i ubuntu:14.04 /bin/bash
    -i, --interactive=false    Keep stdin open even if not attached
    -t, --tty=false            Allocate a pseudo-tty
 
-*** docker logs
+### docker logs ###
+
     -f, --follow=false        Follow log output
     -t, --timestamps=false    Show timestamps
 
-*** Looking at Container's processes
+### Looking at Container's processes ###
+
     $ docker top zk0
 
-*** Inspecting our Web Application Container
+### Inspecting our Web Application Container ###
+
     $ docker inspect zk0
     $ docker inspect -f '{{ .NetworkSettings.IPAddress }}' zk0
 
-** Linking Containers 
+Linking Containers
+------------------
+
    --link=[]                  Add link to another container (name:alias)
-   
+
    docker run --name my-mysql -e MYSQL_ROOT_PASSWORD=my-mysqlpw -d mysql
    # Connect to MySQL from an application in another Docker container
    docker run --name my-app --link my-mysql:mysql -d app-that-uses-mysql
    # Connect to MySQL from the MySQL command line client
    docker run -it --link my-mysql:mysql --rm mysql sh -c 'exec mysql -h"$MYSQL_PORT_3306_TCP_ADDR" -P"$MYSQL_PORT_3306_TCP_PORT" -uroot -p"$MYSQL_ENV_MYSQL_ROOT_PASSWORD"'
-   # Container shell access 
+   # Container shell access
    The docker exec command allows you to run commands inside a Docker container
    docker exec -it my-mysql bash
 
@@ -48,5 +58,3 @@ Docker can build images automatically by reading the instructions from a Dockerf
      the -e, --env and --env-file options on the docker run command when the source container is started
 
 ** Managing Data in Containers
-   
-
