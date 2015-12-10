@@ -71,13 +71,10 @@ To avoid having to use sudo when you use the `docker` command, create a Unix gro
 
 Registry
 ========
-
+[daocloud]: http://www.oschina.net/news/57894/daocloud
 A registry is a storage and content delivery system, holding named Docker images.
 
     docker run -d -p 5000:5000 --restart=always --name registry -v $HOME/tmp/notes/certs:/certs -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/server.pem -e REGISTRY_HTTP_TLS_KEY=/certs/serverkey.pem registry:2
-
-
-
 
 
 Command line
