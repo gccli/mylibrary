@@ -1,0 +1,5 @@
+cluster.name: elastic
+path.logs: /elasticsearch/data/log
+path.data: /elasticsearch/data
+network.host: 0
+discovery.zen.ping.multicast.enable: true

@@ -36,7 +36,7 @@ A [Dockerfile][1] is a text document that contains all the commands you would no
 [2]: http://docs.docker.com/engine/reference/builder/
 Docker can build images automatically by reading the instructions from a Dockerfile
 
-recommendations
+Recommendations
 ---------------
 
 1. Containers should be ephemeral
@@ -45,7 +45,68 @@ recommendations
 3. Run only one process per container
 4. Minimize the number of layers
 
+Instructions
+------------
+
 See [Dockerfile reference][2] for details
+
+### RUN ###
+`RUN <command>` (shell form, the command is run in a shell - /bin/sh -c)
+`RUN ["executable", "param1", "param2"]` (exec form)
+
+
+### CMD ###
+`CMD ["executable","param1","param2"]` (exec form, this is the preferred form)
+`CMD ["param1","param2"]` (as default parameters to ENTRYPOINT)
+`CMD command param1 param2` (shell form)
+
+There can only be one `CMD` instruction in a Dockerfile. If you list more than one CMD then only the last CMD will take effect.
+
+**The main purpose of a CMD is to provide defaults for an executing container.**
+
+> If CMD is used to provide default arguments for the ENTRYPOINT instruction, both the CMD and ENTRYPOINT instructions should be specified with the JSON array format.
+
+
+### LABEL ###
+
+`LABEL <key>=<value> <key>=<value> <key>=<value> ...`
+The `LABEL` instruction adds metadata to an image. A `LABEL` is a key-value pair. To include spaces within a `LABEL` value, use quotes and backslashes as you would in command-line parsing.
+
+
+### EXPOSE ###
+`XPOSE <port> [<port>...]`
+The `EXPOSE` instruction informs Docker that the container listens on the specified network ports at runtime. `EXPOSE` does not make the ports of the container accessible to the host. To do that, you must use either the `-p` flag to publish a range of ports or the `-P` flag to publish all of the exposed ports. You can expose one port number and publish it externally under another number.
+
+To set up port redirection on the host system, see using the `-P` flag. The Docker network feature supports creating networks without the need to expose ports within the network, for detailed information see the overview of this feature).
+
+### ENV ###
+    ENV <key> <value>
+    ENV <key>=<value> ...
+
+The ENV instruction sets the environment variable <key> to the value <value>. This value will be in the environment of all “descendent” Dockerfile commands and can be replaced inline in many as well.
+
+The ENV instruction has two forms. The first form, ENV <key> <value>, will set a single variable to a value. The entire string after the first space will be treated as the <value> - including characters such as spaces and quotes.
+
+The second form, ENV <key>=<value> ..., allows for multiple variables to be set at one time. Notice that the second form uses the equals sign (=) in the syntax, while the first form does not. Like command line parsing, quotes and backslashes can be used to include spaces within values.
+
+
+### ADD ###
+`ADD <src>... <dest>`
+`ADD ["<src>",... "<dest>"]` (this form is required for paths containing whitespace)
+
+The `ADD` instruction copies new files, directories or remote file URLs from `<src>` and adds them to the filesystem of the container at the path `<dest>`.
+
+`ADD` obeys the following rules:
+* The `<src>` path must be inside the context of the build; because the first step of a docker build is to send the context directory (and subdirectories) to the docker daemon.
+* If `<src>` is a directory, the entire contents of the directory are copied, including filesystem metadata.
+* If `<src>` is a local tar archive in a recognized compression format (identity, gzip, bzip2 or xz) then it is unpacked as a directory.
+
+
+### USER ###
+
+`USER daemon`
+The USER instruction sets the user name or UID to use when running the image and for any RUN, CMD and ENTRYPOINT instructions that follow it in the Dockerfile.
+
 
 [Install in Ubuntu][3]
 ======================

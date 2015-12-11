@@ -1,0 +1,51 @@
+#! /bin/bash
+
+#http://www.itsprite.com/docker-elasticsearch-in-docker-container-cluster/
+
+IMAGE="elastic"
+ARGS=" /elasticsearch/bin/elasticsearch --discovery.zen.ping.multicast.enabled=false --discovery.zen.ping.unicast.hosts=172.17.0.2"
+elastic_start_master() {
+    local OPTS=
+
+    sudo mkdir -p  /opt/elastic/master
+    sudo chmod 777 /opt/elastic/master
+
+    OPTS="$OPTS --rm"
+#    OPTS="-d"
+    OPTS="$OPTS --name master"
+    OPTS="$OPTS -v /opt/elastic/master:/elasticsearch/data"
+    OPTS="$OPTS -p 9200:9200"
+    # -p 9300:9300"
+
+    local CMD="docker run $OPTS $IMAGE"
+    echo $CMD
+    $CMD
+}
+
+elastic_start_node() {
+    local OPTS=
+    if [ -z "$1" ]; then
+        echo "Usage: $0 id"
+        return
+    fi
+
+    sudo mkdir -p  /opt/elastic/$1
+    sudo chmod 777 /opt/elastic/$1
+
+    OPTS="$OPTS --rm"
+    #  OPTS="-d"
+    OPTS="$OPTS --name $1"
+    OPTS="$OPTS -v /opt/elastic/$1:/elasticsearch/data"
+    #  OPTS="$OPTS -p 9200:9200 -p 9300:9300"
+    #  OPTS="$OPTS --link master"
+
+    local CMD="docker run $OPTS $IMAGE"
+    echo $CMD
+    $CMD
+}
+
+#  --network.publish_host=192.168.1.20 \
+#  --discovery.zen.ping.multicast.enabled=false \
+#  --discovery.zen.ping.unicast.hosts=192.168.1.10 \
+#  --discovery.zen.ping.timeout=3s \
+#  --discovery.zen.minimum_master_nodes=1

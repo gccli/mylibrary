@@ -9,35 +9,32 @@
 #FROM dockerfile/java:oracle-java8
 FROM daocloud.io/library/java:latest
 
-ENV ES_VERSION=2.1.0
+ENV ES_HOME=/elasticsearch
 
 # Install Elasticsearch.
 RUN \
-  cd /tmp && mkdir -p /data && \
-  wget https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-$ES_VERSION.tar.gz && \
-  tar xvzf elasticsearch-$ES_VERSION.tar.gz && \
-  rm -f elasticsearch-$ES_VERSION.tar.gz && \
-  mv /tmp/elasticsearch-$ES_VERSION /elasticsearch && \
-  useradd -s /bin/bash -k /etc/skel -m demo && \
-  chown -R demo.demo /data && \
-  chown -R demo.demo /elasticsearch
-
-
-# Define mountable directories.
-VOLUME ["/data"]
+  useradd -d $ES_HOME -s /bin/bash -k /etc/skel -m demo && \
+  mkdir -p $ES_HOME/data && chown -R demo.demo $ES_HOME
 
 # Mount elasticsearch.yml config
-ADD config/elasticsearch.yml /elasticsearch/config/elasticsearch.yml
-COPY run.sh /
+ADD elasticsearch /elasticsearch
+ADD elasticsearch.yml /elasticsearch/config/elasticsearch.yml
+
+RUN chown -R demo.demo $ES_HOME
+
+# Define mountable directories.
+VOLUME $ES_HOME/data
 
 # Define working directory.
-WORKDIR /data
-
-# Define default command.
-CMD ["/run.sh"]
+WORKDIR $ES_HOME
 
 # Expose ports.
 #   - 9200: HTTP
 #   - 9300: transport
 EXPOSE 9200
 EXPOSE 9300
+
+USER demo
+
+# Define default command.
+CMD ["/elasticsearch/bin/elasticsearch", "--network.host", "0.0.0.0"]
