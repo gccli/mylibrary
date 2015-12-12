@@ -15,3 +15,6 @@ libencrypt.so:$(OBJS)
 
 %.o:%.cpp
 	$(CXX) $(CFLAGS) -c $^ -o $@
+
+crypt:
+	$(CXX) $(CFLAGS) -D_CRYPT_MAIN crypt.cpp -o $@ -L. -lencrypt $(LDFLAGS)

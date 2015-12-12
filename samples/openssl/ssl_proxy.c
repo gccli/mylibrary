@@ -63,7 +63,7 @@ int serverside_init(int port)
 {
     char tmp[128];
 
-    server_ctx=SSLnew_server_ctx("certs/server.pem","certs/serverkey.pem",NULL);
+    server_ctx=SSLnew_server_ctx("certs/server.pem","certs/server.key",NULL);
     sprintf(tmp, "%d", port);
 
     SSL *ssl = NULL;
@@ -202,7 +202,8 @@ int main(int argc, char **argv)
     }
 
     openlog("sslproxy", LOG_PID, LOG_DAEMON);
-    client_ctx = SSLnew_client_ctx("certs");
+//    client_ctx = SSLnew_client_ctx("certs");
+    client_ctx = SSLnew_client_ctx("/etc/ssl/certs");
     serverside_init(4000);
 
     while(1) {

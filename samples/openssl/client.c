@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     }
 
     SSLinit();
-    SSLseeding(1024, "/tmp/sending");
+//    SSLseeding(1024, "/tmp/sending");
 
     SSL *ssl = NULL;
     BIO *conn = NULL;

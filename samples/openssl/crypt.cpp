@@ -171,7 +171,7 @@ int encrypt_s(crypt_ctx_t *ctx, BIO *in, BIO *out)
 }
 
 
-int encrypt(crypt_ctx_t *ctx, const char *ifile, const char *ofile)
+int encrypt_f(crypt_ctx_t *ctx, const char *ifile, const char *ofile)
 {
     int ret;
     FILE *fpi, *fpo;
@@ -217,7 +217,7 @@ int encrypt(crypt_ctx_t *ctx, const char *ifile, const char *ofile)
     return ret;
 }
 
-int decrypt(crypt_ctx_t *ctx, const char *ifile, const char *ofile)
+int decrypt_f(crypt_ctx_t *ctx, const char *ifile, const char *ofile)
 {
     int ret;
 
@@ -300,8 +300,8 @@ extern "C" {
 
 void test()
 {
+/*
     uint32_t x = 0xf1f2f3f4;
-
     unsigned char buffer[16];
     char tmp[64];
     const char *fmt = "/1 \"%02x\"";
@@ -311,6 +311,7 @@ void test()
     ui2buf(x, buffer);
     printf("32 bits int %s\n", hexdump(fmt, buffer, sizeof(uint32_t),tmp));
     assert(buf2ui(buffer) == x);
+*/
 }
 
 int main(int argc, char *argv[])
@@ -355,9 +356,9 @@ int main(int argc, char *argv[])
         return 1;
     }
     if (dec) {
-        ret = decrypt(ctx, argv[optind],argv[optind+1]);
+        ret = decrypt_f(ctx, argv[optind],argv[optind+1]);
     } else {
-        ret = encrypt(ctx, argv[optind],argv[optind+1]);
+        ret = encrypt_f(ctx, argv[optind],argv[optind+1]);
     }
 
     crypt_free(ctx);

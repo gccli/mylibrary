@@ -37,8 +37,8 @@ void crypt_free(struct crypt_ctx *);
 /**
  * Used for transparent encrypt/decrypt
  */
-int encrypt(struct crypt_ctx *handle, const char *ifile, const char *ofile);
-int decrypt(struct crypt_ctx *handle, const char *ifile, const char *ofile);
+int encrypt_f(struct crypt_ctx *handle, const char *ifile, const char *ofile);
+int decrypt_f(struct crypt_ctx *handle, const char *ifile, const char *ofile);
 int encrypt_s(struct crypt_ctx *handle, BIO *in, BIO *out);
 
 

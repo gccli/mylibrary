@@ -14,8 +14,13 @@
 #include "sslcommon.h"
 #include "crypt.h"
 
+static int port = 3200; // default port
+
+// verify
+// openssl s_client -CApath /etc/ssl/certs/ -connect localhost:3200
+
 struct crypt_ctx *enc_ctx;
-int port;
+
 void *threadfunc(void *param)
 {
     BIO *client = (BIO *) param;
@@ -55,7 +60,7 @@ void *threadfunc(void *param)
 
     if (fd > 0) close(fd);
     sprintf(str, "/tmp/dec.%ld", thread_id());
-    decrypt(enc_ctx, tmp, str);
+    decrypt_f(enc_ctx, tmp, str);
 
     fprintf(stderr, "Connection closed, %d bytes received, decrypt to %s.\n",
             total, str);
@@ -67,7 +72,7 @@ int main(int argc, char *argv[])
 {
     int ret;
     const char *cert = "certs/server.pem";
-    const char *prikey = "certs/serverkey.pem";
+    const char *prikey = "certs/server.key";
     char *pass = NULL;
     static struct option long_options[] = {
         {0, 0, 0, 0}
@@ -95,7 +100,7 @@ int main(int argc, char *argv[])
     pthread_sigmask (SIG_BLOCK, &mask, NULL);
 
     SSLinit();
-    SSLseeding(1024, "/tmp/sending");
+//    SSLseeding(1024, "/tmp/sending");
 
     ret = crypt_create(&enc_ctx, "key");
     if (ret != 0) {
