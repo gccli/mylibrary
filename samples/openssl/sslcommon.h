@@ -36,7 +36,7 @@ static inline unsigned long thread_id(void)
 void SSLinit();
 void SSLseeding(int size, const char *filename);
 
-SSL_CTX *SSLnew_server_ctx(const char *cert, char *pass);
+SSL_CTX *SSLnew_server_ctx(const char *cert, const char *key, char *pass);
 SSL_CTX *SSLnew_client_ctx(const char *capath);
 
 

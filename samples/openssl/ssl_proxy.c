@@ -63,7 +63,7 @@ int serverside_init(int port)
 {
     char tmp[128];
 
-    server_ctx = SSLnew_server_ctx("certs/server.pem", "lijing");
+    server_ctx=SSLnew_server_ctx("certs/server.pem","certs/serverkey.pem",NULL);
     sprintf(tmp, "%d", port);
 
     SSL *ssl = NULL;

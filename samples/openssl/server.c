@@ -66,6 +66,9 @@ void *threadfunc(void *param)
 int main(int argc, char *argv[])
 {
     int ret;
+    const char *cert = "certs/server.pem";
+    const char *prikey = "certs/serverkey.pem";
+    char *pass = NULL;
     static struct option long_options[] = {
         {0, 0, 0, 0}
     };
@@ -100,7 +103,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    SSL_CTX *ctx = SSLnew_server_ctx("certs/server.pem", "lijing");
+    SSL_CTX *ctx = SSLnew_server_ctx(cert, prikey, pass);
 
     char strport[8];
     sprintf(strport, "%d", port);

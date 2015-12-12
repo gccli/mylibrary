@@ -81,6 +81,10 @@ void SSLseeding(int size, const char *filename)
 
 static int SSLpasswd_cb(char *buf, int size, int rwflag, void *password)
 {
+    if (password == NULL) {
+        password = getpass("Enter the password: ");
+    }
+
     strncpy(buf, (char *)password, size);
     buf[size] = 0;
 
@@ -111,7 +115,7 @@ static int SSLverify_cb(int ok, X509_STORE_CTX *store)
     return ok;
 }
 
-SSL_CTX *SSLnew_server_ctx(const char *cert, char *pass)
+SSL_CTX *SSLnew_server_ctx(const char *cert, const char *keyfile, char *pass)
 {
     SSL_CTX *ctx = SSL_CTX_new(TLSv1_method());
     SSL_CTX_set_default_passwd_cb(ctx, SSLpasswd_cb);
@@ -122,7 +126,7 @@ SSL_CTX *SSLnew_server_ctx(const char *cert, char *pass)
         SSL_LOGERR("use certificate");
         return NULL;
     }
-    if (SSL_CTX_use_PrivateKey_file(ctx, cert, SSL_FILETYPE_PEM) <= 0)
+    if (SSL_CTX_use_PrivateKey_file(ctx, keyfile, SSL_FILETYPE_PEM) <= 0)
     {
         SSL_LOGERR("use private key");
         return NULL;
