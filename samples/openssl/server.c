@@ -41,8 +41,7 @@ void *threadfunc(void *param)
     printf("Connection opened from %s:%d write to %s\n",
            inet_ntoa(peer.sin_addr), ntohs(peer.sin_port), tmp);
 
-    do
-    {
+    do {
         if ((err = BIO_read(client, buffer, sizeof(buffer))) <= 0) {
             if (err == -1) {
                 SSL_LOGERR("BIO_read");
@@ -74,19 +73,29 @@ int main(int argc, char *argv[])
     const char *cert = "certs/server.pem";
     const char *prikey = "certs/server.key";
     char *pass = NULL;
-    static struct option long_options[] = {
+    static struct option _options[] = {
+        {"pass", 1, 0, 0},
+        {"cert", 1, 0, 0},
+        {"key", 1, 0, 0},
         {0, 0, 0, 0}
     };
     int index = 0;
     const char* optlist = "p:";
     while (1){
-        int c = getopt_long(argc, argv, optlist, long_options, &index);
+        int c = getopt_long(argc, argv, optlist, _options, &index);
         if (c == EOF) break;
         switch (c) {
         case 'p':
             port = atoi(optarg);
             break;
         case 0:
+            if (strcmp(_options[index].name, "pass") == 0) {
+                pass = strdup (optarg);
+            } else if (strcmp(_options[index].name, "key") == 0) {
+                prikey = strdup (optarg);
+            } else if (strcmp(_options[index].name, "cert") == 0) {
+                cert = strdup (optarg);
+            }
             break;
         default:
             printf("usage: %s [-h host] [-p port]\n", argv[0]);

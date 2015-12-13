@@ -1,9 +1,3 @@
-
-#define CS_BUFFER_LEN 2048
-#define SC_BUFFER_LEN 8192
-#define SLEEP_US 50000
-
-
 #include <stdarg.h>
 #include <syslog.h>
 #include <unistd.h>
@@ -16,6 +10,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <getopt.h>
 
 #include "sslcommon.h"
 #include <openssl/pem.h>
@@ -59,11 +54,11 @@ void plog(int level, const char *format,...)
     debug("LOG: %.256s", str);
 }
 
-int serverside_init(int port)
+int serverside_init(int port, const char *cert, const char *prikey, char *pass)
 {
     char tmp[128];
 
-    server_ctx=SSLnew_server_ctx("certs/server.pem","certs/server.key",NULL);
+    server_ctx=SSLnew_server_ctx(cert,prikey,pass);
     sprintf(tmp, "%d", port);
 
     SSL *ssl = NULL;
@@ -188,13 +183,40 @@ int conn_accept()
 int main(int argc, char **argv)
 {
     int ret;
+
+    const char *cert = "certs/server.pem";
+    const char *prikey = "certs/server.key";
+    char *pass = NULL;
+    static struct option _options[] = {
+        {"pass", 1, 0, 0},
+        {0, 0, 0, 0}
+    };
+    int index = 0;
+    const char* optlist = "p:";
+    while (1){
+        int c = getopt_long(argc, argv, optlist, _options, &index);
+        if (c == EOF) break;
+        switch (c) {
+        case 'p':
+            break;
+        case 0:
+            if (strcmp(_options[index].name, "pass") == 0) {
+                pass = strdup (optarg);
+            }
+            break;
+        default:
+            printf("usage: %s [-h host] [-p port]\n", argv[0]);
+            exit(0);
+        }
+    }
+
+
     signal(SIGINT, sighandler);
     signal(SIGTERM, sighandler);
     signal(SIGPIPE, SIG_IGN);
 
     SSLinit();
 
-    crypt_rsa_genkey("key");
     ret = crypt_create(&enc_ctx, "key");
     if (ret != 0) {
         printf("failed to create context\n");
@@ -204,7 +226,7 @@ int main(int argc, char **argv)
     openlog("sslproxy", LOG_PID, LOG_DAEMON);
 //    client_ctx = SSLnew_client_ctx("certs");
     client_ctx = SSLnew_client_ctx("/etc/ssl/certs");
-    serverside_init(4000);
+    serverside_init(4000, cert, prikey, pass);
 
     while(1) {
         ret = conn_accept();

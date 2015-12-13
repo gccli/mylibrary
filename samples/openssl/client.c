@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 
     SSL *ssl = NULL;
     BIO *conn = NULL;
-    SSL_CTX *ctx = SSLnew_client_ctx("certs");
+    SSL_CTX *ctx = SSLnew_client_ctx("/etc/ssl/certs");
 
     conn = BIO_new_ssl_connect(ctx);
     BIO_get_ssl(conn, &ssl);

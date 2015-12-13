@@ -250,6 +250,7 @@ int rsakey::enc_dec(unsigned char *in, size_t inlen, unsigned char **outp,
             out = (unsigned char *)OPENSSL_malloc(outlen+8);
 
             if (EVP_PKEY_decrypt(ctx, out, &outlen, in, inlen) <= 0) {
+                printf("PKEY decrypt error - decrypt %zu bytes\n", inlen);
                 CRYPT_LOGERR("EVP_PKEY_decrypt");
                 OPENSSL_free(out);
                 break;
