@@ -5,8 +5,9 @@ INC=$(MYLIBRARY)/utils
 UTILS=$(MYLIBRARY)/utils
 
 prefix = /usr/local
-bindir = ${exec_prefix}/bin
-sbindir= ${exec_prefix}/sbin
+libdir = ${prefix}/lib
+bindir = ${prefix}/bin
+sbindir= ${prefix}/sbin
 etcdir = ${prefix}/etc
 mandir = ${prefix}/share/man
 

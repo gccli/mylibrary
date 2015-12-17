@@ -9,7 +9,9 @@
 *.bak
 *.status
 .libs
+.deps
 
 Makefile
+Makefile.in
 a.out
 core*
