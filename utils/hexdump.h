@@ -1,6 +1,11 @@
 #ifndef HEXDUMP_H__
 #define HEXDUMP_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #define HXD_EBASE -(('D' << 24) | ('U' << 16) | ('M' << 8) | 'P')
 #define HXD_ERROR(error) ((error) >= XD_EBASE && (error) < XD_ELAST)
 
@@ -72,5 +77,10 @@ size_t hxd_read(struct hdx *, void *, size_t);
 
 #define HXD_1 "/1 \"%02x\""
 char *hexdump(const char *fmt, void *data, size_t size, char *str);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

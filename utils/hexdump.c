@@ -8,6 +8,10 @@
 #include <setjmp.h>
 #include "hexdump.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef MIN
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #endif
@@ -1106,6 +1110,11 @@ char *hexdump(const char *fmt, void *data, size_t size, char *str)
 
     return str;
 }
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #if HEXDUMP_MAIN
 #include "utilfile.h"

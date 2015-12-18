@@ -1,6 +1,6 @@
 include ../Makefile.common
 
-CFLAGS=-g -Wall -I$(INC)
+CFLAGS=-g -Wall -I$(INC) -fPIC
 LDFLAGS=
 ARFLAGS=rv
 
@@ -12,14 +12,6 @@ OBJS := $(patsubst %.cpp,%.o, $(SRCS))
 OBJS := $(patsubst %.c,%.o, $(OBJS))
 HEADERS := $(patsubst %.cpp,%.h, $(SRCS))
 HEADERS := $(patsubst %.c,%.h, $(HEADERS))
-
-
-show:
-	@echo $(SRCS)
-	@echo $(OBJS)
-	@for i in $(HEADERS); do\
-		echo $$i;\
-	done
 
 TARGET=libcommutils.a
 all:$(TARGET)
