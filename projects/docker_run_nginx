@@ -1,5 +1,0 @@
-#! /bin/bash
-
-mkdir -p /opt/nginx
-echo "hello nginx" > /opt/nginx/index.html
-docker run --name my-nginx -v /opt/nginx:/usr/share/nginx/html:ro -d -p 80:80 -p 443:443 nginx

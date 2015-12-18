@@ -219,7 +219,7 @@ struct sockaddr *sa, socklen_t *salenptr, struct sockaddr_storage *dstp)
       printf("From interface %d\n", in4->ipi_ifindex);
       continue;
     }
-    printf("unknown ancillary data, len = %d, level = %d, type = %d\n",
+    printf("unknown ancillary data, len = %zu, level = %d, type = %d\n",
       cmptr->cmsg_len, cmptr->cmsg_level, cmptr->cmsg_type);
   }
   return(n);

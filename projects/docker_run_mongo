@@ -1,6 +1,0 @@
-#! /bin/bash
-
-docker run --name my-mongo -d mongo
-# This image includes EXPOSE 27017 (the mongo port), so standard container linking will make it automatically available to the linked containers (as the following examples illustrate).
-# connect to it from an application
-# docker run --name some-app --link my-mongo:mongo -d application-that-uses-mongo

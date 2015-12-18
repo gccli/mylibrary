@@ -31,7 +31,6 @@ clean:
 	$(RM) -r $(OBJS) $(TARGET)
 
 install:$(TARGET)
-	@[ -f $(TARGET) ] || { exit 1;}
 	ln -sf $(shell readlink -f $(TARGET)) $(libdir)
 	@for i in $(HEADERS); do\
 	  [ -f $$i ] && ln -sf $$(readlink -f $$i) $(prefix)/include;\

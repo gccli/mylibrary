@@ -1,9 +1,0 @@
-#! /bin/bash
-
-docker rm -f my-rabbit
-docker run -d -e RABBITMQ_NODENAME=rabbit --name my-rabbit rabbitmq:latest
-docker run -d -e RABBITMQ_NODENAME=rabbit --name my-rabbit -p 15672:15672 rabbitmq:management
-
-# docker logs my-rabbit
-# docker run --name my-app --link my-rabbit:rabbit -d application-that-uses-rabbitmq
-
