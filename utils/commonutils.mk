@@ -6,8 +6,7 @@ ARFLAGS=rv
 
 VPATH=.
 
-SRCS =utilsock.cpp utilsockopt.cpp utiltime.cpp utilnet.cpp utilfile.c
-SRCS+=hexdump.c
+SRCS =utilsock.cpp utilsockopt.cpp utiltime.cpp utilnet.cpp utilfile.c utildebug.c
 OBJS := $(patsubst %.cpp,%.o, $(SRCS))
 OBJS := $(patsubst %.c,%.o, $(OBJS))
 HEADERS := $(patsubst %.cpp,%.h, $(SRCS))
