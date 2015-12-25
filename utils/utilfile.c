@@ -51,12 +51,24 @@ const char *file_size(const char *file)
     return filesz;
 }
 
-int get_tmpfile(char *s)
+int get_tmpfile(char *name)
 {
     sprintf(s, "/tmp/temp.XXXXXX");
     return mkstemp(s);
 }
 
+int get_tmpfile_ex(char *name, int mode, const char *dir)
+{
+    int fd;
+    if (!dir) {
+        sprintf(name, "/tmp/temp.XXXXXX");
+    } else {
+        sprintf(name, "%s/temp.XXXXXX", dir);
+    }
+    fd = mkstemp(name);
+    chmod(data->tmpbuf, mode);
+    return fd;
+}
 
 #ifdef __cplusplus
 }

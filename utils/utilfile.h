@@ -33,7 +33,8 @@ char *get_file_buffer(const char *file, size_t *r);
  */
 const char *file_size(const char *file);
 
-int get_tmpfile(char *);
+int get_tmpfile(char *name);
+int get_tmpfile_ex(char *name, int mode, const char *dir);
 
 #ifdef __cplusplus
 }
