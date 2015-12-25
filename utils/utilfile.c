@@ -51,25 +51,52 @@ const char *file_size(const char *file)
     return filesz;
 }
 
-int get_tmpfile(char *name)
+char *get_tmpdir(char *name, int mode, const char *prefix)
 {
-    sprintf(name, "/tmp/XXXXXX.data");
-    return mkstemp(name);
+    if (!prefix) {
+        prefix = "/tmp/tmp.";
+    }
+    sprintf(name, "%sXXXXXX", prefix);
+    if (mkdtemp(name)) {
+        chmod(name, mode);
+    }
+
+    return name;
 }
 
-int get_tmpfile_ex(char *name, int mode, const char *dir)
+int get_tmpfile(char *name, int mode, const char *dir, const char *suffix)
 {
-    int fd;
-    if (!dir) {
-        sprintf(name, "/tmp/XXXXXX.data");
+    int fd, suflen;
+    if (suffix) {
+        suflen = strlen(suffix);
     } else {
-        sprintf(name, "%s/XXXXXX.data", dir);
+        suffix = ".data";
+        suflen = 5;
     }
-    fd = mkstemp(name);
-    chmod(name, mode);
+    if (!dir) dir = "/tmp";
+    sprintf(name, "%s/XXXXXX%s", dir, suffix);
+
+    if ((fd = mkstemps(name, suflen)) >= 0)
+        chmod(name, mode);
+
     return fd;
 }
 
 #ifdef __cplusplus
+}
+#endif
+
+
+#ifdef _TEST
+int main(int argc, char *argv[])
+{
+    char buf[1024];
+    int fd = get_tmpfile(buf, 0666, argc>1?argv[1]:NULL, argc>2?argv[2]:NULL);
+
+
+    printf("tmpfile %s fd:%d\n", buf, fd);
+    printf("tmpdir %s\n", get_tmpdir(buf, 0755, "data."));
+
+    return 0;
 }
 #endif
