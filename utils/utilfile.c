@@ -53,8 +53,8 @@ const char *file_size(const char *file)
 
 int get_tmpfile(char *name)
 {
-    sprintf(s, "/tmp/temp.XXXXXX");
-    return mkstemp(s);
+    sprintf(name, "/tmp/temp.XXXXXX");
+    return mkstemp(name);
 }
 
 int get_tmpfile_ex(char *name, int mode, const char *dir)
@@ -66,7 +66,7 @@ int get_tmpfile_ex(char *name, int mode, const char *dir)
         sprintf(name, "%s/temp.XXXXXX", dir);
     }
     fd = mkstemp(name);
-    chmod(data->tmpbuf, mode);
+    chmod(name, mode);
     return fd;
 }
 
