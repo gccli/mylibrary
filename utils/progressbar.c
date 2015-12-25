@@ -33,6 +33,7 @@ void progressbar(size_t n, size_t total, size_t resolution, size_t width,
                  const char *fmt, ...)
 {
     if (total < resolution) resolution = total;
+    if (resolution == 0) resolution = total/10;
     if (n%(total/resolution)!=0 || n==0) return ;
 
     size_t len;
@@ -47,6 +48,7 @@ void progressbar(size_t n, size_t total, size_t resolution, size_t width,
         terminal_width_get();
     }
     if (len + 32 > terminal_width) {
+        printf("%s\n", buffer);
         return ;
     }
     if (width + len > terminal_width) {
@@ -57,7 +59,7 @@ void progressbar(size_t n, size_t total, size_t resolution, size_t width,
     float ratio = n/(float)total;
     size_t    c = ratio * width;
 
-    printf("%s %3zu/%-3zu [", buffer, n, total);
+    printf("%s [", buffer);
     for (n=0; n<c; n++)
         printf("=");
     printf(">");
@@ -80,10 +82,13 @@ int main(int argc, char *argv[])
     ioctl(0, TIOCGWINSZ, &w);
     printf ("lines %d columns %d\n",w.ws_row, w.ws_col);
 
-    total = 50000+rand()%50000;
-    for (i=0; i<total; ++i) {
-        progressbar(i, total, 1000, 80, "%30s %d", "xsh...", i);
-        usleep(50);
+
+
+    total = 4*1024*1024;
+    total = total + random()%total;
+    for (i=0; i<total; i += random()%4096) {
+        progressbar(i, total, total/10, 80, "%30s %d", "xsh...", i);
+        usleep(500);
     }
 
     return 0;
