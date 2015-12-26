@@ -35,6 +35,7 @@ const char *file_size(const char *file);
 
 char *get_tmpdir(char *name, int mode, const char *prefix);
 int get_tmpfile(char *name, int mode, const char *dir, const char *suffix);
+int get_tmpfile_ex(char *name, int suflen);
 
 #ifdef __cplusplus
 }

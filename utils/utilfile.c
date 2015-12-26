@@ -64,6 +64,15 @@ char *get_tmpdir(char *name, int mode, const char *prefix)
     return name;
 }
 
+int get_tmpfile_ex(char *name, int suflen)
+{
+    int fd;
+    if ((fd = mkstemps(name, suflen)) >= 0)
+        chmod(name, 0666);
+
+    return fd;
+}
+
 int get_tmpfile(char *name, int mode, const char *dir, const char *suffix)
 {
     int fd, suflen;
@@ -81,6 +90,7 @@ int get_tmpfile(char *name, int mode, const char *dir, const char *suffix)
 
     return fd;
 }
+
 
 #ifdef __cplusplus
 }
