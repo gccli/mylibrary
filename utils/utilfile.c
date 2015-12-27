@@ -91,7 +91,6 @@ int get_tmpfile(char *name, int mode, const char *dir, const char *suffix)
     return fd;
 }
 
-
 #ifdef __cplusplus
 }
 #endif
@@ -102,7 +101,6 @@ int main(int argc, char *argv[])
 {
     char buf[1024];
     int fd = get_tmpfile(buf, 0666, argc>1?argv[1]:NULL, argc>2?argv[2]:NULL);
-
 
     printf("tmpfile %s fd:%d\n", buf, fd);
     printf("tmpdir %s\n", get_tmpdir(buf, 0755, "data."));

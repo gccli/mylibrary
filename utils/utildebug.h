@@ -36,6 +36,19 @@ static inline void print_hex_string(void *data, int length, int max_size)
         printf("...");
 }
 
+static inline const char *hexstr(void *in, size_t len, char *out)
+{
+    size_t i, off;
+    unsigned char *p = (unsigned char *)in;
+    for(i=0, off=0; i<len; ++i) {
+        off += sprintf(out+off, "%02x", *p++);
+    }
+    out[off] = 0;
+
+    return out;
+}
+
+
 #ifdef __cplusplus
 }
 #endif
