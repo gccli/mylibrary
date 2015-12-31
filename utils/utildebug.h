@@ -15,9 +15,9 @@ extern "C" {
 #define thread_id() syscall(__NR_gettid)
 static inline void print_string(void *data, int length)
 {
+    int i;
     char *str = (char*) data;
-
-    for (int i = 0; i < length; i++) {
+    for (i = 0; i < length; i++) {
         if (str[i] >= 32 && str[i] <= 126)
             printf("%c", str[i]);
         else
@@ -27,10 +27,11 @@ static inline void print_string(void *data, int length)
 
 static inline void print_hex_string(void *data, int length, int max_size)
 {
+    int i;
     uint8_t *pstr = (uint8_t *)data;
     if (max_size == 0) max_size = 32;
     length = length > max_size ? max_size : length;
-    for (int i = 0; i < length; i++)
+    for (i = 0; i < length; i++)
         printf("%02x ", pstr[i]);
     if (length > 32)
         printf("...");
