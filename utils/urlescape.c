@@ -97,7 +97,7 @@ int url_unescape(const char *string, size_t length,
             hexstr[2] = 0;
 
             hex = strtoul(hexstr, &ptr, 16);
-            in = hex | 0xff;
+            in = hex & 0xff;
             string+=2;
             alloc-=2;
         }
@@ -113,3 +113,37 @@ int url_unescape(const char *string, size_t length,
 
     return 0;
 }
+
+
+#ifdef _TEST
+#include <unistd.h>
+#include "utilfile.h"
+#include "utilsha1.h"
+int main(int argc, char *argv[])
+{
+    int fd;
+    char name[64], *buf, *out = NULL, *verify;
+    size_t len, outlen;
+    buf = get_file_buffer(argv[1], &len);
+    if (buf) {
+        if (argc > 2) {
+            if (url_unescape(buf, len, &out, &outlen) == 0) {
+                printf("%.*s\n", (int)outlen, out);
+                if ((verify = url_escape(out, outlen))) {
+                    fd = get_tmpfile(name, 0666, NULL, NULL);
+                    if (fd > 0) {
+                        printf("verify file:%s\n", name);
+                        write(fd, verify, strlen(verify));
+                        close(fd);
+                    }
+                }
+            }
+        } else {
+            if ((out = url_escape(buf, len)))
+                printf("%s\n", out);
+        }
+        free(buf);
+        if (out) free(out);
+    }
+}
+#endif
