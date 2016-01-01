@@ -7,7 +7,7 @@ ARFLAGS=rv
 VPATH=.
 
 SRCS := utilsock.cpp utilsockopt.cpp utiltime.cpp utilnet.cpp\
-	utilfile.c utildebug.c progressbar.c
+	utilfile.c utildebug.c progressbar.c urlescape.c
 OBJS := $(patsubst %.cpp,%.o, $(SRCS))
 OBJS := $(patsubst %.c,%.o, $(OBJS))
 HEADERS := $(patsubst %.cpp,%.h, $(SRCS))
@@ -32,12 +32,11 @@ clean:
 
 install:$(TARGET)
 	ln -sf $(shell readlink -f $(TARGET)) $(libdir)
+	mkdir -p $(prefix)/include/utils
 	@for i in $(HEADERS); do\
-	  [ -f $$i ] && ln -sf $$(readlink -f $$i) $(prefix)/include;\
+	  [ -f $$i ] && ln -sf $$(readlink -f $$i) $(prefix)/include/utils;\
 	done
 
 uninstall:
-	unlink $(libdir)/$(TARGET)
-	@for i in $(HEADERS); do\
-	  unlink  $(prefix)/include/$$i;\
-	done
+	$(RM) $(libdir)/$(TARGET)
+	$(RM) -r $(prefix)/include/utils
