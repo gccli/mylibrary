@@ -6,6 +6,10 @@
 
 #include <errno.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 static int url_isunreserved(unsigned char in)
 {
   switch (in) {
@@ -114,6 +118,9 @@ int url_unescape(const char *string, size_t length,
     return 0;
 }
 
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef _TEST
 #include <unistd.h>
