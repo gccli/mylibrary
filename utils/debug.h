@@ -8,6 +8,31 @@
 
 #include <sys/syscall.h>
 
+#ifndef _DEBUG
+#define _DEBUG 0
+#endif
+
+#if _DEBUG > 0
+#include <string.h>
+#define __FN__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define debug_print(msg,...)                                            \
+    fprintf(stdout, "%s:%d(%s): "msg,__FN__,__LINE__,__FUNCTION__,##__VA_ARGS__)
+#else
+#define debug_print(msg, ...) ((void)0)
+#endif
+
+#define FMT_RED(msg)    "\x1b[31m\x1b[1m" msg "\x1b[0m"
+#define FMT_GREEN(msg)  "\x1b[32m\x1b[1m" msg "\x1b[0m"
+#define FMT_BLUE(msg)   "\x1b[34m\x1b[1m" msg "\x1b[0m"
+#define FMT_YELLOW(msg) "\x1b[33m\x1b[1m" msg "\x1b[0m"
+#define FMT_MAGE(msg)   "\x1b[35m\x1b[1m" msg "\x1b[0m"
+
+#define FMT_R(msg)  FMT_RED(msg)"\n"
+#define FMT_G(msg)  FMT_GREEN(msg)"\n"
+#define FMT_B(msg)  FMT_BLUE(msg)"\n"
+#define FMT_Y(msg)  FMT_YELLOW(msg)"\n"
+#define FMT_M(msg)  FMT_MAGE(msg)"\n"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

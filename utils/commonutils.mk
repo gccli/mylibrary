@@ -1,13 +1,13 @@
 include ../Makefile.common
 
-CFLAGS=-g -Wall -I$(INC) -fPIC
+CFLAGS=-g -Wall -I$(MYLIB) -fPIC
 LDFLAGS=
 ARFLAGS=rv
 
 VPATH=.
 
-SRCS := utilsock.cpp utilsockopt.cpp utiltime.cpp utilnet.cpp\
-	utilfile.c utildebug.c progressbar.c urlescape.c
+SRCS := utilsock.cpp utilsockopt.cpp utilnet.cpp\
+	file.c time.c debug.c progressbar.c urlescape.c
 OBJS := $(patsubst %.cpp,%.o, $(SRCS))
 OBJS := $(patsubst %.c,%.o, $(OBJS))
 HEADERS := $(patsubst %.cpp,%.h, $(SRCS))

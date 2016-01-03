@@ -1,8 +1,8 @@
-MYLIBRARY=$(shell pwd |sed 's/\(.*mylibrary\).*/\1/')
+MYLIB=$(shell pwd |sed 's/\(.*mylibrary\).*/\1/')
 
-LIB=$(MYLIBRARY)/lib
-INC=$(MYLIBRARY)/utils
-UTILS=$(MYLIBRARY)/utils
+LIB=$(MYLIB)/lib
+INC=$(MYLIB)/utils
+UTILS=$(MYLIB)/utils
 
 prefix = /usr/local
 libdir = ${prefix}/lib

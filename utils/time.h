@@ -9,7 +9,6 @@
 #include <string.h>
 #include <sys/time.h>
 
-
 #define DATE_STR_SIZE 32
 
 #ifdef __cplusplus
