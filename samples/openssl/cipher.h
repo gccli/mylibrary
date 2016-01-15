@@ -46,15 +46,15 @@ public:
  * Utility function for encrypt/decrypt file or buffer
  */
     int enc_dec_file(unsigned char *key, int key_len, const char *ifile,
-                     const char *ofile, int dec=0);
+                     const char *ofile, int flags=0);
     int enc_dec_file(unsigned char *key, int key_len, FILE *inf,
-                     FILE *out, int dec=0);
+                     FILE *out, int flags=0);
     int enc_dec_file(unsigned char *key, int key_len, FILE *inf,
-                     char **outp, size_t *outl, int dec=0);
+                     char **outp, size_t *outl, int flags=0);
     int enc_dec_buffer(unsigned char *key, int key_len, unsigned char *in,
-                       size_t inlen, char **outp, size_t *outl, int dec=0);
+                       size_t inlen, char **outp, size_t *outl, int flags=0);
     int enc_dec_stream(unsigned char *key, int key_len, BIO *in, BIO *out,
-                       int dec=0);
+                       int flags=0);
 
     void dump_ctx();
 

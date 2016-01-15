@@ -4,7 +4,7 @@ include openssl.mk
 TARGET=libencrypt.so client server mailclient sslproxy
 
 # common file defined in mylibrary/utils
-COMMOBJ=hexdump.o utilfile.o
+COMMOBJ=hexdump.o
 
 
 SRCS=$(wildcard *.c)
@@ -17,7 +17,8 @@ MOBJS=mailclient.o infrastucture.o
 PROXYOBJS=ssl_proxy.o infrastucture.o
 
 CFLAGS=-g -Wall -I$(INC) -I$(OSSLINC)
-LDFLAGS=-L$(OSSLLIB) -lssl -lcrypto -lpthread -lm -ldl
+LDFLAGS=$(OSSL_LDFLAGS)
+
 
 all: $(OBJS) $(TARGET)
 
@@ -30,11 +31,12 @@ libencrypt.so:
 client:$(COBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 server:$(SOBJS)
-	$(CC) -o $@ $^ $(LDFLAGS) -L. -lencrypt
+	$(CC) -o $@ $^ $(LDFLAGS) -Wl,-rpath=. -L. -lencrypt
 mailclient:$(MOBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 sslproxy:$(PROXYOBJS)
-	$(CC) -o $@ $^ $(LDFLAGS) -L. -lencrypt
+	$(CC) -o $@ $^ $(LDFLAGS) -Wl,-rpath=. -L. -lencrypt
+
 %.o:%.cpp
 	$(CXX) $(CFLAGS) -c $^ -o $@
 
