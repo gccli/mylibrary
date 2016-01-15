@@ -27,7 +27,7 @@ cipher::cipher(const char *name, int pad)
     :nopadding(pad)
 {
     memset(&cipher_ctx, 0, sizeof(cipher_ctx));
-    sprintf(cipher_name, "aes-256-cbc");
+    strncpy(cipher_name, name, sizeof(cipher_name));
 }
 
 cipher::~cipher()
@@ -348,11 +348,10 @@ int cipher::dec_enc_buffer(unsigned char *in, size_t inlen, char **outp,
 }
 
 int cipher::enc_dec_file(unsigned char *key, int key_len, const char *ifile,
-                     const char *ofile, int dec)
+                     const char *ofile, int flags)
 {
     int ret;
-    if (dec) dec = FLAG_DECRYPT;
-    if ((ret = init(key, key_len, NULL, dec))) {
+    if ((ret = init(key, key_len, NULL, flags))) {
         destroy();
         return ret;
     }
@@ -363,11 +362,10 @@ int cipher::enc_dec_file(unsigned char *key, int key_len, const char *ifile,
 }
 
 int cipher::enc_dec_file(unsigned char *key, int key_len, FILE *inf,
-                     FILE *out, int dec)
+                     FILE *out, int flags)
 {
     int ret;
-    if (dec) dec = FLAG_DECRYPT;
-    if ((ret = init(key, key_len, NULL, dec))) {
+    if ((ret = init(key, key_len, NULL, flags))) {
         destroy();
         return ret;
     }
@@ -378,11 +376,10 @@ int cipher::enc_dec_file(unsigned char *key, int key_len, FILE *inf,
 }
 
 int cipher::enc_dec_file(unsigned char *key, int key_len, FILE *inf,
-                         char **outp, size_t *outl, int dec)
+                         char **outp, size_t *outl, int flags)
 {
     int ret;
-    if (dec) dec = FLAG_DECRYPT;
-    if ((ret = init(key, key_len, NULL, dec))) {
+    if ((ret = init(key, key_len, NULL, flags))) {
         destroy();
         return ret;
     }
@@ -394,11 +391,10 @@ int cipher::enc_dec_file(unsigned char *key, int key_len, FILE *inf,
 
 
 int cipher::enc_dec_buffer(unsigned char *key, int key_len, unsigned char *in,
-                       size_t inlen, char **outp, size_t *outl, int dec)
+                       size_t inlen, char **outp, size_t *outl, int flags)
 {
     int ret;
-    if (dec) dec = FLAG_DECRYPT;
-    if ((ret = init(key, key_len, NULL, dec))) {
+    if ((ret = init(key, key_len, NULL, flags))) {
         destroy();
         return ret;
     }
@@ -409,11 +405,10 @@ int cipher::enc_dec_buffer(unsigned char *key, int key_len, unsigned char *in,
 }
 
 int cipher::enc_dec_stream(unsigned char *key, int key_len, BIO *in, BIO *out,
-                           int dec)
+                           int flags)
 {
     int ret;
-    if (dec) dec = FLAG_DECRYPT;
-    if ((ret = init(key, key_len, NULL, dec))) {
+    if ((ret = init(key, key_len, NULL, flags))) {
         destroy();
         return ret;
     }

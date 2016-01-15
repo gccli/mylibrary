@@ -8,7 +8,7 @@
 #include <getopt.h>
 #include <signal.h>
 
-#include <utilfile.h>
+#include <utils/file.h>
 #include <hexdump.h>
 
 #include "sslcommon.h"
@@ -37,7 +37,7 @@ void *threadfunc(void *param)
     socklen_t solen = sizeof(peer);
     memset(&peer, 0, solen);
     getpeername(fd, (struct sockaddr *) &peer, &solen);
-    fd = get_tmpfile(tmp);
+    fd = get_tmpfile(tmp, 0666, NULL, NULL);
     printf("Connection opened from %s:%d write to %s\n",
            inet_ntoa(peer.sin_addr), ntohs(peer.sin_port), tmp);
 

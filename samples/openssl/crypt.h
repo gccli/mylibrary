@@ -32,6 +32,7 @@ int crypt_rsa_genkey(const char *keypath);
  * The RSA private key given by file @rsakey
  */
 int crypt_create(struct crypt_ctx **handle, const char *rsakey);
+int crypt_create_ex(struct crypt_ctx **handle, const char *rsakey, int flags);
 void crypt_free(struct crypt_ctx *);
 
 /**

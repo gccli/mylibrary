@@ -73,7 +73,7 @@ int crypt_gen_key(void *key, size_t len)
     return 0;
 }
 
-int crypt_create(crypt_ctx_t **ctxp, const char *private_key)
+int crypt_create_ex(struct crypt_ctx **ctxp, const char *rsakeyf, int flags)
 {
     int ret;
 
@@ -86,7 +86,7 @@ int crypt_create(crypt_ctx_t **ctxp, const char *private_key)
         ctx = (crypt_ctx_t *)calloc(1, sizeof(*ctx));
         if (!ctx) break;
 
-        ctx->ciph = new cipher();
+        ctx->ciph = new cipher("aes-256-cbc", flags);
         if (!ctx->ciph) {
             break;
         }
@@ -95,7 +95,7 @@ int crypt_create(crypt_ctx_t **ctxp, const char *private_key)
         if (!ctx->rsa) {
             break;
         }
-        if ((ret = ctx->rsa->load_key(private_key, rsa_pass))) {
+        if ((ret = ctx->rsa->load_key(rsakeyf, rsa_pass))) {
             printf("failed to load rsa key\n");
             break;
         }
@@ -117,6 +117,11 @@ int crypt_create(crypt_ctx_t **ctxp, const char *private_key)
     }
 
     return ret;
+}
+
+int crypt_create(crypt_ctx_t **ctxp, const char *private_key)
+{
+    return crypt_create_ex(ctxp, private_key, 0);
 }
 
 void crypt_free(crypt_ctx_t *ctx)
@@ -292,37 +297,22 @@ int crypt_rsa_genkey(const char *keypath)
  *------------------------------------------------------*/
 #ifdef _CRYPT_MAIN
 extern "C" {
-#include <utiltime.h>
-#include <hexdump.h>
-#include <utilfile.h>
+#include <utils/time.h>
+#include <utils/file.h>
 }
 #include <assert.h>
-
-void test()
-{
-/*
-    uint32_t x = 0xf1f2f3f4;
-    unsigned char buffer[16];
-    char tmp[64];
-    const char *fmt = "/1 \"%02x\"";
-    ul2buf(magic_number, buffer);
-    printf("magic %s\n", hexdump(fmt, buffer, sizeof(uint64_t),tmp));
-    assert(buf2ul(buffer) == magic_number);
-    ui2buf(x, buffer);
-    printf("32 bits int %s\n", hexdump(fmt, buffer, sizeof(uint32_t),tmp));
-    assert(buf2ui(buffer) == x);
-*/
-}
 
 int main(int argc, char *argv[])
 {
     int ret, index;
-    int dec = 0;
+    int dec = 0, nopad = 0, sym = 0;
+    unsigned char symkey[16] = {'s', 'e', 'c', 'r', 'e', 't', 'k', 'e', 'y'};
     static struct option long_options[] = {
+        {"sym", 0, 0, 0},
         {0, 0, 0, 0}
     };
 
-    const char* optlist = "d";
+    const char* optlist = "dn";
     while (1){
         int c = getopt_long(argc, argv, optlist, long_options, &index);
         if (c == EOF) break;
@@ -330,10 +320,16 @@ int main(int argc, char *argv[])
         case 'd':
             dec = 1;
             break;
+        case 'n':
+            nopad = 1;
+            break;
         case 0:
+            if (strcmp(long_options[index].name, "sym") == 0) {
+                sym = 1;
+            }
             break;
         default:
-            printf("usage: %s [-d] in out\n", argv[0]);
+            printf("usage: %s [-dn] [--sym] in out\n", argv[0]);
             exit(0);
         }
     }
@@ -350,17 +346,27 @@ int main(int argc, char *argv[])
     }
 
     crypt_ctx_t *ctx;
-    ret = crypt_create(&ctx, "key");
+    ret = crypt_create_ex(&ctx, "key", nopad);
     if (ret != 0) {
         printf("failed to create context\n");
         return 1;
     }
+    if (sym) { // for symmetrical encrypt/decrypt
+        if (dec) {
+            ret = ctx->ciph->enc_dec_file(symkey, sizeof(symkey), argv[optind],argv[optind+1], 1);
+        } else {
+            ret = ctx->ciph->enc_dec_file(symkey, sizeof(symkey), argv[optind],argv[optind+1], 0);
+        }
+        goto done;
+    }
+
     if (dec) {
         ret = decrypt_f(ctx, argv[optind],argv[optind+1]);
     } else {
         ret = encrypt_f(ctx, argv[optind],argv[optind+1]);
     }
 
+done:
     crypt_free(ctx);
     crypt_destroy();
 

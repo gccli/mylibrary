@@ -1,7 +1,8 @@
 include openssl.mk
 
 CFLAGS=-g -Wall -fPIC -I$(OSSLINC)
-LDFLAGS=-L$(OSSLLIB) -lssl -lcrypto -lpthread -lm -ldl
+
+LDFLAGS=$(OSSL_LDFLAGS)
 
 TARGET=libencrypt.so
 
@@ -16,5 +17,5 @@ libencrypt.so:$(OBJS)
 %.o:%.cpp
 	$(CXX) $(CFLAGS) -c $^ -o $@
 
-crypt:
-	$(CXX) $(CFLAGS) -D_CRYPT_MAIN crypt.cpp -o $@ -L. -lencrypt $(LDFLAGS)
+crypt:crypt.cpp
+	$(CXX) $(CFLAGS) -D_CRYPT_MAIN crypt.cpp -o $@ $(LDFLAGS) -Wl,-rpath=. -L. -lencrypt
