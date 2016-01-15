@@ -22,6 +22,4 @@ sudo apt-get install php5-common php5-cli php5-fpm
     HTTP_INCS="$HTTP_INCS $ngx_addon_dir"
 
 ## 透明代理 ##
-
-
-https://help.ubuntu.com/community/NetworkConnectionBridge
+[https://help.ubuntu.com/community/NetworkConnectionBridge](Add Bridge)
