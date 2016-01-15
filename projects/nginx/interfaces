@@ -1,0 +1,52 @@
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+source /etc/network/interfaces.d/*
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+
+# The primary network interface
+auto br0
+iface br0 inet static
+  address 192.168.30.51
+  netmask 255.255.255.0
+  network 192.168.30.0
+  gateway 192.168.30.1
+  dns-nameservers 192.168.30.1
+  dns-search example.com
+
+  pre-up ip link set em1 down
+  pre-up ip link set em2 down
+  pre-up brctl addbr br0
+  pre-up brctl addif br0 em1 em2
+  pre-up ip addr flush dev em1
+  pre-up ip addr flush dev em2
+  post-down ip link set em1 down
+  post-down ip link set em2 down
+  post-down ip link set br0 down
+  post-down brctl delif br0 em1 em2
+  post-down brctl delbr br0
+
+
+# For dynamic
+#iface br0 inet dhcp
+#  pre-up ip link set eth0 down
+#  pre-up ip link set eth1 down
+#  pre-up brctl addbr br0
+#  pre-up brctl addif br0 eth0 eth1
+#  pre-up ip addr flush dev eth0
+#  pre-up ip addr flush dev eth1
+#  post-down ip link set eth0 down
+#  post-down ip link set eth1 down
+#  post-down ip link set br0 down
+#  post-down brctl delif br0 eth0 eth1
+#  post-down brctl delbr br0
+
+
+auto em3
+iface em3 inet static
+  address 192.168.30.52
+  netmask 255.255.255.0
