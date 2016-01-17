@@ -9,17 +9,25 @@ echo 1 > /proc/sys/net/ipv4/ip_forward
 iptables -t nat -F
 iptables -F
 
+# drop packets
+#iptables -A INPUT -d 10.0.0.0/8 -j DROP
+#iptables -A OUTPUT -d 10.0.0.0/8 -j DROP
+
 #configuration nat
-# --src 192.168.30.0/0
 
-iptables -A INPUT -d 10.0.0.0/8 -j DROP
-iptables -A OUTPUT -d 10.0.0.0/8 -j DROP
+# redirect boring dest ip to fake port
+#iptables -t nat -d 10.0.0.0/8 -A PREROUTING -p tcp -m tcp --dport 80 -j REDIRECT --to-port 10001
 
-# don't disturb
-iptables -t nat -d 10.0.0.0/8 -A PREROUTING -p tcp -m tcp --dport 80 -j REDIRECT --to-port 10001
-
-iptables -t nat -A PREROUTING -p tcp -m tcp --dport 80 -j REDIRECT --to-port 8080
+# only redirect specific dest ip, e.g. 106.120.160.78 for yunpan
+iptables -t nat -d 42.236.9.68 -A PREROUTING -p tcp -m tcp --dport 80 -j REDIRECT --to-port 8080
+# iptables -t nat -A PREROUTING -p tcp -m tcp --dport 80 -j REDIRECT --to-port 8080
 iptables -t nat -A PREROUTING -p tcp -m tcp --dport 443 -j REDIRECT --to-port 443
+iptables -L PREROUTING -t nat -n
 
-iptables -L -n
-iptables -t nat -L -n
+# To print all IPv4 HTTP packets to and from port 80,
+# i.e. print only packets that contain data, not, for example, SYN and FIN packets and ACK-only packets.
+# tcpdump 'tcp port 80 and (((ip[2:2] - ((ip[0]&0xf)<<2)) - ((tcp[12]&0xf0)>>2)) != 0)'
+
+# Dump HTTP GET/POST
+# tcpdump -nn -i eth2 'tcp port 80 and tcp[((tcp[12]&0xf0)>>2):4]=0x47455420'
+tcpdump -nn -i eth2 'tcp port 80 and tcp[((tcp[12]&0xf0)>>2):4]=0x504f5354'
