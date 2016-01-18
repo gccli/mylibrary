@@ -22,7 +22,7 @@ sudo apt-get install php5-common php5-cli php5-fpm
 
 ## Compile Nginx
 
-    ./configure --with-http_ssl_module --prefix=/opt/nginx --add-module=appid_module
+    ./configure --with-debug --with-http_ssl_module --prefix=/opt/nginx --add-module=filter --add-module=../upload
 
 ## 透明代理 ##
 [https://help.ubuntu.com/community/NetworkConnectionBridge](Add Bridge)
