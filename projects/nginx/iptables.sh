@@ -4,8 +4,7 @@
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
 # Interested destination ip address
-DEST=101.226.161.204
-
+# DEST=122.228.0.12
 #drop nat
 iptables -t nat -F
 iptables -F
