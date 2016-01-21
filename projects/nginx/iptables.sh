@@ -5,6 +5,7 @@ echo 1 > /proc/sys/net/ipv4/ip_forward
 
 # Interested destination ip address
 # DEST=122.228.0.12
+#DEST=101.226.161.204
 #drop nat
 iptables -t nat -F
 iptables -F
@@ -29,8 +30,8 @@ iptables -L PREROUTING -t nat -n
 
 # To print all IPv4 HTTP packets to and from port 80,
 # i.e. print only packets that contain data, not, for example, SYN and FIN packets and ACK-only packets.
-# tcpdump 'tcp port 80 and (((ip[2:2] - ((ip[0]&0xf)<<2)) - ((tcp[12]&0xf0)>>2)) != 0)'
+tcpdump 'tcp port 80 and (((ip[2:2] - ((ip[0]&0xf)<<2)) - ((tcp[12]&0xf0)>>2)) != 0)'
 
 # Dump HTTP GET/POST
 # tcpdump -nn -i eth2 'tcp port 80 and tcp[((tcp[12]&0xf0)>>2):4]=0x47455420'
-tcpdump -nn -i em2 'tcp port 80 and tcp[((tcp[12]&0xf0)>>2):4]=0x504f5354'
+#tcpdump -nn -i em2 'tcp port 80 and tcp[((tcp[12]&0xf0)>>2):4]=0x504f5354'
