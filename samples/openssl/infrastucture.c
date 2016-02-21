@@ -1,6 +1,7 @@
 #include <sys/syscall.h>
 
 #include "sslcommon.h"
+#include "callback.h"
 
 #define SSL_FAILURE 0
 #define SSL_SUCCESS 1
@@ -91,29 +92,6 @@ static int SSLpasswd_cb(char *buf, int size, int rwflag, void *password)
     return strlen(buf);
 }
 
-static int SSLverify_cb(int ok, X509_STORE_CTX *store)
-{
-    char data[256];
-    if (!ok)
-    {
-        X509 *cert = X509_STORE_CTX_get_current_cert(store);
-        int depth = X509_STORE_CTX_get_error_depth(store);
-        int err = X509_STORE_CTX_get_error(store);
-        if (err == X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN) {
-            fprintf(stderr, "Ignore: SELF_SIGNED_CERT_IN_CHAIN\n");
-            ok = 1;
-        } else {
-            fprintf(stderr, "-Error with certificate at depth: %i\n", depth);
-            X509_NAME_oneline(X509_get_issuer_name(cert), data, 256);
-            fprintf(stderr, " issuer  = %s\n", data);
-            X509_NAME_oneline(X509_get_subject_name(cert), data, 256);
-            fprintf(stderr, " subject = %s\n", data);
-            fprintf(stderr, " error %i:%s\n", err, X509_verify_cert_error_string(err));
-        }
-    }
-
-    return ok;
-}
 
 SSL_CTX *SSLnew_server_ctx(const char *cert, const char *keyfile, char *pass)
 {
@@ -144,15 +122,31 @@ SSL_CTX *SSLnew_client_ctx(const char *capath)
 {
     SSL_CTX *ctx = SSL_CTX_new(TLSv1_method());
 
+    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, SSLverify_callback);
+    SSL_CTX_set_info_callback(ctx, SSLinfo_callback);
+
     // set default locations for trusted CA certificates
     if (SSL_CTX_load_verify_locations(ctx, NULL, capath) <= 0) {
-        SSL_LOGERR("load verify");
-        return NULL;
+        SSL_print_err("load verify location:");
+        goto error;
     }
 
-    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, SSLverify_cb);
+    if (!SSL_CTX_set_default_verify_paths(ctx)) {
+        SSL_print_err("set default verify path:");
+        goto error;
+    }
+
+    TLS_extdata tlsext = {SSLgetstderr(), 0};
+
+    SSL_CTX_set_tlsext_servername_callback(ctx, SSLservername_cb);
+    SSL_CTX_set_tlsext_servername_arg(ctx, &tlsext);
+
 
     return ctx;
+
+error:
+    SSL_CTX_free(ctx);
+    return NULL;
 }
 
 

@@ -1,17 +1,21 @@
 include ../../Makefile.common
 include openssl.mk
 
-TARGET=libencrypt.so client server mailclient sslproxy
+TARGET=libencrypt.so client server
+#mailclient sslproxy
 
 # common file defined in mylibrary/utils
-COMMOBJ=hexdump.o
+
 
 
 SRCS=$(wildcard *.c)
 OBJS=$(subst .c,.o,$(SRCS))
 
-COBJS=client.o infrastucture.o
-SOBJS=server.o infrastucture.o $(COMMOBJ)
+COMOBJS=infrastucture.o sslcommon.o callback.o hexdump.o
+
+
+COBJS=client.o $(COMOBJS)
+SOBJS=server.o $(COMOBJS)
 MOBJS=mailclient.o infrastucture.o
 
 PROXYOBJS=ssl_proxy.o infrastucture.o

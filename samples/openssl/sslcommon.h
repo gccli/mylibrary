@@ -1,3 +1,6 @@
+#ifndef SSL_COMMON_H__
+#define SSL_COMMON_H__
+
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +37,7 @@ static inline unsigned long thread_id(void)
 }
 
 void SSLinit();
+BIO *SSLgetstderr();
 void SSLseeding(int size, const char *filename);
 
 SSL_CTX *SSLnew_server_ctx(const char *cert, const char *key, char *pass);
@@ -42,3 +46,17 @@ SSL_CTX *SSLnew_client_ctx(const char *capath);
 
 int BIO_nb_read(BIO *bio, char *start, int size);
 int BIO_nb_write(BIO *bio, char *start, int size);
+
+
+
+#define SSL_print_err(str) do {                                         \
+        char tmp_errstr[256];                                           \
+        unsigned long tmp_errno;                                        \
+        while((tmp_errno = ERR_get_error())) {                          \
+            BIO_printf(SSLgetstderr(), "%s %s\n", str,                  \
+                       ERR_error_string(tmp_errno, tmp_errstr));        \
+        }                                                               \
+    } while(0)
+
+
+#endif
