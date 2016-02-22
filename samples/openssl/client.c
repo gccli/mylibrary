@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <getopt.h>
 
+#include <openssl/bio.h>
+
 #include "sslcommon.h"
 
 char *host = "localhost";
@@ -13,6 +15,8 @@ int main(int argc, char *argv[])
 {
     int ret, index = 0;
     static struct option long_options[] = {
+        {"verify-return-error", 0, 0, 0},
+        {"verify-depth",        1, 0, 0},
         {0, 0, 0, 0}
     };
     const char* optlist = "ih:p:";
@@ -38,22 +42,28 @@ int main(int argc, char *argv[])
     }
 
     SSLinit();
-//    SSLseeding(1024, "/tmp/sending");
 
     SSL *ssl = NULL;
-    BIO *conn = NULL;
-    SSL_CTX *ctx = SSLnew_client_ctx("/etc/ssl/certs");
+    BIO *conn = NULL, *errbio = NULL;
+    char tmp[256] = {0};
+    SSL_CTX *ctx = NULL;
 
+    ctx = SSLnew_client_ctx("/etc/ssl/certs");
+    errbio = SSLgetstderr();
     conn = BIO_new_ssl_connect(ctx);
     BIO_get_ssl(conn, &ssl);
     if (ssl == NULL)
         return -1;
 
-    char strport[8] = {0};
-    sprintf(strport, "%d", port);
+    if (!SSL_set_tlsext_host_name(ssl, host)) {
+        BIO_printf(errbio, "Unable to set TLS servername extension.\n");
+        SSL_print_err("SSL_set_tlsext_host_name");
+        return -1;
+    }
 
+    sprintf(tmp, "%d", port);
     BIO_set_conn_hostname(conn, host);
-    BIO_set_conn_port(conn, strport);
+    BIO_set_conn_port(conn, tmp);
     BIO_set_nbio(conn, 1);
     SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
 
@@ -62,13 +72,12 @@ int main(int argc, char *argv[])
             break;
     } while(BIO_should_retry(conn));
     if (ret <= 0) {
-        fprintf(stderr, "BIO_do_connect\n");
-        SSL_LOGERR("BIO_do_connect");
+        SSL_print_err("BIO_do_connect");
         return 1;
     }
 
     if (BIO_do_handshake(conn) <=0 ) {
-        fprintf(stderr, "BIO_do_handshake\n");
+        SSL_print_err("BIO_do_handshake");
         return 1;
     }
 
@@ -79,9 +88,8 @@ int main(int argc, char *argv[])
     rlen = BIO_nb_read(conn, rcvbuf, sizeof(rcvbuf));
     if (rlen > 0) {
         rcvbuf[rlen] = 0;
-        fprintf(stderr, "S: %s\n", rcvbuf);
+        BIO_printf(errbio, "S: %s\n", rcvbuf);
     }
-    printf("SSL connection opened\n");
 
     while(1) {
         rlen = fread(sndbuf, 1, sizeof(sndbuf), stdin);
@@ -89,14 +97,14 @@ int main(int argc, char *argv[])
             break;
         }
         wlen = BIO_nb_write(conn, sndbuf, rlen);
-        printf("C: %d bytes sent\n", wlen);
+        BIO_printf(errbio, "C: %d bytes sent\n", wlen);
     }
 
     sleep(1);
     rlen = BIO_nb_read(conn, rcvbuf, sizeof(rcvbuf));
     if (rlen > 0) {
         rcvbuf[rlen] = 0;
-        fprintf(stderr, "S: %s", rcvbuf);
+        BIO_printf(errbio, "S: %s", rcvbuf);
     }
 
     BIO_free_all(conn);

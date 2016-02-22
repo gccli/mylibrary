@@ -8,29 +8,25 @@
 #include <getopt.h>
 #include <signal.h>
 
+#include <utils/debug.h>
 #include <utils/file.h>
-#include <hexdump.h>
 
 #include "sslcommon.h"
-#include "crypt.h"
 
 static int port = 3200; // default port
 
 // verify
 // openssl s_client -CApath /etc/ssl/certs/ -connect localhost:3200
-
-struct crypt_ctx *enc_ctx;
-
 void *threadfunc(void *param)
 {
     BIO *client = (BIO *) param;
     if (BIO_do_handshake(client) <= 0) {
-        SSL_LOGERR("thread handshake");
+        SSL_print_err("thread handshake");
         BIO_free_all(client);
         return NULL;
     }
     int fd, len, err, total = 0;
-    char tmp[128] = {0}, str[256] = {0}, buffer[819200];
+    char tmp[128] = {0}, buffer[819200];
     BIO_get_fd(client, &fd);
 
     struct sockaddr_in peer;
@@ -44,12 +40,12 @@ void *threadfunc(void *param)
     do {
         if ((err = BIO_read(client, buffer, sizeof(buffer))) <= 0) {
             if (err == -1) {
-                SSL_LOGERR("BIO_read");
+                SSL_print_err("BIO_read");
             }
             break ;
         }
-        len = err>32?32:err;
-        printf("read %d bytes:\n%s\n", err, hexdump(HXD_1, buffer, len, str));
+
+        printf("read %d bytes:\n", err);
 
         BIO_write(client, "OK\r\n", 4);
         write(fd, buffer, err);
@@ -58,27 +54,22 @@ void *threadfunc(void *param)
     BIO_free_all(client);
 
     if (fd > 0) close(fd);
-    sprintf(str, "/tmp/dec.%ld", thread_id());
-    decrypt_f(enc_ctx, tmp, str);
-
-    fprintf(stderr, "Connection closed, %d bytes received, decrypt to %s.\n",
-            total, str);
 
     return NULL;
 }
 
 int main(int argc, char *argv[])
 {
-    int ret;
-    const char *cert = "certs/server.pem";
-    const char *prikey = "certs/server.key";
-    char *pass = NULL;
+    const char *cert = "ca.cert";
+    const char *prikey = cert;
+    char *pass = NULL, tmp[256];
     static struct option _options[] = {
         {"pass", 1, 0, 0},
         {"cert", 1, 0, 0},
         {"key", 1, 0, 0},
         {0, 0, 0, 0}
     };
+
     int index = 0;
     const char* optlist = "p:";
     while (1){
@@ -109,18 +100,7 @@ int main(int argc, char *argv[])
     pthread_sigmask (SIG_BLOCK, &mask, NULL);
 
     SSLinit();
-//    SSLseeding(1024, "/tmp/sending");
-
-    ret = crypt_create(&enc_ctx, "key");
-    if (ret != 0) {
-        printf("failed to create context\n");
-        return 1;
-    }
-
     SSL_CTX *ctx = SSLnew_server_ctx(cert, prikey, pass);
-
-    char strport[8];
-    sprintf(strport, "%d", port);
 
     SSL *ssl = NULL;
     BIO *acc, *client;
@@ -133,7 +113,8 @@ int main(int argc, char *argv[])
     SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
 
     // acc is a source/sink BIO
-    if ((acc = BIO_new_accept(strport)) == NULL)
+    sprintf(tmp, "%d", port);
+    if ((acc = BIO_new_accept(tmp)) == NULL)
         return 1;
     BIO_set_bind_mode(acc, BIO_BIND_REUSEADDR);
 
@@ -143,7 +124,7 @@ int main(int argc, char *argv[])
 
     // set up the accept BIO
     if (BIO_do_accept(acc) <= 0) {
-        SSL_LOGERR("init accept");
+        SSL_print_err("init accept");
         return 1;
     }
 
@@ -152,7 +133,7 @@ int main(int argc, char *argv[])
     {
         // wait for incoming connection
         if (BIO_do_accept(acc) <= 0) {
-            SSL_LOGERR("accept");
+            SSL_print_err("accept");
             break;
         }
         client = BIO_pop(acc);

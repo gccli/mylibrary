@@ -26,7 +26,7 @@ int THREAD_setup(void)
     for (i=0 ;i<mutex_count; ++i)
         pthread_mutex_init(&ssl_mutex[i], NULL);
 
-    CRYPTO_set_id_callback(thread_id);
+    CRYPTO_set_id_callback(pthread_self);
     CRYPTO_set_locking_callback(thread_lock);
 
     return SSL_SUCCESS;
@@ -48,18 +48,23 @@ int THREAD_cleanup(void)
 }
 //////////////////////////////////////////////////
 
+int SSL_extdata_index;
+int SSL_CTX_extdata_index;
 
 // Common Functions
 void SSLinit()
 {
     SSL_library_init();
 
-    THREAD_setup();
+    //THREAD_setup();
     SSL_load_error_strings();
     ERR_load_BIO_strings();
     ERR_load_crypto_strings();
     OpenSSL_add_all_algorithms();
     OpenSSL_add_all_ciphers();
+
+    SSL_extdata_index = SSL_get_ex_new_index(0, "SSL_extdata", NULL, NULL, NULL);
+    SSL_CTX_extdata_index = SSL_CTX_get_ex_new_index(0, "SSL_extdata", NULL, NULL, NULL);
 }
 
 void SSLcleanup()
@@ -92,35 +97,52 @@ static int SSLpasswd_cb(char *buf, int size, int rwflag, void *password)
     return strlen(buf);
 }
 
-
 SSL_CTX *SSLnew_server_ctx(const char *cert, const char *keyfile, char *pass)
 {
     SSL_CTX *ctx = SSL_CTX_new(TLSv1_method());
+
     SSL_CTX_set_default_passwd_cb(ctx, SSLpasswd_cb);
     SSL_CTX_set_default_passwd_cb_userdata(ctx, pass);
 
     if (SSL_CTX_use_certificate_chain_file(ctx, cert) <= 0)
     {
-        SSL_LOGERR("use certificate");
-        return NULL;
+        SSL_print_err("use certificate");
+        goto error;
     }
     if (SSL_CTX_use_PrivateKey_file(ctx, keyfile, SSL_FILETYPE_PEM) <= 0)
     {
-        SSL_LOGERR("use private key");
-        return NULL;
+        SSL_print_err("use private key");
+        goto error;
     }
     if (SSL_CTX_check_private_key(ctx) <= 0)
     {
-        SSL_LOGERR("check private key");
-        return NULL;
+        SSL_print_err("check private key");
+        goto error;
     }
 
+    SSL_CTX_set_tlsext_servername_callback(ctx, SSLservername_cb);
+    //SSL_CTX_set_tlsext_servername_arg(ctx, &tlsext);
+
+    SSL_CTX_set_info_callback(ctx, SSLinfo_callback);
+
     return ctx;
+
+error:
+    SSL_CTX_free(ctx);
+    return NULL;
 }
 
 SSL_CTX *SSLnew_client_ctx(const char *capath)
 {
     SSL_CTX *ctx = SSL_CTX_new(TLSv1_method());
+    CCTX_extdata_t *extdata;
+
+    extdata = (CCTX_extdata_t *)calloc(1, sizeof(*extdata));
+    extdata->verify_depth = 5;
+    extdata->verify_ignore = 1;
+    extdata->err = SSLgetstderr();
+
+    SSL_CTX_set_ex_data(ctx, SSL_CTX_extdata_index, extdata);
 
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, SSLverify_callback);
     SSL_CTX_set_info_callback(ctx, SSLinfo_callback);
@@ -136,11 +158,8 @@ SSL_CTX *SSLnew_client_ctx(const char *capath)
         goto error;
     }
 
-    TLS_extdata tlsext = {SSLgetstderr(), 0};
-
     SSL_CTX_set_tlsext_servername_callback(ctx, SSLservername_cb);
-    SSL_CTX_set_tlsext_servername_arg(ctx, &tlsext);
-
+    SSL_CTX_set_tlsext_servername_arg(ctx, extdata);
 
     return ctx;
 
@@ -159,7 +178,7 @@ int BIO_nb_write(BIO *bio, char *start, int size)
         if (len <= 0) {
             if (BIO_should_retry(bio)) continue;
             else {
-                SSL_LOGERR("BIO_write");
+                SSL_print_err("BIO_write");
                 return -1;
             }
         }
@@ -182,7 +201,7 @@ int BIO_nb_read(BIO *bio, char *start, int size)
         }
         if (len < 0) {
             if (!BIO_should_read(bio)) {
-                SSL_LOGERR("BIO_read");
+                SSL_print_err("BIO_read");
                 return -1;
             }
         }
