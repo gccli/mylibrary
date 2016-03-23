@@ -13,7 +13,7 @@
 #include <assert.h>
 #include <getopt.h>
 
-#include "utiltime.h"
+//#include "utiltime.h"
 
 #define THREAD_COUNT 4
 #define gettid() syscall(__NR_gettid)
@@ -99,7 +99,7 @@ retry:
 		if(verbose)printf("\n");
 	}
 	mysql_free_result(result);
-	
+
 	return 0;
 }
 
@@ -108,7 +108,7 @@ void *threadfunc1(void *param)
 {
 	int  i=0;
 	char sql[1024];
-	for (;i<300; ++i) 
+	for (;i<300; ++i)
 	{
 		int id = random() % 100;
 		sprintf(sql, "select * from users where id = %d", id);
@@ -123,7 +123,7 @@ void *threadfunc2(void *param)
 {
 	int  i=0;
 	char sql[1024];
-	for (;i<3000; ++i) 
+	for (;i<3000; ++i)
 	{
 		int id = random() % 100;
 		sprintf(sql, "select * from users where id < %d", id);
@@ -159,7 +159,7 @@ void PARSE_CLI(int argc, char *argv[])
 			break;
 		case 's':
 			unix_socket = strdup(optarg);
-			break;			
+			break;
 		case 0:
 			break;
 		default:
@@ -173,13 +173,13 @@ int TEST_MULTITHREAD()
 {
 	int i;
 	pthread_t th[THREAD_COUNT+1];
-	for (i=0; i<THREAD_COUNT; i+=2) 
+	for (i=0; i<THREAD_COUNT; i+=2)
 	{
 		pthread_create(&th[i], NULL, threadfunc1, NULL);
 		pthread_create(&th[i+1], NULL, threadfunc2, NULL);
 	}
 
-	for (i=0; i<THREAD_COUNT; ++i) 
+	for (i=0; i<THREAD_COUNT; ++i)
 	{
 		pthread_join(th[i], NULL);
 	}
@@ -191,27 +191,22 @@ int TEST_MULTITHREAD()
 
 int TEST_INTER_JOIN()
 {
-	double tstart;
 	const char *sql = "use world";
 	MYSQL_QUERY(sql, strlen(sql));
 	// Warm up cache
 	MYSQL_SELECT("SELECT C1.Name,C2.Name from City C1, Country C2 where C1.CountryCode=C2.Code and C2.Name='China';");
 
-	// 
+	//
 	printf("\n1. No Inner Join\n");
-	tstart = timing_start();
 	MYSQL_SELECT("SELECT C1.Name,C2.Name from City C1, Country C2 where C1.CountryCode=C2.Code and C2.Name='China';");
-	printf("time cost %lf second\n", timing_cost(tstart));
+
 
 	printf("\n2. Inner Join\n");
-	tstart = timing_start();
 	MYSQL_SELECT("SELECT C1.Name,C2.Name from City C1 INNER JOIN Country C2 ON C1.CountryCode=C2.Code WHERE C2.Name='China';");
-	printf("time cost %lf second\n", timing_cost(tstart));
+
 
 	printf("\n3. No Inner Join\n");
-	tstart = timing_start();
 	MYSQL_SELECT("SELECT C1.Name,C2.Name from City C1, Country C2 where C1.CountryCode=C2.Code and C2.Name='China';");
-	printf("time cost %lf second\n", timing_cost(tstart));
 
 	return 0;
 }
@@ -224,4 +219,3 @@ int main(int argc, char *argv[])
 	TEST_INTER_JOIN();
 	return 0;
 }
-

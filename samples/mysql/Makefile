@@ -6,7 +6,7 @@ SRCS=$(filter-out $(wildcard *.c), sqlite.c)
 OBJS=$(subst .c,.o,$(SRCS))
 
 CFLAGS=-g -Wall -I$(INC)
-LDFLAGS= -L$(LIB) -lutilext -lmysqlclient -lpthread
+LDFLAGS= -lmysqlclient -lpthread
 
 all: $(TARGET)
 
