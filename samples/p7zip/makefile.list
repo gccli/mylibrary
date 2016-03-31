@@ -1,0 +1,67 @@
+PROG=7zw
+
+all: $(PCH_NAME) $(PROG)
+
+LOCAL_FLAGS=$(TARGET_FLAGS) \
+  -D_FILE_OFFSET_BITS=64 \
+  -D_LARGEFILE_SOURCE \
+  -D_REENTRANT \
+  -DENV_UNIX \
+  -DUNICODE \
+  -D_UNICODE \
+  -DUNIX_USE_WIN_FILE \
+
+SRCS=\
+  Client7z.cpp \
+  $(P7ZIP)/CPP/7zip/Common/FileStreams.cpp \
+  $(P7ZIP)/CPP/Common/IntToString.cpp \
+  $(P7ZIP)/CPP/Common/MyString.cpp \
+  $(P7ZIP)/CPP/Common/MyVector.cpp \
+  $(P7ZIP)/CPP/Common/MyWindows.cpp \
+  $(P7ZIP)/CPP/Common/StringConvert.cpp \
+  $(P7ZIP)/CPP/Common/UTFConvert.cpp \
+  $(P7ZIP)/CPP/Common/Wildcard.cpp \
+  $(P7ZIP)/CPP/Windows/DLL.cpp \
+  $(P7ZIP)/CPP/Windows/FileDir.cpp \
+  $(P7ZIP)/CPP/Windows/FileFind.cpp \
+  $(P7ZIP)/CPP/Windows/FileIO.cpp \
+  $(P7ZIP)/CPP/Windows/FileName.cpp \
+  $(P7ZIP)/CPP/Windows/PropVariant.cpp \
+  $(P7ZIP)/CPP/Windows/PropVariantConv.cpp \
+  $(P7ZIP)/CPP/myWindows/wine_date_and_time.cpp \
+
+SRCS_C=\
+  $(P7ZIP)/C/Threads.c \
+
+%.o : %.cpp
+	$(CXX) $(CXXFLAGS) $^
+%.o : $(P7ZIP)/CPP/7zip/Common/%.cpp
+	$(CXX) $(CXXFLAGS) $^
+%.o : $(P7ZIP)/CPP/Common/%.cpp
+	$(CXX) $(CXXFLAGS) $^
+%.o : $(P7ZIP)/CPP/Windows/%.cpp
+	$(CXX) $(CXXFLAGS) $^
+%.o : $(P7ZIP)/CPP/myWindows/%.cpp
+	$(CXX) $(CXXFLAGS) $^
+%.o : $(P7ZIP)/C/%.c
+	$(CC) $(CFLAGS) $^
+
+OBJS=\
+ Threads.o \
+ FileStreams.o \
+ Client7z.o \
+ IntToString.o \
+ MyString.o \
+ MyVector.o \
+ MyWindows.o \
+ StringConvert.o \
+ UTFConvert.o \
+ Wildcard.o \
+ DLL.o \
+ FileDir.o \
+ FileFind.o \
+ FileIO.o \
+ FileName.o \
+ PropVariant.o \
+ PropVariantConv.o \
+ wine_date_and_time.o \
