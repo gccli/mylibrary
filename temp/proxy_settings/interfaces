@@ -1,0 +1,22 @@
+# interfaces(5) file used by ifup(8) and ifdown(8)
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet static
+  address 172.16.1.1
+  netmask 255.255.255.0
+
+auto br0
+iface br0 inet dhcp
+  pre-up ip link set eth1 up
+  pre-up ip link set eth2 up
+  pre-up ip addr flush dev eth1
+  pre-up ip addr flush dev eth2
+  pre-up brctl addbr br0
+  pre-up brctl addif br0 eth1 eth2
+  post-down ip link set eth1 down
+  post-down ip link set eth2 down
+  post-down ip link set br0 down
+  post-down brctl delif br0 eth1 eth2
+  post-down brctl delbr br0
