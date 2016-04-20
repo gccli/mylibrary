@@ -24,6 +24,8 @@
 #include "7zip/Archive/IArchive.h"
 #include "7zip/IPassword.h"
 
+#include "libzip.h"
+
 DEFINE_GUID(CLSID_CFormatZIP,
 	    0x23170F69, 0x40C1, 0x278A, 0x10, 0x00, 0x00, 0x01, 0x10, 0x01, 0x00, 0x00);
 DEFINE_GUID(CLSID_CFormat7z,
@@ -700,7 +702,7 @@ static int PrepareDirItems(const char *root, const char *relative, CObjectVector
     return 0;
 }
 
-int CompressDirectory(const char *file, const char *directory)
+extern "C" int CompressDirectory(const char *file, const char *directory)
 {
     CObjectVector<CDirItem> dirItems;
     if (PrepareDirItems(directory, "", dirItems) != 0)
@@ -751,7 +753,7 @@ int CompressDirectory(const char *file, const char *directory)
     return 0;
 }
 
-int DecompressArchive(const char *zipfile, const char *directory)
+extern "C" int DecompressArchive(const char *zipfile, const char *directory)
 {
     CMyComPtr<IInArchive> archive;
     if (createObjectFunc(&CLSID_Format, &IID_IInArchive, (void **)&archive) != S_OK)

@@ -1,4 +1,4 @@
-P7ZIP=p7zip_15.14
+P7ZIP=p7zip_15.14.1
 
 include $(P7ZIP)/makefile.crc32
 include $(P7ZIP)/makefile.machine
