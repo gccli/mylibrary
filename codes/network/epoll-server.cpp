@@ -11,8 +11,7 @@
 #include <signal.h>
 
 #define MAXEVENTS 1024
-// 
-// http://blog.chinaunix.net/uid-24517549-id-4051156.html
+
 static int make_socket_non_blocking (int sfd)
 {
   int flags, s;
@@ -48,7 +47,7 @@ static int create_and_bind (char *port)
     }
 
   for (rp = result; rp != NULL; rp = rp->ai_next) {
-      sfd = socket (rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+      sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
       if (sfd == -1)
         continue;
 
@@ -133,7 +132,7 @@ int main (int argc, char *argv[])
 	  if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP) || (!(events[i].events & EPOLLIN))) {
 	      /* An error has occured on this fd, or the socket is not
 		 ready for reading (why were we notified then?) */
-	      fprintf(stderr, "epoll error: %s %x\n", 
+	      fprintf(stderr, "epoll error: %s %x\n",
 		      (events[i].events & EPOLLERR)?"EPOLLERR":((events[i].events & EPOLLHUP)?"EPOLLHUP":"Other"), events[i].events);
 	      s = epoll_ctl(efd, EPOLL_CTL_DEL, events[i].data.fd, NULL);
 	      close (events[i].data.fd);
@@ -172,7 +171,7 @@ int main (int argc, char *argv[])
 
                   event.data.fd = infd;
                   event.events = EPOLLIN | EPOLLET;
-                  s = epoll_ctl (efd, EPOLL_CTL_ADD, infd, &event);
+                  s = epoll_ctl(efd, EPOLL_CTL_ADD, infd, &event);
                   if (s == -1) {
                       perror("epoll_ctl"); abort ();
 		  }
@@ -206,7 +205,9 @@ int main (int argc, char *argv[])
                       break;
 		  }
 		  buf[count] = 0;
-		  printf("client(%zu,%zu,%zu,%d) length:%ld\n", client_accept, client_quit, client_err, events[i].data.fd, count);
+		  printf("client(%zu,%zu,%zu,%d) length:%ld\n", client_accept, client_quit, client_err,
+                         events[i].data.fd, count);
+                  printf("%s\n", buf);
 	      }
 
               if (done) {
@@ -216,7 +217,16 @@ int main (int argc, char *argv[])
                      from the set of descriptors which are monitored. */
                   close (events[i].data.fd);
 	      } else {
-		  if (write(events[i].data.fd, "OK\r\n", 4) < 0) {
+
+                  const char *response_msg =
+                      "HTTP/1.1 200 OK\r\n"
+                      "Server: epoll server\r\n"
+                      "Content-Type: text/plain; charset=utf-8\r\n"
+                      "Content-Length: 13\r\n\r\n"
+                      "Hello, world!";
+
+
+		  if (write(events[i].data.fd, response_msg, strlen(response_msg)) < 0) {
 		      perror("write");
 		  }
 	      }
