@@ -4,7 +4,7 @@
     $ dpkg -l
 *** To list the files installed by a package, in this case the _openssl_ package
     $ dpkg -L openssl
-*** which package installed a file 
+*** which package installed a file
     $ dpkg -S /etc/host.conf
 
 ** apt-cache
@@ -29,3 +29,11 @@
    $ apt-get install build-essential
    $ yum groupinstall 'Development Tools'
 
+
+* TAR
+  -t list the contents
+  --transform=expr or --xform=expr  modify filenames using supplied expression.
+  --strip-components=number
+    strip given number of leading components
+  -P keep leading '/'
+  -r

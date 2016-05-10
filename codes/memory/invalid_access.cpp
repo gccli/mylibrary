@@ -7,6 +7,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <getopt.h>
+#include <pthread.h>
+#include <utils/debug.h>
 
 /*
  * This program demonstrate the detail of heap area (malloc) and memore mapping area (mmap)
@@ -21,13 +23,65 @@
 #define B_RED   "\033[31m"
 #define B_END   "\033[0m"
 
+
+
+static char hex_string[1024];
+
+
+void *threadfunc(void *)
+{
+    printf("enter thread\n");
+
+    void *p = malloc(1024*20);
+
+}
+
+
+void inspect_malloc_memory(size_t size)
+{
+    long  len;
+    char *addr[2];
+
+    addr[0] = (char *)malloc(size);
+    addr[1] = (char *)malloc(size);
+
+    len = addr[1] > addr[0] ? addr[1]-addr[0]-size : addr[0]-addr[1]-size;
+    printf("malloc size %10zu, %p %p, gap:%ld ", size, addr[0], addr[1], len);
+    if (addr[1] > addr[0]) {
+        printf("grow up\n");
+        printf("%s\n", hexstr(addr[0]+size, len, hex_string));
+    } else {
+        printf("grow donw\n");
+    }
+
+    printf("before free()\n"); getchar();
+    free(addr[0]);
+    free(addr[1]);
+}
+
 int main(int argc, char *argv[])
 {
     int malloc_block_size   = 1024*1024;
     int malloc_block_count  = 100;
     int mapping_block_size  = 1024*1024;
     int mapping_block_count = 100;
-    
+
+    size_t len = 20480;
+    printf("before any malloc\n");
+    for(;;) {
+        char c;
+        printf("before alloc %zu bytes in heap, press 'x' to stop. > ", len);
+        if ((c = getchar()) == 'x')
+            break;
+        malloc(len);
+    }
+
+    inspect_malloc_memory(20*1024);
+    inspect_malloc_memory(1024*1024);
+
+    printf("end of main\n"); getchar();
+    exit(0);
+
     int c,i;
     while (1) {
 	int option_index = 0;
@@ -60,7 +114,7 @@ int main(int argc, char *argv[])
 		printf("       %*s [ --malloc-block-count=N] [--mapping-block-count=N_kbytes]\n", strlen(argv[0]), "");
 		exit(0);
 	}
-    }    
+    }
 
     printf("Create %d heap block, block size:"B_GREEN"%d"B_END"\n", malloc_block_count, malloc_block_size);
     char *old, *heap = NULL; // malloc area (heap)
@@ -74,7 +128,7 @@ int main(int argc, char *argv[])
 	printf("%p  ", heap);
 	if (((i+1) % 8) == 0)
 	    printf("\n");
-    } 
+    }
 
     printf("\n================================================================\n");
     printf("Create %d memory mapping block, block size:"B_GREEN"%d"B_END"\n", mapping_block_count, mapping_block_size);
@@ -84,7 +138,7 @@ int main(int argc, char *argv[])
 	if ((addr[i] = (char*)mmap(NULL, mapping_block_size, PROT_READ, MAP_PRIVATE|MAP_ANON, -1, 0)) == MAP_FAILED) {
 	    printf("failed to create memory map: %s\n", strerror(errno));
 	    return 1;
-	} 
+	}
 	printf("%p  ", addr[i]);
 	if (((i+1) % 8) == 0)
 	    printf("\n");
@@ -108,7 +162,7 @@ int main(int argc, char *argv[])
 	    phi = addr[j];plo = addr[j-1];
 	    printf("++++Memory mapping grow up: area(%d ~ %d) = %d\n", j-1, j, sz);
 	}
-	if (sz == mapping_block_size) 
+	if (sz == mapping_block_size)
 	    break;
     }
     if (old > heap) {
@@ -134,7 +188,7 @@ int main(int argc, char *argv[])
 
     printf("Try to access freed memory(%p):", heap);
     free(heap);
-    *(int *) (heap) = 300; // invalid write
+    //*(int *) (heap) = 300; // invalid write
     x = *(int *) heap;     // invalid read
     printf(B_GREEN"pass:%d\n"B_END, x);
 
@@ -145,7 +199,7 @@ int main(int argc, char *argv[])
     if ((addr[i] = (char*)mmap(NULL, mapping_block_size+1024, PROT_READ, MAP_PRIVATE|MAP_ANON, -1, 0)) == MAP_FAILED) {
 	printf("failed to create memory map: %s\n", strerror(errno));
 	return 1;
-    } 
+    }
     printf("Access mapped memory(%p), length=0x%x at offset 0x%x:", addr[i], mapping_block_size+1024, mapping_block_size+2048);
     x = *(int *) (addr[i]+mapping_block_size+2048);
     printf(B_GREEN"pass:%d\n"B_END, x);
@@ -153,7 +207,7 @@ int main(int argc, char *argv[])
     munmap(phi, mapping_block_size);
     // thsi will access phi, memory mapping grow down, cause coredump
     x = *(int *) (plo+mapping_block_size);
-    printf("Access unmapped memory. munmap(%p~%p), dereference(%p), x = 0x%x\n", 
+    printf("Access unmapped memory. munmap(%p~%p), dereference(%p), x = 0x%x\n",
 	   phi, phi+mapping_block_size, plo+mapping_block_size, x);
 
     return 0;
