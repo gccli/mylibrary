@@ -15,7 +15,7 @@ K4IMAGE="lijing/k4"
 function nodeadd {
     local n=$1
     local f=$2
-    local CMD="docker.io run -d -h node$n --name node$n -v /opt/cluster/$n:/data"
+    local CMD="docker run -d -h node$n --name node$n -v /opt/cluster/$n:/data"
     if [ -n "$f" -a "$f" == "master" ]; then
 	CMD="$CMD -p 9200:9200 -p 9300:9300"
     fi
@@ -29,7 +29,7 @@ function nodectl {
     shift
     for n in $@
     do
-	local CMD="docker.io $cmd node$n"
+	local CMD="docker $cmd node$n"
 	echo $CMD
 	$CMD
     done
@@ -50,7 +50,7 @@ function find_unused_dir {
     for i in `ls $CLUSTER_PATH`
     do
 	[ ! -d $CLUSTER_PATH/$i ] && continue
-	if [ $i -gt $max ]; then 
+	if [ $i -gt $max ]; then
 	    max=$i
 	fi
     done
@@ -88,12 +88,12 @@ if [ -n "$1" ]; then
 	    do
 		[ ! -d $CLUSTER_PATH/$i ] && continue
 		rm -rf $CLUSTER_PATH/$i
-	    done	    
+	    done
 
-	    ids=$(docker.io ps -a | grep elastic | awk '{ print $1 }')
+	    ids=$(docker ps -a | grep elastic | awk '{ print $1 }')
 	    for i in $(echo $ids)
 	    do
-		docker.io rm -f $i
+		docker rm -f $i
 	    done
             ;;
 	stop)
@@ -103,10 +103,10 @@ if [ -n "$1" ]; then
 	    startall
             ;;
 	shell)
-	    docker.io run --rm -it $IMAGE /bin/bash
+	    docker run --rm -it $IMAGE /bin/bash
 	    exit 0
 	    ;;
-esac    
+esac
 fi
 
-sleep 1 && docker.io ps
+sleep 1 && docker ps

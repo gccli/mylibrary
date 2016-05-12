@@ -1,16 +1,21 @@
 #! /usr/bin/env python
 
-
 import sys
 import signal
 import getopt
-import dpkt
+
 import pcap
 import socket
 import json
 from datetime import date, datetime
 import elasticsearch
 from elasticsearch import Elasticsearch
+
+import dpkt
+
+
+import time
+current_milli_time = lambda: int(round(time.time() * 1000))
 
 def usage():
     print >>sys.stderr, 'usage: %s [-i device] [pattern]' % sys.argv[0]
@@ -29,10 +34,9 @@ class IndexMgr(object):
         self.es.indices.create(index=self.current(), ignore=[400])
 
         mapping = {
-            "event" : {
-                "_timestamp" : {
-                    "enabled" : 'true',
-                    "path" : "datetime"
+            "log" : {
+                "_timestamp": {
+                    "enabled": True
                 },
                 "properties" : {
                     "URL" : {
@@ -42,6 +46,10 @@ class IndexMgr(object):
                     "source" : {
                         "type" : "string",
                         "index" : "not_analyzed"
+                    },
+                    "datetime" : {
+                        "type" : "date",
+                        "format" : "epoch_second"
                     }
                 }
             }
@@ -52,7 +60,7 @@ class IndexMgr(object):
         print 'Index created', rt, '\n'
 
     def delete(self):
-        self.es.indices.delete(index=index_pattern, ignore=[400, 404])
+        self.es.indices.delete(index=self.index_pattern, ignore=[400, 404])
 
     def feedback_get(self, idd):
         doc=None
@@ -112,23 +120,30 @@ def signal_handler(signal, frame):
 # pip install elasticsearch dpkt pypcap
 
 def main():
-    opts, args = getopt.getopt(sys.argv[1:], 'i:h')
+    index_manager = IndexMgr(host = '127.0.0.1')
+    pcap_filter = 'port 10087'
+
+    opts, args = getopt.getopt(sys.argv[1:], 'i:d')
     name = 'lo'
     for o, a in opts:
         if o == '-i': name = a
+        elif o == '-d':
+            index_manager.delete();
+            index_manager.feedback_create();
         else: usage()
 
     pc = pcap.pcap(name)
-    pc.setfilter(' '.join(args))
+    pc.setfilter(pcap_filter)
 
     signal.signal(signal.SIGINT, signal_handler)
 
-#    index_manager = IndexMgr(host = '127.0.0.1')
-#    index_manager.feedback_create();
-
+    jd = json.JSONDecoder()
     for src, sport, data, ip_version in decode_udp(pc):
-        print 'from {0}:{1}'.format(socket.inet_ntoa(src), sport)
-        print json.dumps(data)
+        dl = len(data)
+        print 'from {0}:{1} received {2} bytes'.format(socket.inet_ntoa(src), sport, len(data))
+        print json.dumps(data[:dl-1])
+        index_manager.feedback_insert(current_milli_time(), data[:dl-1])
+
         #print json.loads(data)
 
 if __name__ == '__main__':
