@@ -7,7 +7,7 @@ import getopt
 import pcap
 import socket
 import json
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, tzinfo
 import elasticsearch
 from elasticsearch import Elasticsearch
 
@@ -39,6 +39,10 @@ class IndexMgr(object):
                     "enabled": True
                 },
                 "properties" : {
+                    "vendor" : {
+                        "type" : "string",
+                        "index" : "not_analyzed"
+                    },
                     "URL" : {
                         "type" : "string",
                         "index" : "not_analyzed"
@@ -47,9 +51,9 @@ class IndexMgr(object):
                         "type" : "string",
                         "index" : "not_analyzed"
                     },
-                    "datetime" : {
-                        "type" : "date",
-                        "format" : "epoch_second"
+                    "appid_action" : {
+                        "type" : "string",
+                        "index" : "not_analyzed"
                     }
                 }
             }
@@ -114,10 +118,12 @@ def decode_udp ( pc ) :
 def signal_handler(signal, frame):
     sys.exit(0)
 
-# event "{\"type\":1,\"vendor\":2,\"appid_action\":131,\"datetime\":1462965421,\"protocol\":1,\"URL\":\"yun.360.cn\\/contact\\/detail\",\"source\":\"10.18.240.131\"}
-
 
 # pip install elasticsearch dpkt pypcap
+
+class TZ(tzinfo):
+    def utcoffset(self, dt): return timedelta(hours=+8)
+    def dst(self, dt): return timedelta(hours=+8)
 
 def main():
     index_manager = IndexMgr(host = '127.0.0.1')
@@ -136,15 +142,47 @@ def main():
     pc.setfilter(pcap_filter)
 
     signal.signal(signal.SIGINT, signal_handler)
+    actions = {
+        2:'DownloadREQ',
+        3:'Download',
+        4:'Upload',
+        6:'DeleteREQ',
+        7:'Delete',
+        9:'RenameREQ',
+        9:'Rename',
+        128:'AddrbookListREQ',
+        129:'AddrbookList',
+        131:'AddrbookDetailREQ',
+        131:'AddrbookDetail',
+        132:'Addrbook Save',
 
-    jd = json.JSONDecoder()
+        257:'SFShow',
+        265:'SFMainPage',
+        277:'SFHomePage',
+        267:'SFHover',
+        269:'SFLookup'
+    }
+    vendors = {1:"Qihoo", 2:"Salesforce"}
+    nact = 0
+
     for src, sport, data, ip_version in decode_udp(pc):
         dl = len(data)
-        print 'from {0}:{1} received {2} bytes'.format(socket.inet_ntoa(src), sport, len(data))
-        print json.dumps(data[:dl-1])
-        index_manager.feedback_insert(current_milli_time(), data[:dl-1])
+        try:
+            jd = json.loads(data[:dl-1])
+        except:
+            print 'parse json error:'
+            print data
+            continue
 
-        #print json.loads(data)
+        nact = jd['appid_action'];
+        jd['datetime'] = datetime.fromtimestamp(jd['datetime'], tz=TZ()).isoformat()
+        if ((nact == 256 or nact > 263) and jd['appid_action']%2==0):
+            continue
+        jd['appid_action'] = actions.get(jd['appid_action'], 'Unknown {0}'.format(jd['appid_action']))
+        jd['vendor'] = vendors.get(jd['vendor'], 'Unknown')
+
+        print '{0} from {1}:{2} received {3} bytes'.format(jd['datetime'], socket.inet_ntoa(src), sport, dl)
+        index_manager.feedback_insert(current_milli_time(), jd)
 
 if __name__ == '__main__':
     main()

@@ -27,3 +27,7 @@ Install Elasticsearch and Kibana with repositories
         sudo /bin/systemctl enable kibana.service
 
 [1]: https://www.elastic.co/guide/en/elasticsearch/reference/current/setup-repositories.html#setup-repositories "Setup Repositories"
+
+
+Install with tar
+================
