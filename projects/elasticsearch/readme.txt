@@ -46,10 +46,18 @@
    curl -XGET "http://localhost:9200/$my_index/_status?pretty"
    curl -XGET "http://localhost:9200/_stats?pretty"
 
-* cat
-  curl "http://localhost:9200/_cat/allocation?v"
-  curl "http://localhost:9200/_cat/indices?v"
-  curl "http://localhost:9200/_cat/nodes?v"
+* cat APIs - such as show indices
+** Parmeters
+*** Help
+    curl 'localhost:9200/_cat/indices?help
+*** Headers
+    curl 'localhost:9200/_cat/nodes?h=ip,port,heapPercent,name'
+    curl 'localhost:9200/_cat/indices/event_*?h=i' # show all indices based on name pattern
+** Show Indices
+*** show all indices
+    curl "http://localhost:9200/_cat/indices?v"
+*** show indices with specific patterns
+    curl "http://localhost:9200/_cat/indices/event_*?v"
 
 * Cluster
   curl -XGET "http://localhost:9200/_cluster/health?pretty=true"
@@ -67,8 +75,8 @@
 ** Queries
 
 ** Filters
-   
- 
+
+
 ** Controlling Relevance
    [[https://www.elastic.co/guide/en/elasticsearch/guide/current/relevance-intro.html][+ What is Relevance?]]
      Term frequency: How often does the term appear in the field
@@ -79,4 +87,3 @@
    Query-time boosting is the main tool that you can use to tune relevance.
 
    curl -i -XGET 'http://localhost:9200/_search?explain&pretty' '{"query"   : { "match" : { "name" : "Jeck" }}}'
-
