@@ -8,10 +8,10 @@
    sed 's/[ \t]*$//'   # remove white space after line
 
 ** find
- -newer file 
+ -newer file
   File was modified more recently than file.
  -regex pattern
-  File name matches regular expression pattern. 
+  File name matches regular expression pattern.
   - regex ".*\.h\|.*\.cpp\|.*\.c"
  -size n[cwbkMG]
    'b'    for 512-byte blocks (this is the default if no suffix is used)
@@ -31,7 +31,7 @@ rsync -av --exclude *.o --exclude .svn --exclude *~ --exclude *.a centos0:~/myli
 
 ** binary file process command
 xxd
-od -Ax -tx1 infile.bin 
+od -Ax -tx1 infile.bin
 hexdump -C infile.bin
 xxd -r -p infile.txt outfile.bin
 echo -n c984aed014aec7623a54f0591da07a85fd4b762d | xxd -r -p > outfile.bin
@@ -47,8 +47,8 @@ echo -n c984aed014aec7623a54f0591da07a85fd4b762d | xxd -r -p > outfile.bin
 
 * programming
 ** gcc/g++
-** gdb 
-   x/512b memory 
+** gdb
+   x/512b memory
 ** valgrind
    # memory check
    valgrind --tool=memcheck --log-file=vcheck.out --leak-check=full --undef-value-errors=no --free-fill=0xBB --malloc-fill=0xAA
@@ -74,7 +74,7 @@ echo -n c984aed014aec7623a54f0591da07a85fd4b762d | xxd -r -p > outfile.bin
    PKCS12 (RSA Labs Standard) format are typically used by browsers:
 
    # conversion PKCS12 > PEM
-   openssl pkcs12 -clcerts -nokeys -in cert.p12 -out usercert.pem 
+   openssl pkcs12 -clcerts -nokeys -in cert.p12 -out usercert.pem
    # extracts certificate only
 
    openssl pkcs12 -nocerts -in cert.p12 -out userkey.pem
@@ -116,3 +116,7 @@ ref:http://www.openssh.org/
 ** veriry
    json_verify < mapping.json
 
+* svn
+$ add executable permission
+svn propset svn:executable on *.sh
+svn propdel svn:executable on *.c

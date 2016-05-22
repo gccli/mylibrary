@@ -1,4 +1,6 @@
 <?php
+
+use Elasticsearch\ClientBuilder;
 require 'vendor/autoload.php';
 
 define("INDEX_NAME", "driver");
@@ -11,17 +13,10 @@ define("URUMCHI", "43.8346112822,87.5584165186");
 
 function init()
 {
-    $params = array();
-    $params['connectionPoolClass'] = '\Elasticsearch\ConnectionPool\SniffingConnectionPool';
-    $params['hosts'] = array (
-        'localhost'
-    );
-
-    $params['logging'] = true;
-    $params['logPath'] = '/tmp/elasticsearch.log';
-    $params['logPermission'] = 0664;
-    $params['logLevel'] = Psr\Log\LogLevel::INFO;
-    $client = new Elasticsearch\Client($params);
+    $connectionPool = '\Elasticsearch\ConnectionPool\StaticNoPingConnectionPool';
+    $client = ClientBuilder::create()
+            ->setConnectionPool($connectionPool)
+            ->build();
 
     return $client;
 }
@@ -50,7 +45,7 @@ function create_index($client)
 }
 
 function random($min = 0.0, $max = 1.0) {
-    return $min + mt_rand() / mt_getrandmax() * ($max - $min);  
+    return $min + mt_rand() / mt_getrandmax() * ($max - $min);
 }
 
 function location($center, $min = -0.3, $max = 0.3) {
@@ -61,7 +56,7 @@ function location($center, $min = -0.3, $max = 0.3) {
     return sprintf("%f,%f", $lat, $lon);
 }
 
-function time_range($hour, $interval) 
+function time_range($hour, $interval)
 {
     $minute = rand() % 60;
     $today = date("Y,m,d");
@@ -89,7 +84,7 @@ function time_slot($time, $mode='round')
     } else {
         $slot = round($m/$interval);
     }
-    
+
     return (int)(2*($h-1) + $slot);
 }
 
@@ -205,7 +200,7 @@ function search($client, $json)
         var_dump($json);
     }
     $results = $client->search($params);
-    printf("Total hit count %d, took %d, top 5 as follow\n", 
+    printf("Total hit count %d, took %d, top 5 as follow\n",
       $results['hits']['total'], $results['took']);
 
     if ($GLOBALS["opt_verbose"] > 0) {
@@ -213,8 +208,8 @@ function search($client, $json)
     }
     foreach ($results['hits']['hits'] as $hit) {
         $s = $hit['_source'];
-        printf("name:%-10s cartype:%d location:(%s) distance:%.3fkm\n", 
-          $s['name'], $s['cartype'], $s['location'], 
+        printf("name:%-10s cartype:%d location:(%s) distance:%.3fkm\n",
+          $s['name'], $s['cartype'], $s['location'],
         key_exists('sort', $hit) ? $hit['sort'][0] : 0.0);
     }
     printf("<<<\n");
