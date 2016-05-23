@@ -1,0 +1,140 @@
+* Salesforce Object
+|-------------------------+------------+--------------|
+| Function                | Key prefix | Chinese Name |
+|-------------------------+------------+--------------|
+| Account                 | 001        | 客户         |
+| Note                    | 002        | 备注         |
+| Contact                 | 003        | 联系人       |
+| ReceiptAddress__c       | a0Q        | 收货地址     |
+| AccountInfo__c          | a00        | 客户账户     |
+| Opportunity             | 006        | 商机         |
+|-------------------------+------------+--------------|
+| Contract                | 800        | 合同         |
+| Order                   | 801        | 订单         |
+| PriceList__c            | a0D        | 价格列表     |
+| Project__c              | a0N        | 项目         |
+| Projectstep__c          | a0O        | 项目阶段     |
+| Charge__c               | a01        | 费用         |
+| Invoice__c              | a08        | 发票         |
+|-------------------------+------------+--------------|
+| ProductCustomization__c | a0F        | 产品定制报备 |
+| ProductLine__c          | a0H        | 产品线       |
+| ProductName__c          | a0J        | 产品名       |
+| ProductGroup__c         | a0G        | 产品系列     |
+| ProductModel__c         | a0I        | 产品型号     |
+| Product2                | 01t        | 物料         |
+|-------------------------+------------+--------------|
+| Staff__c                | a0U        | 员工         |
+|-------------------------+------------+--------------|
+
+* Salesforce Fields
+|-------------------------+-----------------------------+--------------+-----------------+--------+------------|
+| Function                | Field Name                  | Label        | PRP             | Type   | Max Length |
+|-------------------------+-----------------------------+--------------+-----------------+--------+------------|
+| Account                 | Name                        | 客户名       | acc2            |        |            |
+|                         | Phone                       | 客户电话     | acc10           |        |            |
+|                         | Website                     | 网址         | acc12           |        |            |
+|                         | LegalPerson__c              | 法定代表人   | 00N2800000BzpGw |        |            |
+|                         | TaxpayerIdentification__c   | 纳税人识别号 | 00N2800000BzpH0 |        |            |
+|                         | Address__c                  | 注册地址     | 00N2800000BzpGp |        |            |
+|                         | BankForTicket__c            | 开户行       | 00N2800000BzpGq |        |            |
+|                         | TelephoneTicket__c          | 电话         | 00N2800000BzpH1 |        |            |
+|                         |                             | 账号         | 00N2800000BzpGr |        |            |
+|                         |                             | 描述         | acc20           |        |            |
+| Contact                 | LastName                    | 姓           | name_lastcon2   |        |            |
+|                         | FirstName                   | 名           | name_firstcon2  |        |            |
+|                         | Title                       | 职务         | con6            |        |            |
+|                         | Department                  | 部门         | con6            |        |            |
+|                         |                             | 电话         | con10           |        |            |
+|                         |                             | 客户传真     | con11           |        |            |
+|                         | MobilePhone                 | 手机         | con12           |        |            |
+|                         | Email                       | 电子邮件     | con15           |        |            |
+|                         | WeChat__c                   | 微信         | 00N28000008oBru |        |            |
+|                         | QQ__c                       | QQ           | 00N28000008oBrt |        |            |
+| Note                    | Title                       | 标题         | Title           |        |            |
+|                         | Body                        | 正文         | Body            |        |            |
+| ReceiptAddress__c       |                             | 收货人       | 00N28000008oBwm |        |            |
+|                         |                             | 邮编         | 00N2800000BzpIf |        |            |
+|                         |                             | 联系电话     | 00N28000008oBwn |        |            |
+|                         |                             | 身份证号     | 00N2800000BzpIe |        |            |
+|                         |                             | 收货地址     | 00N28000008oBwk |        |            |
+| AccountInfo__c          | Name                        | 帐户信息名称 | Name            |        |            |
+|                         | BankFullName__c             | 开户行全称   | 00N28000008oBrc |        |            |
+|                         | UserName__c                 | 户名         | 00N28000008oBri |        |            |
+|                         | Phone__c                    | 电话         | 00N28000008oBrf |        |            |
+|                         | AccountNo__c                | 账号         | 00N28000008oBra |        |            |
+|                         | TaxpayerNum__c              | 纳税人识别号 | 00N28000008oBrh |        |            |
+|                         | Address__c                  | 地址         | 00N28000008oBrb |        |            |
+|                         | ReMarks__c                  | 备注         | 00N28000008oBrg |        |            |
+|-------------------------+-----------------------------+--------------+-----------------+--------+------------|
+| Contract                | Name                        | 合同名称     | Name            |        |            |
+|                         | ContractCode__c             | 合同编码     | 00N28000008oBs5 |        |            |
+|                         | SignedAccount__c            | 签单客户名   | 00N2800000BzpHX |        |            |
+|                         | ChannelName__c              | 签单渠道名   | 00N2800000BzpHA |        |            |
+|                         | ContractFees__c             | 合同成本     | 00N2800000BzpHD | DOUBLE |            |
+|                         | Amount__c                   | 合同金额     | 00N28000008oBrz | DOUBLE |            |
+|                         | PurchaseCost__c             | 外采产品成本 | 00N2800000BzpHT |        |            |
+|                         | ThirdPartyAmount__c         | 外采产品金额 | 00N2800000Bm7EH |        |            |
+|                         | ThirdPartyProductRemarks__c | 外采产品说明 | 00N2800000BzpHa |        |            |
+|                         | Abstract__c                 | 内容提要     | 00N28000008oBrv |        |            |
+|                         | Description                 | 备注         | Description     |        |            |
+| Opportunity             | Name                        | 商机名称     | opp3            |        |            |
+|                         | Amount                      | 金额         | opp7            | DOUBLE |            |
+|                         | PreDeliveryRemarks__c       | 提前发货说明 | 00N280000092j3B |        |            |
+|                         | SpecialText__c              | 特殊配置     | 00N28000008oBtq |        |            |
+|                         | ThirdPartyAmount__c         | 外采产品金额 | 00N2800000BRMLp | DOUBLE |            |
+|                         | PurchaseCost__c             | 外采产品成本 | 00N2800000BzpHx | DOUBLE |            |
+|                         | ThirdPartyProductRemarks__c | 外采产品说明 | 00N2800000BzpI0 |        |            |
+|                         | ImplementationFeesDetail__c | 实施费用说明 | 00N2800000BzpHr |        |            |
+| Order                   | AccountCheckingNo__c        | 对账订单编号 | 00N28000009TULJ |        |            |
+|                         | AuthCode__c                 | 授权码       | 00N28000009lCdm |        |            |
+| PriceList__c            | Name                        | 价格列表名称 | Name            |        |            |
+|                         | Remarks__c                  | 备注         | 00N28000008oBuk |        |            |
+|-------------------------+-----------------------------+--------------+-----------------+--------+------------|
+| Project__c              | ProjectName__c              | 项目名称     | 00N28000008oBvr |        |            |
+|                         | Remarks__c                  | 项目备注     | 00N28000008oBvv |        |            |
+| Projectstep__c          | Stagedis__c                 | 阶段描述     | 00N28000008oBw6 |        |            |
+|                         | Remarks__c                  | 备注         | 00N28000008oBw2 |        |            |
+| Charge__c               | CostAmount__c               | 费用金额     | 00N28000008oBrj | DOUBLE |            |
+|                         | CostRemarks__c              | 费用说明     | 00N28000008oBrk |        |            |
+| Invoice__c              | InvoiceNum__c               | 发票号码     | 00N28000008oBtG |        |            |
+|                         | Receiver__c                 | 收件人       | 00N28000008oBtG |        |            |
+|                         | Phone__c                    | 联系电话     | 00N28000008oBtL |        |            |
+|                         | Address__c                  | 联系地址     | 00N28000008oBt6 |        |            |
+|                         | ExpressNO__c                | 快递单号     | 00N28000008oBtD |        |            |
+| Staff__c                | Name                        | 员工名称     | Name            |        |            |
+|                         | Email__c                    | 邮箱地址     | 00N28000008oBx8 |        |            |
+|                         | StaffCode__c                | 员工编号     | 00N28000008oBxA |        |            |
+|                         | Phone__c                    | 联系电话     | 00N28000008oBx9 |        |            |
+|-------------------------+-----------------------------+--------------+-----------------+--------+------------|
+|-------------------------+-----------------------------+--------------+-----------------+--------+------------|
+| ProductCustomization__c | Name                        | 定制型号名称 | Name            |        |            |
+|                         | Request__c                  | 定制要求描述 | 00N28000008oBvC |        |            |
+|                         | FeedbackModel__c            | 定制型号分配 | 00N28000008oBv9 |        |            |
+|                         | Feedback__c                 | 定制要求反馈 | 00N28000008oBvA |        |            |
+| ProductLine__c          | Name                        | 产品线名称   | Name            |        |            |
+|                         | Remarks__c                  | 备注         | 00N28000008oBvG |        |            |
+| ProductName__c          | Name                        | 产品名称     | Name            |        |            |
+|                         | ProductLinefortext__c       | 产品线(文本) | 00N2800000BzpIJ |        |            |
+|                         | TaxName__c                  | 退税产品名称 | 00N2800000C80cU |        |            |
+| ProductGroup__c         | Name                        | 系列名称     | Name            |        |            |
+|                         | Remarks__c                  | 备注         | 00N28000008oBvF |        |            |
+| ProductModel__c         | ProductModelName__c         | 产品型号名称 | 00N280000092kcQ |        |            |
+|                         | Name                        | 产品型号     | Name            |        |            |
+|                         | Remarks__c                  | 备注         | 00N28000008oBvM |        |            |
+|                         | CustomizedDescription__c    | 定制说明     | 00N28000008oBvI |        |            |
+| Product2                | Name                        | 产品名称     | Name            |        |            |
+|                         | ComponentName__c            | 部件名称     | 00N28000008oBuq |        |            |
+|                         | ComponentCode__c            | 部件编码     | 00N28000008oBup |        |            |
+|                         | ComponentText__c            | 部件描述     | 00N28000008oBur |        |            |
+|                         | CostPrice__c                | 成本价格     | 00N28000008oBut | DOUBLE |            |
+|                         | ConfigurationText__c        | 选配说明     | 00N28000008oBus |        |            |
+|                         | ReMarks__c                  | 内部说明     | 00N28000008oBuy |        |            |
+|                         | TaxName__c                  | 退税名称     | 00N28000008oBv1 |        |            |
+|                         | MainCode__c                 | 主机编码     | 00N28000008oBuu |        |            |
+|                         | CertificationVersion__c     | 认证型号     | 00N28000008oBun |        |            |
+|                         | MaterialCode__c             | 物料编码     | 00N28000008oBuv |        |            |
+|                         | RealVersion__c              | 实际型号     | 00N28000008oBuz |        |            |
+|                         | Description                 | 产品描述     | Description     |        |            |
+|                         | ProductRemarks__c           | 产品说明     | 00N28000008oBux |        |            |
+|-------------------------+-----------------------------+--------------+-----------------+--------+------------|
