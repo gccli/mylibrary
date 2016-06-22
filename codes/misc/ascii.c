@@ -66,9 +66,9 @@ int main(int argc, char *argv[])
 	for (offset = 0, j=0; j<4; ++j) {
 	    value = j*32+i;
 	    if (value < 32) {
-		sprintf(buffer, "%-3d  %02x   %-6s  %s", value, value, ascii_table[i].symble, ascii_table[i].desc);
-	    }
-	    else {
+		sprintf(buffer, "\x1b[31m%-3d\x1b[0m  %02x   %-6s  %s",
+                        value, value, ascii_table[i].symble, ascii_table[i].desc);
+	    } else {
 		width = 28+16*j;
 		if (offset < width)
 		    memset(buffer+offset, ' ', width-offset);
@@ -78,7 +78,6 @@ int main(int argc, char *argv[])
 	}
 	printf("%s\n", buffer);
     }
-    
+
     return 0;
 }
-

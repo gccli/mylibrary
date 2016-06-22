@@ -1,4 +1,4 @@
-* Configure 
+* Configure
 ** for interface ubuntu
 # add the following lines to interfaces see interfaces(5) and resolvconf(8)
 dns-nameservers IPADDR
@@ -21,7 +21,7 @@ dns-search inetlinux.net
 ** QUERY OPTIONS
    - set or reset flag bits in the query header
    - determine which sections of the answer get printed
-   - determine the timeout and retry strategies 
+   - determine the timeout and retry strategies
    +[no]tcp
      Use [do not use] TCP when querying name servers. The default behavior is to use UDP unless an AXFR or IXFR query is requested, in which case a TCP connection is used
    +[no]search
@@ -31,9 +31,101 @@ dns-search inetlinux.net
    +tries=T
      Sets the number of times to try UDP queries to server to T instead of the default, 3. If T is less than or equal to zero, the number of tries is silently rounded up to 1.
    +retry=T
-     Sets the number of times to retry UDP queries to server to T instead of the default, 2. Unlike +tries, this does not include the initial query.     
-	   
+     Sets the number of times to retry UDP queries to server to T instead of the default, 2. Unlike +tries, this does not include the initial query.
+
 * HOWTO
-** How to list all DNS records in a domain ? 
+** How to list all DNS records in a domain ?
    dig -tAXFR mycompany.com
    host -l domain.com
+
+* dnsmasq - Dnsmasq provides network infrastructure for small networks: DNS, DHCP, router advertisement and network boot.
+
+  dnsmasq -k -F 192.168.18.2,192.168.18.100 --dhcp-host=3c:33:00:56:5c:c7,work,infinite --dhcp-relay=10.18.240.129,10.16.0.216
+
+** Usage
+    -H, --addn-hosts=<file>
+        Additional hosts file. Read the specified file as well as /etc/hosts.
+    -k, --keep-in-foreground
+    -d, --no-daemon
+        Debug mode: don't fork to the background, don't write a pid file, don't change user id
+    -q, --log-queries
+        Log the results of DNS queries handled by dnsmasq.
+    -S, --local, --server=[/[<domain>]/[domain/]][<ipaddr>[#<port>][@<source-ip>|<interface>[#<port>]]
+        Specify IP address of upstream servers directly.
+    -A, --address=/<domain>/[domain/][<ipaddr>]
+        Specify an IP address to return for any host in the given domains.
+
+    -F, --dhcp-range=[tag:<tag>[,tag:<tag>],][set:<tag>,]<start-addr>[,<end-addr>|<mode>][,<netmask>[,<broadcast>]][,<lease time>]
+    -F, --dhcp-range=[tag:<tag>[,tag:<tag>],][set:<tag>,]<start-IPv6addr>[,<end-IPv6addr>|constructor:<interface>][,<mode>][,<prefix-len>][,<lease time>]
+        Enable the DHCP server.
+
+    -G, --dhcp-host=[<hwaddr>][,id:<client_id>|*][,set:<tag>][,<ipaddr>][,<hostname>][,<lease_time>][,ignore]
+        Specify per host parameters for the DHCP server.
+        This allows a machine with a particular hardware address to be always allocated the same hostname, IP address and lease time.
+        A hostname specified like this overrides any supplied by the DHCP client on the machine.
+        It is also allowable to omit the hardware address and include the hostname, in which case the IP address and lease times will apply to any machine claiming that name.
+        For example --dhcp-host=00:20:e0:3b:13:af,wap,infinite tells dnsmasq to give the machine with hardware address 00:20:e0:3b:13:af the name wap, and an infinite DHCP lease.
+                    --dhcp-host=lap,192.168.0.199 tells dnsmasq to always allocate the machine lap the IP address 192.168.0.199.
+    --dhcp-hostsfile=<path>
+    --dhcp-relay=<local address>,<server address>[,<interface]
+        Configure dnsmasq to do DHCP relay.
+        The local address is an address allocated to an interface on the host running dnsmasq
+    --log-dhcp
+        Extra logging for DHCP: log all the options sent to DHCP clients and the tags used to determine them.
+
+
+** DNS subsystem
+ + /etc/hosts
+   Upstream servers can be configured in a variety of convenient ways
+   Authoritative DNS mode
+
+
+** DHCP subsystem
+   1. Enable the DHCP server.
+      dhcp-range=set:dev,192.168.18.2,192.168.18.100
+
+*** Options - for display known DHCPv4 configuration options
+    dnsmasq --help dhcp
+    dhcp-option=3    # Override the default route supplied by dnsmasq and send no default route at all
+    dhcp-option=40,welly
+
+** TFTP server to allow net/PXE boot of DHCP hosts
+   mkdir -p /tfptboot && cd /tfptboot
+
+   wget http://archive.ubuntu.com/ubuntu/dists/xenial/main/installer-amd64/current/images/netboot/netboot.tar.gz
+   tar -zxf netboot.tar.gz
+   chown -R nobody: .
+
+   # dnsmasq options
+   --enable-tftp --tftp-root=/tftpboot --dhcp-boot=pxelinux.0 -F 192.168.18.2,192.168.18.100 --dhcp-option=3,192.168.18.1 --dhcp-option=6,192.168.18.1
+   dnsmasq -d -k -F 192.168.18.2,192.168.18.100 --enable-tftp --tftp-root=/tftpboot --dhcp-boot=pxelinux.0
+
+   # verify
+   cd /tmp
+   echo 'get pxelinux.0' | atftp localhost
+
+** Example config
+######## DNS ########
+log-queries
+no-hosts
+addn-hosts=/var/run/dnsmasq/hosts
+address=/*.ck.360.cn/10.18.240.129
+
+######## DHCP ########
+log-dhcp
+dhcp-range=set:dev,192.168.18.2,192.168.18.100
+dhcp-option=3
+dhcp-option=option:domain-search,inetlinux.com
+
+######## PXE/TFTP OPTIONS ########
+enable-tftp
+tftp-root=/tftpboot
+
+# Do real PXE, rather than just booting a single file, this is an
+# alternative to dhcp-boot.
+pxe-prompt="What system shall I netboot?"
+# Available boot services. for PXE.
+#pxe-service=x86PC, "Boot from local disk"
+# Loads <tftp-root>/pxelinux.0 from dnsmasq TFTP server.
+pxe-service=x86PC, "Install Linux", pxelinux
+# Loads <tftp-root>/pxelinux.0 from TFTP server at 1.2.3.4.
