@@ -6,7 +6,6 @@
 #define MAX_WF_KEY_LEN          128
 #define MAX_WF_VAL_LEN         1024
 
-
 typedef enum form_state_e {
     CHAR_KEY,
     CHAR_ASSIGN,
@@ -15,6 +14,8 @@ typedef enum form_state_e {
     CHAR_END
 } form_state_t;
 
+// Web formdata parser
+
 typedef struct form_parser_s {
     form_state_t     state;
     int              key_len;
@@ -22,7 +23,6 @@ typedef struct form_parser_s {
     u_char           key[MAX_WF_KEY_LEN];
     u_char           val[MAX_WF_VAL_LEN];
 } form_parser_t;
-
 
 typedef struct {
     size_t      len;
@@ -51,12 +51,8 @@ int sf_parse_form(form_parser_t *fp, u_char *data, u_char *end,
         case CHAR_ASSIGN:
             fp->key_len = i;
             j = 0;
-//            if (*p == '&') {
-//                fp->state = CHAR_END;
-//            } else {
-                fp->state = CHAR_VALUE;
-                p--;   // repeat for retrieve value
-//            }
+            fp->state = CHAR_VALUE;
+            p--;   // repeat for retrieve value
 
             break;
         case CHAR_VALUE:
