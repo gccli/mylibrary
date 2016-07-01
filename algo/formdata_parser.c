@@ -71,7 +71,7 @@ int sf_parse_form(form_parser_t *fp, u_char *data, u_char *end,
                 val->data = fp->val; val->len = fp->val_len;
                 stop = 1;
             }
-            //printf("  [%.*s]=[%.*s]\n", fp->key_len, fp->key, fp->val_len, fp->val);
+            printf("  [%.*s]=[%.*s]\n", fp->key_len, fp->key, fp->val_len, fp->val);
 
             break;
         case CHAR_END:
@@ -123,12 +123,12 @@ int main(int argc, char *argv[])
 
     find_key("entityId",           (u_char *)data, strlen(data));
     find_key("city",               (u_char *)data, strlen(data));
-    find_key("acc11",              (u_char *)data, strlen(data));
     find_key("00N2800000CSGj6",    (u_char *)data, strlen(data));
     find_key("00N2800000CSGj7",    (u_char *)data, strlen(data));
     find_key("acc18zip",           (u_char *)data, strlen(data));
     find_key("save",               (u_char *)data, strlen(data));
     find_key("_CONFIRMATIONTOKEN", (u_char *)data, strlen(data));
+    find_key("acc11",              (u_char *)data, strlen(data));
 
     return 0;
 }
