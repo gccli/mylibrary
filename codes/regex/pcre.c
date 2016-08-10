@@ -59,6 +59,8 @@ void my_regex_add_patterns()
         "t0k([^<]+)([0-9]{5})eok",
         "t0k([^<\\n]+)([0-9]{5})e0k",
         "\\*\\*[^<\"\\s]+&(\\d+)!",
+        "handleRedirect\\('/(\\w{15,18})",
+        "feedItemId\":\"([^\"]+)",
         NULL
     };
     for(i=0; patterns[i]; i++) {
@@ -111,10 +113,14 @@ int main(int argc, char *argv[])
             }
 
             if (tmp > 0) {
-                str = ibuf + tmp->o[0];
-                n = tmp->o[1] - tmp->o[0];
-                printf("\n(%04d,%04d) match regex '%s' - [%.*s]\n", tmp->o[0], tmp->o[1],
-                       tmp->pattern, n, str);
+                int i;
+                printf("\n(%04d,%04d) match regex (%s)\n", tmp->o[0], tmp->o[1], tmp->pattern);
+                for(i=0; i<tmp->match; ++i) {
+                    str = ibuf + tmp->o[2*i];
+                    n = tmp->o[2*i+1] - tmp->o[2*i];
+                    printf("  %.*s\n", n, str);
+                }
+
                 offs = tmp->o[1];
             } else {
                 offs = len;
