@@ -45,6 +45,15 @@ echo -n c984aed014aec7623a54f0591da07a85fd4b762d | xxd -r -p > outfile.bin
     sed -i 's/daily/weekly/' /etc/logrotate.d/rsyslog
     sed -i '/compress/d' /etc/logrotate.d/rsyslog
 
+* system
+** time
+   # update time with ntp
+   ntpdate ntp.ubuntu.com
+   until ping -nq -c3 8.8.8.8; do
+     echo "Waiting for network..."
+   done
+   ntpdate -s time.nist.gov
+
 * programming
 ** gcc/g++
 ** gdb
@@ -54,7 +63,6 @@ echo -n c984aed014aec7623a54f0591da07a85fd4b762d | xxd -r -p > outfile.bin
    valgrind --tool=memcheck --log-file=vcheck.out --leak-check=full --undef-value-errors=no --free-fill=0xBB --malloc-fill=0xAA
    # multi-thread check
    valgrind  --tool=helgrind --track-lockorders=no --log-file=vcheck.out
-
 
 * openssl
 
