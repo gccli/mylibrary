@@ -1,0 +1,33 @@
+MIME-Version: 1.0
+Content-Type: multipart/mixed; charset="utf-8";
+ boundary="===============3828561390547451048=="
+Content-Transfer-Encoding: base64
+Subject: =?utf-8?b?5pe26Ze0OjE3OjU5OjEwLjk3Nzc1MyDnm67lvZUgcw==?=
+From: lijing@safedefense.net
+To: lijing1-s@360.cn, inetlinux@126.com, inetlinux@163.com
+Date: Fri, 14 Oct 2016 09:59:10 -0000
+
+--===============3828561390547451048==
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+
+IyEgL3Vzci9iaW4vZW52IHB5dGhvbgojIC0qLSBjb2Rpbmc6IHV0Zi04IC0qLQojIOmCruS7tua1
+i+ivlQoKCg==
+
+--===============3828561390547451048==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Content-Disposition: attachment;
+ filename="=?utf-8?b?5b2T5YmN55uu5b2V5LiL55qE5paH5Lu2LnR4dA==?="
+
+total 68
+-rw-rw-rw-+ 1 lijing lijing 22504 Oct 14 11:48 1.jpg
+-rw-rw-rw-  1 lijing lijing  1793 Dec 22  2015 2.txt
+-rw-rw-rw-+ 1 lijing lijing 10108 Oct 14 11:48 butterfly.png
+-rw-rw-rw-  1 lijing lijing 12996 Apr 20 14:34 合同文件.docx
+-rw-rw-r--  1 lijing lijing     0 Oct 14 12:15 当前目录下的文件.txt
+-rw-rw-rw-  1 lijing lijing  8840 Oct 14 11:50 新建工作表.xlsx
+
+--===============3828561390547451048==--
