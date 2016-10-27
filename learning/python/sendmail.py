@@ -23,7 +23,7 @@ sender    = 'lijing@safedefense.net'
 recipients= ['lijing1-s@360.cn', 'inetlinux@126.com', 'inetlinux@163.com']
 
 body      = open(sys.argv[0], 'r').read(64)
-directory = 's'
+directory = 'test'
 
 cs = email.charset.Charset('UTF-8')
 cs.header_encoding = email.charset.BASE64
@@ -53,11 +53,7 @@ for filename in os.listdir(directory):
         ctype = 'application/octet-stream'
 
     maintype, subtype = ctype.split('/', 1)
-    if maintype == 'text':
-        fp = open(path)
-        msg = MIMEText(fp.read(), _subtype=subtype)
-        fp.close()
-    elif maintype == 'image':
+    if maintype == 'image':
         fp = open(path, 'rb')
         msg = MIMEImage(fp.read(), _subtype=subtype)
         fp.close()
