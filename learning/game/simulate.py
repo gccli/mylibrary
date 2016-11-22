@@ -1,3 +1,4 @@
+import sys
 import time
 import win32api, win32con, win32gui
 
@@ -99,11 +100,13 @@ def left_click(x,y):
 
 def enum_handler(hwnd, lParam):
     if win32gui.IsWindowVisible(hwnd):
-        if 'Stack Overflow' in win32gui.GetWindowText(hwnd):
+        print 'window is', win32gui.GetWindowText(hwnd)
+        if 'Outlook' in win32gui.GetWindowText(hwnd):
             win32gui.MoveWindow(hwnd, 0, 0, 760, 500, True)
 
 win32gui.EnumWindows(enum_handler, None)
 
+sys.exit(1)
 input_window = [
     (1000, 395),
     (1500, 395)
