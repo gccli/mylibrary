@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import json
@@ -16,11 +17,28 @@ class Coordinate(object):
     def __init__(self, config):
         with open(config) as fp:
             self.coords = json.load(fp)
+
+        files = os.listdir('.')
+        for filename in files:
+            name,_ = filename.split('.')
+            if name in ['silicon', 'diamond']:
+                self.parse_file(filename)
+
         for k,v in self.coords.iteritems():
             for x in v:
                 x['type'] = k
                 self.flat_coords.append(x)
 
+    def parse_file(self, filename):
+        name,level = filename.split('.')
+        fp = open(filename, 'r')
+        for line in fp:
+            info = line.split()
+            x,y = int(info[0]), int(info[1])
+            coord = {"level": level, "coordinate": [x,y], "type": name}
+
+            self.flat_coords.append(coord)
+            print coord
 
     def plot(self):
         fig, ax = plt.subplots()
@@ -37,6 +55,8 @@ class Coordinate(object):
                     ax.plot(x, y, 'g*') # out group
             elif c['type'] == 'diamond':
                 ax.plot(x, y, 'g^')
+            elif c['type'] == 'silicon':
+                ax.plot(x, y, 'b^')
 
         me = self.coords['player'][0]
         ax.annotate('weipin', xy=tuple(me['coordinate']), xycoords='data',
