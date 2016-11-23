@@ -13,7 +13,7 @@
         {"level":60, "coordinate": [158, 204]}
     ],
     "player": [
-        {"name":"伟品", "level":72, "coordinate": [6, 242]},
+        {"name":"weipin", "level":72, "coordinate": [6, 242]},
         {"name":"star", "level":75, "coordinate": [300, 300], "label": 1},
         {"name":"MuDan", "level":75, "coordinate": [524, 201], "label": 1},
         {"name":"sheep1", "level":75, "coordinate": [158, 222], "label": 1},

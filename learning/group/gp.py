@@ -20,6 +20,8 @@ class Coordinate(object):
             for x in v:
                 x['type'] = k
                 self.flat_coords.append(x)
+
+
     def plot(self):
         fig, ax = plt.subplots()
 
