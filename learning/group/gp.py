@@ -15,19 +15,13 @@ class Coordinate(object):
     flat_coords = []
 
     def __init__(self, config):
-        with open(config) as fp:
-            self.coords = json.load(fp)
-
         files = os.listdir('.')
         for filename in files:
             name,_ = filename.split('.')
             if name in ['silicon', 'diamond']:
                 self.parse_file(filename)
-
-        for k,v in self.coords.iteritems():
-            for x in v:
-                x['type'] = k
-                self.flat_coords.append(x)
+            elif name == 'player':
+                self.parse_player(filename)
 
     def parse_file(self, filename):
         name,level = filename.split('.')
@@ -36,6 +30,21 @@ class Coordinate(object):
             info = line.split()
             x,y = int(info[0]), int(info[1])
             coord = {"level": level, "coordinate": [x,y], "type": name}
+
+            self.flat_coords.append(coord)
+            print coord
+
+    def parse_player(self, filename):
+        fp = open(filename, 'r')
+        for line in fp:
+            info = line.split()
+            name = info[2] if len(info) > 2 else ''
+            tufei = True if len(info) > 3 else False
+            x,y = int(info[0]), int(info[1])
+            coord = {"coordinate": [x,y],
+                     "type": filename.split('.')[0],
+                     "name": name,
+                     "tufei": tufei}
 
             self.flat_coords.append(coord)
             print coord
@@ -49,7 +58,7 @@ class Coordinate(object):
 
             if c['type'] == 'player':
                 player = c
-                if player.get('label'):
+                if player['tufei']:
                     ax.plot(x, y, 'ro') # others
                 else:
                     ax.plot(x, y, 'g*') # out group
@@ -58,10 +67,10 @@ class Coordinate(object):
             elif c['type'] == 'silicon':
                 ax.plot(x, y, 'b^')
 
-        me = self.coords['player'][0]
-        ax.annotate('weipin', xy=tuple(me['coordinate']), xycoords='data',
-                    xytext=(20, 20), textcoords='offset points',
-                    arrowprops=dict(arrowstyle="->"))
+        #me = self.coords['player'][0]
+        #ax.annotate('weipin', xy=tuple(me['coordinate']), xycoords='data',
+        #            xytext=(20, 20), textcoords='offset points',
+        #            arrowprops=dict(arrowstyle="->"))
 
 
 #        ax.annotate('weipin', xy=tuple(me['coordinate']), xycoords='data',
@@ -73,7 +82,6 @@ class Coordinate(object):
         plt.axis([0, 600, 0, 600])
         ax.grid(True, linewidth=1, which='both')
         plt.show()
-
 
 if __name__ == '__main__':
     coord = Coordinate('world.json')
