@@ -5,6 +5,11 @@ import SocketServer
 import BaseHTTPServer
 
 class MyHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+    def _set_headers(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+
     def do_GET(s):
         """Respond to a GET request."""
         s.send_response(200)
@@ -24,6 +29,8 @@ class MyHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length)
+
+        print post_data
 
         self._set_headers()
         self.wfile.write("<html><body><h1>POST!</h1></body></html>")
