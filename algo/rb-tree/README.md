@@ -63,4 +63,4 @@ make
 ```
 
 After run the example:
-![eveny time the result is different](https://github.com/gccli/rb-tree/blob/master/example.png "snapshot")
+![eveny time the result is different](example.png "snashot)
