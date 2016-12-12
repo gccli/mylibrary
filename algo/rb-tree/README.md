@@ -63,4 +63,4 @@ make
 ```
 
 After run the example:
-![eveny time the result is different](example.png "snashot)
+![eveny time the result is different](example.png)
