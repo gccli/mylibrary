@@ -1,6 +1,6 @@
 #! /bin/bash
 
-cpp_regex=".*\.[hc][pp]*$"
+cpp_regex=".*\.[hc][cp]*$"
 
 find . -type f -regex $cpp_regex
 read -p "Prettify all files (y/n)? " yes
