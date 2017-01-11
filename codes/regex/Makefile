@@ -1,11 +1,11 @@
 TARGET=regex boost_regex_thread
 CC=g++
-CXXFLAGS=-g -Wall -I../../inc 
+CXXFLAGS=-g -Wall -I../../inc
 
 all:$(TARGET)
 
 regex:regex.o
-	$(CC) -o $@ $^ -lboost_regex
+	$(CC) -o $@ $^
 
 boost_regex_thread:boost_regex_thread.o
 	$(CC) -o $@ $^ -lboost_regex -lpthread
