@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
     wstr = (wchar_t *) buffer;
 
     for (i=0; i<len/sizeof(wchar_t); ++i) {
-        printf("%6x  %7d  %s\n", wstr[i], wstr[i], unicode2utf8(wstr[i]));
+        printf("U+%04x  %s\n", wstr[i], unicode2utf8(wstr[i]));
 
     }
 
