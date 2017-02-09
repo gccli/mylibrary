@@ -55,12 +55,8 @@ void my_regex_add_patterns()
 {
     int i;
     const char *patterns[] = {
-        "tok([^<]+)([0-9]{5})eok",
-        "t0k([^<]+)([0-9]{5})eok",
         "t0k([^<\\n]+)([0-9]{5})e0k",
-        "\\*\\*[^<\"\\s]+&(\\d+)!",
-        "handleRedirect\\('/(\\w{15,18})",
-        "feedItemId\":\"([^\"]+)",
+        "<.+?>",
         NULL
     };
     for(i=0; patterns[i]; i++) {

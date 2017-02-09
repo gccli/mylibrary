@@ -1,4 +1,4 @@
-TARGET=regex boost_regex_thread
+TARGET=regex pcre
 CC=g++
 CXXFLAGS=-g -Wall -I../../inc
 
@@ -6,6 +6,8 @@ all:$(TARGET)
 
 regex:regex.o
 	$(CC) -o $@ $^
+pcre:pcre.c
+	cc -o $@ $^ -lpcre
 
 boost_regex_thread:boost_regex_thread.o
 	$(CC) -o $@ $^ -lboost_regex -lpthread
