@@ -21,6 +21,8 @@
  * UTF-16 encodings specify the Unicode Byte Order Mark (BOM) for use at the beginnings of text files,
  * BOM - Unicode Byte Order Mark
  * plain - In the Unicode standard, a plane is a continuous group of 65536 code points.
+ * script - In Unicode, a script is a collection of letters and other written signs used to
+ *          represent textual information in one or more writing systems
  *
  */
 
@@ -190,8 +192,9 @@ int main(int argc, char *argv[])
 
     for (i=0; i<len/sizeof(wchar_t); ++i) {
         printf("U+%04x  %s\n", wstr[i], unicode2utf8(wstr[i]));
-
     }
+    printf("U+2602  %s\n", unicode2utf8(0x2602));
+    printf("U+2605  %s\n", unicode2utf8(0x2605));
 
     size_t cnt;
     len = strlen(text);
