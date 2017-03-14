@@ -57,6 +57,8 @@ void my_regex_add_patterns()
     const char *patterns[] = {
         "t0k([^<\\n]+)([0-9]{5})e0k",
         "<.+?>",
+        "(%[0-9A-Za-z]{2})+",
+        "ck_key_associate\\s+(\\w+)\\s+([^ ]+)",
         NULL
     };
     for(i=0; patterns[i]; i++) {

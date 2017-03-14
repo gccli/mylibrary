@@ -1,6 +1,7 @@
 #include "algorithm.h"
 #include <math.h>
 
+
 void insert_sort(int *array, int len)
 {
   int i,j,tmp = 0;
@@ -16,13 +17,12 @@ void insert_sort(int *array, int len)
   }
 }
 
-
 void shell_insert(int *a, int n, int k)
 {
     int i,j,tmp;
     for(i=k; i<n; i+=k) {
 	tmp = a[i];
-	for(j=i-k; j>=0 && a[j] > tmp; j-=k) 
+	for(j=i-k; j>=0 && a[j] > tmp; j-=k)
 	    a[j+k] = a[j];
 	a[j+k] = tmp;
     }
@@ -41,9 +41,9 @@ int main(int argc, char *argv[])
 {
   int a[] = {1,2,9,7,4,5,8,0,3,6};
   print_array(a, 10);
-  //shell_sort(a, 10);
+  insert_sort(a, 10);
   printf("Sorted %s\n", is_sorted(a, 10)?"Yes":"No");
-
+  print_array(a, 10);
   return 0;
 }
 #endif
