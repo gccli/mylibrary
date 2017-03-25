@@ -51,14 +51,16 @@ int my_regex_add_pattern(const char *pattern)
     return 0;
 }
 
+//        "<.+?>",
+
 void my_regex_add_patterns()
 {
     int i;
     const char *patterns[] = {
-        "t0k([^<\\n]+)([0-9]{5})e0k",
-        "<.+?>",
+        "t0k[^<\\n]+([0-9]{5})e0k",
         "(%[0-9A-Za-z]{2})+",
         "ck_key_associate\\s+(\\w+)\\s+([^ ]+)",
+        "123\\w+X|dogY",
         NULL
     };
     for(i=0; patterns[i]; i++) {
@@ -76,6 +78,7 @@ int main(int argc, char *argv[])
     int         n;
     size_t      len;
     my_regex_t *node, *tmp;
+    int         option = PCRE_PARTIAL_HARD;
 
     my_regex_add_patterns();
     if ((fp = fopen(argv[1], "r")) == NULL) {
@@ -92,8 +95,7 @@ int main(int argc, char *argv[])
             unsigned int min_index = (unsigned int) -1;
             for(tmp = NULL, node = my_head; node; node = node->next) {
                 memset(node->o, 0, sizeof(node->o));
-
-                node->match = pcre_exec(node->code, NULL, ibuf, len, offs, 0,
+                node->match = pcre_exec(node->code, NULL, ibuf, len, offs, option,
                                         node->o,
                                         sizeof(node->o)/sizeof(int));
                 assert(node->match != 0);
