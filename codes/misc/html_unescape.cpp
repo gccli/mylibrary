@@ -93,6 +93,7 @@ error:
 }
 
 #include <iconv.h>
+// g++ -std=c++11 -g -Wall html_unescape.cpp
 int main(int argc, char *argv[])
 {
     const char *str = "&#23596;&#38694;&#25493;&#29785;&#30777;&#37804;&#29448;";
