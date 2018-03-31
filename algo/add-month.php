@@ -22,7 +22,7 @@ $t = strtotime("2017-03-31 09:19:33");
 $lastt = $t;
 $loop=600;
 for ($o=1; $o <= $loop; $o++) {
-    $dt = mon_offset($t, $o);
+    $dt = add_month($t, $o);
     $ts = strtotime($dt);
 
     $days = ($ts-$lastt)/86400;
